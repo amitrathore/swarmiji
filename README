@@ -1,0 +1,3 @@
+A system that helps implement and run programs that want to use multiple cores/processors for parallel processing. 
+
+The programming language is Clojure.
