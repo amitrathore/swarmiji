@@ -1,4 +1,4 @@
-(ns org.runa.swarmiji.master.grizzly-utils)
+(ns org.runa.swarmiji.http.grizzly-utils)
 
 (import '(com.sun.grizzly.http SelectorThread))
 

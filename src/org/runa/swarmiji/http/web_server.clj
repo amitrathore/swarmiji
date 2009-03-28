@@ -1,4 +1,4 @@
-(ns org.runa.swarmiji.master.web-server)
+(ns org.runa.swarmiji.http.web-server)
 
 (import '(com.sun.grizzly.http SelectorThread))
 (import '(com.sun.grizzly.tcp Adapter OutputBuffer Request Response))
@@ -6,7 +6,7 @@
 (import '(java.net HttpURLConnection))
 
 (defn is-get? [request]
-  (= (.toUpperCase (.method request)) "GET"))
+  (= (.toUpperCase (str (.method request))) "GET"))
 
 (defn response-as-chunk [grizzly-response response-text]
   (let [response-bytes (.getBytes response-text)
@@ -18,12 +18,13 @@
     (.append out-chunk response-bytes 0 response-length)
     out-chunk))
 
-(defn service-http-request [request response]
+(defn service-http-request [custom-request-handler request response]
   (do
-    (println "Recieved request from" (.requestURI request))
+    (println "Recieved request from" (str (.requestURI request)))
     (if (is-get? request)
       (let [out-buffer (.getOutputBuffer response)
-	    response-chunk (response-as-chunk response "Hello World!")]
+	    response-text (custom-request-handler request)
+	    response-chunk (response-as-chunk response response-text)]
 	(.doWrite out-buffer response-chunk response)
 	(.finish response)))))
 	
@@ -32,10 +33,10 @@
     (.recycle request)
     (.recycle response)))
 
-(defn http-request-handler []
+(defn http-request-handler [custom-request-handler]
   (proxy [Adapter] []
     (service [req res]
-      (service-http-request req res))
+      (service-http-request custom-request-handler req res))
     (afterService [req res]
       (after-service req res))))
 	     
