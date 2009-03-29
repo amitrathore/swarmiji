@@ -25,7 +25,7 @@
       (if route-handler
 	(let [params (params-for-dispatch request-uri request-route)
 	      response-text (apply route-handler params)]
-	  (println "Recieved request for" request-route "with params" params)
+	  (println "Recieved request for (" request-route params ")")
 	  (.println (.getWriter response) response-text))
 	(println "Unable to respond to" request-uri)))))
 
