@@ -1,6 +1,7 @@
 (ns org.runa.swarmiji.http.web-server)
 
 (import '(com.sun.grizzly.http SelectorThread))
+(import '(com.sun.grizzly.http.embed GrizzlyWebServer))
 (import '(com.sun.grizzly.tcp.http11 GrizzlyAdapter))
 (import '(com.sun.grizzly.util.buf ByteChunk))
 (import '(java.net HttpURLConnection))
@@ -8,54 +9,33 @@
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
 
-(defn requested-route-from [request]
-  (str (.getRequestURI request)))
+(defn requested-route-from [uri-string handler-functions]
+  (let [registered (keys handler-functions)]
+    (first (filter #(.startsWith uri-string %) registered))))
 
-;(defn response-as-chunk [grizzly-response response-text]
-;  (let [response-bytes (.getBytes response-text)
-;	response-length (count response-bytes)
-;	out-chunk (ByteChunk.)]
-;    (.setStatus grizzly-response HttpURLConnection/HTTP_OK)
-;    (.setContentLength grizzly-response response-length)
-;    (.setContentType grizzly-response "text/plain")
-;    (.append out-chunk response-bytes 0 response-length)
-;    out-chunk))
+(defn params-for-dispatch [uri-string requested-route]
+  (let [params-string (.substring uri-string (count requested-route))]
+    (rest (seq (.split (.substring uri-string (count requested-route)) "/")))))  
 
-;(defn service-http-request [handler-functions-as-route-map request response]
-;  (if (is-get? request)
-;    (let [request-route (requested-route-from request)
-;	  route-handler (handler-functions-as-route-map request-route)
-;	  _ (println "Recieved request from" request-route)
-;	  _ (println "Request attributes:" (.getAttributes request))
-;	  out-buffer (.getOutputBuffer response)
-;	  response-text (route-handler request)
-;	  response-chunk (response-as-chunk response response-text)]
-;      (.doWrite out-buffer response-chunk response)
-;      (.finish response))))
-
-;(defn after-service [request response]
-;  (do
-;    (.recycle request)
-;    (.recycle response)))
-
-(defn params-for-dispatch [parameter-map]
-  (map first (.values parameter-map)))
-
-(defn service-http-request [handler-functions-as-route-map request response]
+(defn service-http-request [handler-functions request response]
   (if (is-get? request)
-    (let [request-route (requested-route-from request)
-	  route-handler (handler-functions-as-route-map request-route)
-	  params (params-for-dispatch (.getParameterMap request))
-	  _ (println "Recieved request from" request-route)
-	  _ (println "Request attributes:" params)
-	  response-text (apply route-handler params)]
-      (.println (.getWriter response) response-text))))
+    (let [request-uri (.getRequestURI request)
+	  request-route (requested-route-from request-uri handler-functions)
+	  route-handler (handler-functions request-route)]
+      (if route-handler
+	(let [params (params-for-dispatch request-uri request-route)
+	      response-text (apply route-handler params)]
+	  (println "Recieved request for" request-route "with params" params)
+	  (.println (.getWriter response) response-text))
+	(println "Unable to respond to" request-uri)))))
 
 (defn grizzly-adapter-for [handler-functions-as-route-map]
   (proxy [GrizzlyAdapter] []
     (service [req res]
       (service-http-request handler-functions-as-route-map req res))))
 
-;    (afterService [req res]
-;      (after-service req res))))
-	     
+(defn start-web-server [handler-functions-as-route-map port]
+  (let [gws (GrizzlyWebServer. port)]
+    (.addGrizzlyAdapter gws (grizzly-adapter-for handler-functions-as-route-map))
+    (println "Started swarmiji-http-gateway on port" port)
+    (.start gws)))
