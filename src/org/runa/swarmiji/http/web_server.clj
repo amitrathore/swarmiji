@@ -15,7 +15,7 @@
 
 (defn params-for-dispatch [uri-string requested-route]
   (let [params-string (.substring uri-string (count requested-route))]
-    (rest (seq (.split (.substring uri-string (count requested-route)) "/")))))  
+    (rest (.split (.substring uri-string (count requested-route)) "/"))))
 
 (defn service-http-request [handler-functions request response]
   (if (is-get? request)
