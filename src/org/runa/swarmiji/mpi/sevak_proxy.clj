@@ -18,14 +18,16 @@
 (defn listener-proxy [q-client return-q-name custom-handler]
   (proxy [Listener] []
     (message [headerMap messageBody]
-	     (custom-handler (json/decode-from-str messageBody))
-	     (.unsubscribe q-client return-q-name)
-	     (.disconnect q-client))))
+	     (do
+	       (custom-handler (json/decode-from-str messageBody))
+	       (.unsubscribe q-client return-q-name)
+	       (.disconnect q-client)))))
 
-(defn register-callback [q-client return-q-name custom-handler]
+(defn register-callback [return-q-name custom-handler]
   (let [client (Client. "tank.cinchcorp.com" 61613, "guest" "guest")
-	callback (listener-proxy q-client return-q-name custom-handler)]
-    (.subscribe client return-q-name callback)))
+	callback (listener-proxy client return-q-name custom-handler)]
+    (.subscribe client return-q-name callback)
+    client))
 
 (defn send-on-transport [q-message]
   (let [client (Client. "tank.cinchcorp.com" 61613, "guest" "guest")
@@ -36,8 +38,8 @@
 (defn new-proxy [sevak-service args]
   (let [request-json-object (sevak-queue-message sevak-service args)
 	return-q-name (request-json-object :return-queue-name)
-	_ (println "request:" request-json-object)
-	q-client (send-on-transport request-json-object)]
-    (register-callback q-client return-q-name 
+	_ (println "request:" request-json-object)]
+    (send-on-transport request-json-object)
+    (register-callback return-q-name 
 		       (fn [response-json]
 			 (spit "/Users/amit/workspace/swarmiji/test.out" (json/encode-to-str response-json))))))
