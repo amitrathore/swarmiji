@@ -1,6 +1,7 @@
 (ns org.runa.swarmiji.mpi.sevak-proxy)
 
 (import '(java.util Random))
+(use 'org.runa.swarmiji.mpi.transport)
 (require '(org.danlarkin [json :as json]))
 (import '(net.ser1.stomp Client Listener))
 
@@ -27,16 +28,10 @@
     (.subscribe client return-q-name callback)
     client))
 
-(defn send-on-transport [q-message]
-  (let [client (Client. "tank.cinchcorp.com" 61613, "guest" "guest")
-	q-message-string (json/encode-to-str q-message)]
-    (.send client "RUNA_SWARMIJI_TRANSPORT" q-message-string)
-    client))
-
 (defn new-proxy [sevak-service args callback-function]
   (let [request-json-object (sevak-queue-message sevak-service args)
 	return-q-name (request-json-object :return-queue-name)
 	_ (println "request:" request-json-object)]
-    (send-on-transport request-json-object)
+    (send-on-transport "RUNA_SWARMIJI_TRANSPORT" request-json-object)
     (register-callback return-q-name callback-function)))
 		       
