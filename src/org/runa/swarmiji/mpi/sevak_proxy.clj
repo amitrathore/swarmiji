@@ -30,8 +30,7 @@
 
 (defn new-proxy [sevak-service args callback-function]
   (let [request-json-object (sevak-queue-message sevak-service args)
-	return-q-name (request-json-object :return-queue-name)
-	_ (println "request:" request-json-object)]
+	return-q-name (request-json-object :return-queue-name)]
     (send-on-transport "RUNA_SWARMIJI_TRANSPORT" request-json-object)
     (register-callback return-q-name callback-function)))
 		       
