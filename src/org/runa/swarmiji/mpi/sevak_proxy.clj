@@ -5,7 +5,7 @@
 (import '(net.ser1.stomp Client Listener))
 
 (defn return-queue-name []
-  (str (.nextInt (Random. ) 10000000000)))
+  (str (Math/abs (.nextInt (Random. ) 10000000000))))
 
 (defn sevak-queue-message [sevak-service args]
   (let [return-q-name (return-queue-name)]
