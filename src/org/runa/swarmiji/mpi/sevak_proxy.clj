@@ -3,8 +3,6 @@
 (import '(java.util Random))
 (require '(org.danlarkin [json :as json]))
 (import '(net.ser1.stomp Client Listener))
-(use '[clojure.contrib.duck-streams :only (spit)]) 
-
 
 (defn return-queue-name []
   (str (.nextInt (Random. ) 10000000000)))
@@ -35,11 +33,10 @@
     (.send client "RUNA_SWARMIJI_TRANSPORT" q-message-string)
     client))
 
-(defn new-proxy [sevak-service args]
+(defn new-proxy [sevak-service args callback-function]
   (let [request-json-object (sevak-queue-message sevak-service args)
 	return-q-name (request-json-object :return-queue-name)
 	_ (println "request:" request-json-object)]
     (send-on-transport request-json-object)
-    (register-callback return-q-name 
-		       (fn [response-json]
-			 (spit "/Users/amit/workspace/swarmiji/test.out" (json/encode-to-str response-json))))))
+    (register-callback return-q-name callback-function)))
+		       
