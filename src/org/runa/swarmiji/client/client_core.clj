@@ -1,4 +1,4 @@
-(ns org.runa.swarmiji.client.core)
+(ns org.runa.swarmiji.client.client-core)
 
 (use 'org.runa.swarmiji.mpi.sevak-proxy)
 (require '(org.danlarkin [json :as json]))
