@@ -16,6 +16,7 @@
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (cond
+	(= accessor :distributed?) true
 	(= accessor :complete?) (not (= :swarmiji-sevak-init @sevak-data))
 	(= accessor :value) (response-value-from @sevak-data)
 	(= accessor :status) (@sevak-data :status)
@@ -38,3 +39,16 @@
 
 (defmacro from-swarm [max-time-allowed swarm-requests expr]
   (list 'do (list 'wait-until-completion swarm-requests max-time-allowed) expr))
+
+
+(defn on-local [sevak-service-function & args]
+  (fn [accessor]
+    (cond
+	(= accessor :distributed?) false
+	(= accessor :complete?) true
+	(= accessor :value) (apply sevak-service-function args)
+	(= accessor :status) "success"
+	(= accessor :exception) nil
+	(= accessor :stacktrace) nil
+	(= accessor :_inner_ref) nil
+	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor))))))

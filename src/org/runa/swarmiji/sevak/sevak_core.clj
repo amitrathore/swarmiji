@@ -4,13 +4,21 @@
 (use 'org.runa.swarmiji.utils.exception-utils)
 (import '(net.ser1.stomp Client Listener))
 (require '(org.danlarkin [json :as json]))
+(use 'org.runa.swarmiji.client.client-core)
 (use 'org.runa.swarmiji.config.queue-config)
 
 (def sevaks (ref {}))
 
+(defmacro sevak-runner [sevak-name sevak-args]
+  `(fn ~sevak-args 
+     (if (swarmiji-distributed-mode?)
+       (apply on-swarm (cons ~sevak-name ~sevak-args))
+       (apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
+
 (defmacro defsevak [service-name args expr]
   `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks sevak-name# (fn ~args ~expr))))))
+     (dosync (ref-set sevaks (assoc @sevaks sevak-name# (fn ~args ~expr))))
+     (def ~service-name (sevak-runner sevak-name# ~args))))
 
 (defn handle-sevak-request [service-handler service-args]
   (try
@@ -36,6 +44,6 @@
 
 (defn boot []
   (println "Starting sevaks in" *swarmiji-env* "mode")
-  (println "RabbitMQ config" (queue-config))
+  (println "RabbitMQ config" (operation-config))
   (println "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (start-sevak-listener))

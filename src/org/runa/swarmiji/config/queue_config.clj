@@ -2,13 +2,22 @@
 
 (def *swarmiji-env* (.get (System/getenv) "SWARMIJI_ENV"))
 
-(def rabbitmq-config {
+(def operation-configs {
+    "test" {
+      :host "tank.cinchcorp.com"
+      :port 61613
+      :username "guest"
+      :password "guest"
+      :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_DEVELOPMENT"
+      :distributed-mode false
+    }    
     "development" {
       :host "tank.cinchcorp.com"
       :port 61613
       :username "guest"
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_DEVELOPMENT"
+      :distributed-mode true
     }
     "production" {
       :host "tank.cinchcorp.com"
@@ -16,24 +25,30 @@
       :username "guest"
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_PRODUCTION"
+      :distributed-mode true
     }
   }
 )
 
-(defn queue-config []
-  (rabbitmq-config *swarmiji-env*))
+(defn operation-config []
+  (if *swarmiji-env*
+    (operation-configs *swarmiji-env*)
+    (throw (Exception. "SWARMIJI_ENV is not set"))))
 
 (defn queue-host []
-  ((queue-config) :host))
+  ((operation-config) :host))
 
 (defn queue-port []
-  ((queue-config) :port))
+  ((operation-config) :port))
 
 (defn queue-username []
-  ((queue-config) :username))
+  ((operation-config) :username))
 
 (defn queue-password []
-  ((queue-config) :password))
+  ((operation-config) :password))
 
 (defn queue-sevak-q-name []
-  ((queue-config) :sevak-request-queue))
+  ((operation-config) :sevak-request-queue))
+
+(defn swarmiji-distributed-mode? []
+  ((operation-config) :distributed-mode))
