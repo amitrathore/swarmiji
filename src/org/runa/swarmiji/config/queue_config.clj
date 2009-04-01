@@ -8,11 +8,12 @@
       :port 61613
       :username "guest"
       :password "guest"
-      :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_DEVELOPMENT"
+      :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_TEST"
       :distributed-mode false
     }    
     "development" {
       :host "tank.cinchcorp.com"
+      ;:host "rohanda.local"
       :port 61613
       :username "guest"
       :password "guest"
