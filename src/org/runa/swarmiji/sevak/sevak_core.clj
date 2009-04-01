@@ -4,6 +4,7 @@
 (use 'org.runa.swarmiji.utils.exception-utils)
 (import '(net.ser1.stomp Client Listener))
 (require '(org.danlarkin [json :as json]))
+(use 'org.runa.swarmiji.config.queue-config)
 
 (def sevaks (ref {}))
 
@@ -29,10 +30,12 @@
 	(send-on-transport return-q response-envelope)))))
 
 (defn start-sevak-listener []
-  (let [client (Client. "tank.cinchcorp.com" 61613, "guest" "guest")
+  (let [client (new-queue-client)
 	sevak-request-handler (sevak-request-handling-listener)]
-    (.subscribe client "RUNA_SWARMIJI_TRANSPORT" sevak-request-handler)))
+    (.subscribe client (queue-sevak-q-name) sevak-request-handler)))
 
 (defn boot []
+  (println "Starting sevaks in" *swarmiji-env* "mode")
+  (println "RabbitMQ config" (queue-config))
   (println "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (start-sevak-listener))
