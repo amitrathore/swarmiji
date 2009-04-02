@@ -1,4 +1,6 @@
-(ns org.runa.swarmiji.config.queue-config)
+(ns org.runa.swarmiji.config.system-config)
+
+(use 'org.runa.swarmiji.utils.general-utils)
 
 (def *swarmiji-env* (.get (System/getenv) "SWARMIJI_ENV"))
 
@@ -10,6 +12,8 @@
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_TEST"
       :distributed-mode false
+      :logsdir "/Users/amit/workspace/furtive/logs"
+      :log-to-console true
     }    
     "development" {
       :host "tank.cinchcorp.com"
@@ -19,6 +23,8 @@
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_DEVELOPMENT"
       :distributed-mode true
+      :logsdir "/Users/amit/workspace/furtive/logs"
+      :log-to-console true
     }
     "production" {
       :host "tank.cinchcorp.com"
@@ -27,6 +33,8 @@
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_PRODUCTION"
       :distributed-mode true
+      :logsdir "/Users/amit/workspace/furtive/logs"
+      :log-to-console false
     }
   }
 )
@@ -35,6 +43,9 @@
   (if *swarmiji-env*
     (operation-configs *swarmiji-env*)
     (throw (Exception. "SWARMIJI_ENV is not set"))))
+
+
+(def logfile (str ((operation-config) :logsdir) "/" *swarmiji-env* "_" (random-number-string) ".log"))
 
 (defn queue-host []
   ((operation-config) :host))
@@ -53,3 +64,6 @@
 
 (defn swarmiji-distributed-mode? []
   ((operation-config) :distributed-mode))
+
+(defn log-to-console? []
+  ((operation-config) :log-to-console))

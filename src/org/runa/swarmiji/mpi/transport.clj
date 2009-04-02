@@ -1,6 +1,6 @@
 (ns org.runa.swarmiji.mpi.transport)
 
-(use 'org.runa.swarmiji.config.queue-config)
+(use 'org.runa.swarmiji.config.system-config)
 (require '(org.danlarkin [json :as json]))
 (import '(net.ser1.stomp Client Listener))
 

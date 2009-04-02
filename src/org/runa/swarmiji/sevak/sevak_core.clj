@@ -5,7 +5,9 @@
 (import '(net.ser1.stomp Client Listener))
 (require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.client.client-core)
-(use 'org.runa.swarmiji.config.queue-config)
+(use 'org.runa.swarmiji.config.system-config)
+(use 'org.runa.swarmiji.utils.general-utils)
+(use 'org.runa.swarmiji.utils.logger)
 
 (def sevaks (ref {}))
 
@@ -31,7 +33,7 @@
   (proxy [Listener] []
     (message [headerMap messageBody]
       (let [req-json (json/decode-from-str messageBody)
-	    _ (println "got request" req-json)
+	    _ (log-message "got request" req-json)
 	    service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
 	    service-handler (@sevaks (keyword service-name))
 	    response-envelope (handle-sevak-request service-handler service-args)]
@@ -43,7 +45,7 @@
     (.subscribe client (queue-sevak-q-name) sevak-request-handler)))
 
 (defn boot []
-  (println "Starting sevaks in" *swarmiji-env* "mode")
-  (println "RabbitMQ config" (operation-config))
-  (println "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
+  (log-message "Starting sevaks in" *swarmiji-env* "mode")
+  (log-message "RabbitMQ config" (operation-config))
+  (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (start-sevak-listener))

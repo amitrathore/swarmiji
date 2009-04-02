@@ -5,6 +5,8 @@
 (import '(com.sun.grizzly.tcp.http11 GrizzlyAdapter))
 (import '(com.sun.grizzly.util.buf ByteChunk))
 (import '(java.net HttpURLConnection))
+(use 'org.runa.swarmiji.utils.general-utils)
+(use 'org.runa.swarmiji.utils.logger)
 
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
@@ -24,10 +26,10 @@
 	  route-handler (handler-functions request-route)]
       (if route-handler
 	(let [params (params-for-dispatch request-uri request-route)
-	      _ (println "Recieved request for (" request-route params ")")
+	      _ (log-message "Recieved request for (" request-route params ")")
 	      response-text (apply route-handler params)]
 	  (.println (.getWriter response) response-text))
-	(println "Unable to respond to" request-uri)))))
+	(log-message "Unable to respond to" request-uri)))))
 
 (defn grizzly-adapter-for [handler-functions-as-route-map]
   (proxy [GrizzlyAdapter] []
@@ -37,5 +39,5 @@
 (defn start-web-server [handler-functions-as-route-map port]
   (let [gws (GrizzlyWebServer. port)]
     (.addGrizzlyAdapter gws (grizzly-adapter-for handler-functions-as-route-map))
-    (println "Started swarmiji-http-gateway on port" port)
+    (log-message "Started swarmiji-http-gateway on port" port)
     (.start gws)))

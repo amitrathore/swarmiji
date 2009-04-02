@@ -1,7 +1,10 @@
 (ns org.runa.swarmiji.utils.exception-utils)
 
+(use 'org.runa.swarmiji.utils.general-utils)
+(use 'org.runa.swarmiji.utils.logger)
+
 (defn log-exception [e]
-  (println (.getMessage e))
+  (log-message (.getMessage e))
   (.printStackTrace e))
 
 (defn exception-name [e]

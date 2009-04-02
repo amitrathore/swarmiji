@@ -1,13 +1,13 @@
 (ns org.runa.swarmiji.mpi.sevak-proxy)
 
-(import '(java.util Random))
 (use 'org.runa.swarmiji.mpi.transport)
 (require '(org.danlarkin [json :as json]))
 (import '(net.ser1.stomp Client Listener))
-(use 'org.runa.swarmiji.config.queue-config)
+(use 'org.runa.swarmiji.config.system-config)
+(use 'org.runa.swarmiji.utils.general-utils)
 
 (defn return-queue-name []
-  (str (Math/abs (.nextInt (Random. ) 10000000000))))
+  (random-number-string))
 
 (defn sevak-queue-message [sevak-service args]
   (let [return-q-name (return-queue-name)]
