@@ -25,15 +25,13 @@
 
 (defn handle-sevak-request [service-handler service-args]
   (try
-   (let [_ (. clojure.lang.Var (pushThreadBindings @sevak-bindings))
-	 response (apply service-handler service-args)]	 
-     {:response  response :status :success})
+   (push-thread-bindings @sevak-bindings)
+   {:response (apply service-handler service-args) :status :success}
    (catch Exception e 
-     (do
-       (log-exception e)
-       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))
+     (log-exception e)
+     {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})
    (finally
-    (. clojure.lang.Var (popThreadBindings)))))
+    (pop-thread-bindings))))
 
 (defn sevak-request-handling-listener []
   (proxy [Listener] []

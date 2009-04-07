@@ -21,18 +21,16 @@
 	      (next (next vvs)))
       (seq ret))))
 
+(defn push-thread-bindings [bindings-map]
+  (clojure.lang.Var/pushThreadBindings bindings-map))
+
+(defn pop-thread-bindings []
+  (clojure.lang.Var/popThreadBindings))
+
 (defmacro with-bindings [bindings-map body]
   `(do
      (. clojure.lang.Var (pushThreadBindings ~bindings-map)
      (try
-      ~@body
+      ~body
       (finally
        (. clojure.lang.Var (popThreadBindings)))))))
-
-;(try 
-; (clojure.lang.Var/pushThreadBindings 
-;  {*hbase-master* *hbase-master* 
-;   *primary-keys-config* *primary-keys-config* 
-;   *cinch-table-config* *cinch-table-config*})
-; (rowcount "amit_development_consumer_events" "api:")
-; (finally (clojure.lang.Var/popThreadBindings)))
