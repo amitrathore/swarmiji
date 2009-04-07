@@ -8,6 +8,8 @@
 (use 'org.runa.swarmiji.utils.general-utils)
 (use 'org.runa.swarmiji.utils.logger)
 (require '(org.danlarkin [json :as json]))
+(use 'org.runa.swarmiji.config.system-config)
+(use 'org.runa.swarmiji.sevak.sevak-core)
 
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
@@ -35,10 +37,12 @@
 (defn grizzly-adapter-for [handler-functions-as-route-map]
   (proxy [GrizzlyAdapter] []
     (service [req res]
-      (service-http-request handler-functions-as-route-map req res))))
+      (with-swarmiji-bindings 
+        (service-http-request handler-functions-as-route-map req res)))))
 
 (defn boot-web-server [handler-functions-as-route-map port]
   (let [gws (GrizzlyWebServer. port)]
     (.addGrizzlyAdapter gws (grizzly-adapter-for handler-functions-as-route-map))
+    (log-message "Using config:" (operation-config))
     (log-message "Started swarmiji-http-gateway on port" port)
     (.start gws)))

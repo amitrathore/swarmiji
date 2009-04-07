@@ -19,10 +19,3 @@
 (defn pop-thread-bindings []
   (clojure.lang.Var/popThreadBindings))
 
-(defmacro with-bindings [bindings-map body]
-  `(do
-     (. clojure.lang.Var (pushThreadBindings ~bindings-map)
-     (try
-      ~body
-      (finally
-       (. clojure.lang.Var (popThreadBindings)))))))

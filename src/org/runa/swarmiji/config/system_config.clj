@@ -16,8 +16,8 @@
       :log-to-console true
     }    
     "development" {
-      :host "tank.cinchcorp.com"
-      ;:host "rohanda.local"
+      ;:host "tank.cinchcorp.com"
+      :host "rohanda.local"
       :port 61613
       :username "guest"
       :password "guest"
