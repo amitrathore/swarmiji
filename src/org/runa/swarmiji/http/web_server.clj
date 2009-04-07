@@ -7,6 +7,7 @@
 (import '(java.net HttpURLConnection))
 (use 'org.runa.swarmiji.utils.general-utils)
 (use 'org.runa.swarmiji.utils.logger)
+(require '(org.danlarkin [json :as json]))
 
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
@@ -28,7 +29,7 @@
 	(let [params (params-for-dispatch request-uri request-route)
 	      _ (log-message "Recieved request for (" request-route params ")")
 	      response-text (apply route-handler params)]
-	  (.println (.getWriter response) response-text))
+	  (.println (.getWriter response) (json/encode-to-str response-text)))
 	(log-message "Unable to respond to" request-uri)))))
 
 (defn grizzly-adapter-for [handler-functions-as-route-map]
@@ -36,7 +37,7 @@
     (service [req res]
       (service-http-request handler-functions-as-route-map req res))))
 
-(defn start-web-server [handler-functions-as-route-map port]
+(defn boot-web-server [handler-functions-as-route-map port]
   (let [gws (GrizzlyWebServer. port)]
     (.addGrizzlyAdapter gws (grizzly-adapter-for handler-functions-as-route-map))
     (log-message "Started swarmiji-http-gateway on port" port)

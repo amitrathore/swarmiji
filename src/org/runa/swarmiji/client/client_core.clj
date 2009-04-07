@@ -31,7 +31,7 @@
 (defn wait-until-completion [swarm-requests allowed-time]
   (loop [all-complete (all-complete? swarm-requests) elapsed-time 0]
     (if (> elapsed-time allowed-time)
-      (throw (RuntimeException. (str "Swarmiji says: This operation has taken more than " allowed-time "milliseconds")))
+      (throw (RuntimeException. (str "Swarmiji reports: This operation has taken more than " allowed-time " milliseconds.")))
        (if (not all-complete)
 	 (do
 	   (Thread/sleep 100)

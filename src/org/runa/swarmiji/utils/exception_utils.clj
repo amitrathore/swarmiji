@@ -12,5 +12,6 @@
 
 (defn stacktrace [e]
   (apply str 
-	 (cons (str (exception-name e) "\n") 
-	       (map #(str (.toString %) "\n") (.getStackTrace e)))))
+	 (cons (str (exception-name e) "\n")
+	       (cons (str (.getMessage e) "\n")
+		     (map #(str (.toString %) "\n") (.getStackTrace e))))))
