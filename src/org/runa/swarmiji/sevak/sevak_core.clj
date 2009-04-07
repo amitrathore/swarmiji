@@ -10,6 +10,7 @@
 (use 'org.runa.swarmiji.utils.logger)
 
 (def sevaks (ref {}))
+(def sevak-bindings (ref {}))
 
 (defmacro sevak-runner [sevak-name sevak-args]
   `(fn ~sevak-args 
@@ -24,10 +25,15 @@
 
 (defn handle-sevak-request [service-handler service-args]
   (try
-   {:response (apply service-handler service-args) :status :success}
-   (catch Exception e (do
-			(log-exception e)
-			{:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
+   (let [_ (. clojure.lang.Var (pushThreadBindings @sevak-bindings))
+	 response (apply service-handler service-args)]	 
+     {:response  response :status :success})
+   (catch Exception e 
+     (do
+       (log-exception e)
+       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))
+   (finally
+    (. clojure.lang.Var (popThreadBindings)))))
 
 (defn sevak-request-handling-listener []
   (proxy [Listener] []
@@ -44,8 +50,17 @@
 	sevak-request-handler (sevak-request-handling-listener)]
     (.subscribe client (queue-sevak-q-name) sevak-request-handler)))
 
+(defmacro register-bindings [bindings]
+  `(dosync (ref-set sevak-bindings (hash-map ~@(var-ize bindings)))))
+
 (defn boot []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
   (log-message "RabbitMQ config" (operation-config))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (start-sevak-listener))
+
+(defmacro with-transfer-bindings [bindings expr]
+  `(do
+     (register-bindings ~bindings)
+     ~expr))
+  

@@ -2,7 +2,7 @@
 
 (use 'org.runa.swarmiji.utils.general-utils)
 
-(def *swarmiji-env* (.get (System/getenv) "SWARMIJI_ENV"))
+(def *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
 
 (def operation-configs {
     "test" {
