@@ -6,14 +6,6 @@
 (defn random-number-string []
   (str (Math/abs (.nextInt (Random. ) 10000000000))))
 
-(defmacro bind-and-run [vars expr]
-  (let [locals (map #(gensym (quote %)) vars)]
-    `(let [~@(interleave locals vars)
-           action# (fn []
-                     (binding [~@(interleave vars locals)]
-                       ~expr))]
-       (action# ))))
-
 (defn var-ize [var-vals]
   (loop [ret [] vvs (seq var-vals)]
     (if vvs

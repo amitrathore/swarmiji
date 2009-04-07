@@ -51,14 +51,16 @@
 (defmacro register-bindings [bindings]
   `(dosync (ref-set sevak-bindings (hash-map ~@(var-ize bindings)))))
 
-(defn boot []
+(defmacro binding-for-swarmiji [bindings expr]
+  `(do
+     (register-bindings ~bindings)
+     (binding [~@bindings]
+       ~expr)))
+
+(defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
   (log-message "RabbitMQ config" (operation-config))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (start-sevak-listener))
 
-(defmacro with-transfer-bindings [bindings expr]
-  `(do
-     (register-bindings ~bindings)
-     ~expr))
   
