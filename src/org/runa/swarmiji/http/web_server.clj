@@ -11,45 +11,32 @@
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.sevak.sevak-core)
 
-(def jsonp-marker "/jsonp")
+(def jsonp-marker "/jsonp=")
 
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
 
 (defn is-jsonp? [uri-string]
-  (.startsWith uri-string jsonp-marker))
+  (.contains uri-string jsonp-marker))
 
 (defn request-uri-from-jsonp-uri [jsonp-uri-string]
-  (.substring jsonp-uri-string (count jsonp-marker)))
+  (let [end-point (.indexOf jsonp-uri-string jsonp-marker)]
+    (.substring jsonp-uri-string 0 end-point)))
 
 (defn requested-route-from [uri-string handler-functions]
-  (let [registered (keys handler-functions)
-	lookup-handler-from (fn [uri-to-use] (first (filter #(.startsWith uri-to-use %) registered)))]
-    (if (is-jsonp? uri-string)
-      (lookup-handler-from (request-uri-from-jsonp-uri uri-string))
-      (lookup-handler-from uri-string))))    
+  (let [registered (keys handler-functions)]
+    (first (filter #(.startsWith uri-string %) registered))))
 
 (defn callback-fname [uri-string]
   (let [callback-token (last (.split uri-string "/"))]
     (last (.split callback-token "="))))
 
-(defn params-string-from [uri-without-jsonp-marker requested-route]
-  (.substring uri-without-jsonp-marker (count requested-route)))
-
-(defn params-from-jsonp-uri [uri-string requested-route]
-  (let [uri-without-marker (request-uri-from-jsonp-uri uri-string)
-	param-string (params-string-from uri-without-marker requested-route)
-	tokens (.split param-string "/")]
-    (rest (butlast tokens))))
-
-(defn params-from-regular-uri [uri-string requested-route]
-  (let [params-string (params-string-from uri-string requested-route)]
-    (rest (.split params-string "/"))))
-
 (defn params-for-dispatch [uri-string requested-route]
-  (if (is-jsonp? uri-string)
-    (params-from-jsonp-uri uri-string requested-route)
-    (params-from-regular-uri uri-string requested-route)))
+  (let [uri-to-use (if (is-jsonp? uri-string)
+		     (request-uri-from-jsonp-uri uri-string)
+		     uri-string)
+	params-string (.substring uri-to-use (count requested-route))]
+    (rest (.split params-string "/"))))
 
 (defn prepare-response [uri-string response-text]
   (if (is-jsonp? uri-string)
