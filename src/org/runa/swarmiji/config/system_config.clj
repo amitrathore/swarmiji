@@ -3,6 +3,7 @@
 (use 'org.runa.swarmiji.utils.general-utils)
 
 (def *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
+(def swarmiji-home (or (.get (System/getenv) "SWARMIJI_HOME") (str (System/getProperty "user.home") "/workspace/swarmiji")))
 
 (def operation-configs {
     "test" {
@@ -12,7 +13,7 @@
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_TEST"
       :distributed-mode false
-      :logsdir "/Users/amit/workspace/furtive/logs"
+      :logsdir (str swarmiji-home "/logs")
       :log-to-console true
     }    
     "development" {
@@ -23,7 +24,7 @@
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_DEVELOPMENT"
       :distributed-mode true
-      :logsdir "/Users/amit/workspace/furtive/logs"
+      :logsdir (str swarmiji-home "/logs")
       :log-to-console true
     }
     "production" {
@@ -33,7 +34,7 @@
       :password "guest"
       :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_PRODUCTION"
       :distributed-mode true
-      :logsdir "/Users/amit/workspace/furtive/logs"
+      :logsdir (str swarmiji-home "/logs")
       :log-to-console false
     }
   }
