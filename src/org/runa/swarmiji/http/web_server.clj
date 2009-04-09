@@ -11,16 +11,50 @@
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.sevak.sevak-core)
 
+(def jsonp-marker "/jsonp")
+
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
 
+(defn is-jsonp? [uri-string]
+  (.startsWith uri-string jsonp-marker))
+
+(defn request-uri-from-jsonp-uri [jsonp-uri-string]
+  (.substring jsonp-uri-string (count jsonp-marker)))
+
 (defn requested-route-from [uri-string handler-functions]
-  (let [registered (keys handler-functions)]
-    (first (filter #(.startsWith uri-string %) registered))))
+  (let [registered (keys handler-functions)
+	lookup-handler-from (fn [uri-to-use] (first (filter #(.startsWith uri-to-use %) registered)))]
+    (if (is-jsonp? uri-string)
+      (lookup-handler-from (request-uri-from-jsonp-uri uri-string))
+      (lookup-handler-from uri-string))))    
+
+(defn callback-fname [uri-string]
+  (let [callback-token (last (.split uri-string "/"))]
+    (last (.split callback-token "="))))
+
+(defn params-string-from [uri-without-jsonp-marker requested-route]
+  (.substring uri-without-jsonp-marker (count requested-route)))
+
+(defn params-from-jsonp-uri [uri-string requested-route]
+  (let [uri-without-marker (request-uri-from-jsonp-uri uri-string)
+	param-string (params-string-from uri-without-marker requested-route)
+	tokens (.split param-string "/")]
+    (rest (butlast tokens))))
+
+(defn params-from-regular-uri [uri-string requested-route]
+  (let [params-string (params-string-from uri-string requested-route)]
+    (rest (.split params-string "/"))))
 
 (defn params-for-dispatch [uri-string requested-route]
-  (let [params-string (.substring uri-string (count requested-route))]
-    (rest (.split (.substring uri-string (count requested-route)) "/"))))
+  (if (is-jsonp? uri-string)
+    (params-from-jsonp-uri uri-string requested-route)
+    (params-from-regular-uri uri-string requested-route)))
+
+(defn prepare-response [uri-string response-text]
+  (if (is-jsonp? uri-string)
+    (str (callback-fname uri-string)"(" (json/encode-to-str response-text) ")")
+    response-text))
 
 (defn service-http-request [handler-functions request response]
   (if (is-get? request)
@@ -31,7 +65,7 @@
 	(let [params (params-for-dispatch request-uri request-route)
 	      _ (log-message "Recieved request for (" request-route params ")")
 	      response-text (apply route-handler params)]
-	  (.println (.getWriter response) (json/encode-to-str response-text)))
+	  (.println (.getWriter response) (prepare-response request-uri response-text)))
 	(log-message "Unable to respond to" request-uri)))))
 
 (defn grizzly-adapter-for [handler-functions-as-route-map]
