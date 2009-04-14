@@ -7,32 +7,35 @@
 
 (def operation-configs {
     "test" {
+      :swarmiji-username "amit"
       :host "tank.cinchcorp.com"
       :port 61613
-      :username "guest"
-      :password "guest"
-      :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_TEST"
+      :q-username "guest"
+      :q-password "guest"
+      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
       :distributed-mode false
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true
     }    
     "development" {
-      ;:host "tank.cinchcorp.com"
-      :host "rohanda.local"
+      :swarmiji-username "amit"
+      :host "tank.cinchcorp.com"
+      ;:host "rohanda.local"
       :port 61613
-      :username "guest"
-      :password "guest"
-      :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_DEVELOPMENT"
+      :q-username "guest"
+      :q-password "guest"
+      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
       :distributed-mode true
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true
     }
     "production" {
+      :swarmiji-username "amit"
       :host "tank.cinchcorp.com"
       :port 61613
-      :username "guest"
-      :password "guest"
-      :sevak-request-queue "RUNA_SWARMIJI_TRANSPORT_PRODUCTION"
+      :q-username "guest"
+      :q-password "guest"
+      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
       :distributed-mode true
       :logsdir (str swarmiji-home "/logs")
       :log-to-console false
@@ -45,8 +48,10 @@
     (operation-configs *swarmiji-env*)
     (throw (Exception. "SWARMIJI_ENV is not set"))))
 
-
 (def logfile (str ((operation-config) :logsdir) "/" *swarmiji-env* "_" (random-number-string) ".log"))
+
+(defn swarmiji-user []
+  ((operation-config) :swarmiji-username))
 
 (defn queue-host []
   ((operation-config) :host))
@@ -55,13 +60,13 @@
   ((operation-config) :port))
 
 (defn queue-username []
-  ((operation-config) :username))
+  ((operation-config) :q-username))
 
 (defn queue-password []
-  ((operation-config) :password))
+  ((operation-config) :q-password))
 
 (defn queue-sevak-q-name []
-  ((operation-config) :sevak-request-queue))
+  (str ((operation-config) :sevak-request-queue) (swarmiji-user)))
 
 (defn swarmiji-distributed-mode? []
   ((operation-config) :distributed-mode))
