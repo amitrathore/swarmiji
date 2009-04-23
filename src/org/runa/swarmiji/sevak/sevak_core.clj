@@ -57,11 +57,11 @@
 (defmacro register-bindings [bindings]
   `(dosync (ref-set swarmiji-bindings (hash-map ~@(var-ize bindings)))))
 
-(defmacro binding-for-swarmiji [bindings expr]
+(defmacro binding-for-swarmiji [bindings & expr]
   `(do
      (register-bindings ~bindings)
      (binding [~@bindings]
-       ~expr)))
+       ~@expr)))
 
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
