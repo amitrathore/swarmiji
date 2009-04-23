@@ -66,6 +66,7 @@
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
   (log-message "System config:" (operation-config))
+  (log-message "MPI transport Q:" (queue-sevak-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (start-sevak-listener))
 
