@@ -39,15 +39,22 @@
       (log-exception e)
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
 
+(defn async-sevak-handler [service-handler service-args return-q]
+  (let [response (handle-sevak-request service-handler service-args)]
+    (send-on-transport return-q response)))
+
 (defn sevak-request-handling-listener []
   (proxy [Listener] []
     (message [headerMap messageBody]
-      (let [req-json (json/decode-from-str messageBody)
-	    _ (log-message "got request" req-json)
-	    service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
-	    service-handler (@sevaks (keyword service-name))
-	    response-envelope (handle-sevak-request service-handler service-args)]
-	(send-on-transport return-q response-envelope)))))
+      (try
+        (let [req-json (json/decode-from-str messageBody)
+	      _ (log-message "got request" req-json)
+	      service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
+	      service-handler (@sevaks (keyword service-name))
+	      sevak-agent (agent service-handler)]
+	  (send sevak-agent async-sevak-handler service-args return-q))
+	(catch Exception e
+	  (log-exception e))))))
 
 (defn start-sevak-listener []
   (let [client (new-queue-client)
