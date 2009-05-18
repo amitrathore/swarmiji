@@ -19,3 +19,6 @@
 (defn pop-thread-bindings []
   (clojure.lang.Var/popThreadBindings))
 
+(defn extract-time [time-elapsed-string-writer]
+  (let [time-string (first (.split (last (.split (str time-elapsed-string-writer) ": ")) " msecs"))]
+    (Double/parseDouble time-string)))
