@@ -32,12 +32,16 @@
        (pop-thread-bindings)))))
 
 (defn handle-sevak-request [service-handler service-args]
-  (with-swarmiji-bindings 
-   (try
-    {:response (apply service-handler service-args) :status :success}
-    (catch Exception e 
-      (log-exception e)
-      {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
+  (try
+   (let [response-with-time (run-and-measure-timing 
+			     (with-swarmiji-bindings
+			      (apply service-handler service-args)))
+	 value (response-with-time :response)
+	 time-elapsed (response-with-time :time-taken)]
+     {:response value :status :success :time-on-server time-elapsed})
+     (catch Exception e 
+       (log-exception e)
+       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
 (defn async-sevak-handler [service-handler service-args return-q]
   (let [response (handle-sevak-request service-handler service-args)]

@@ -7,12 +7,18 @@
 
 (def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
 
-(defn response-value-from [sevak-data]
+(defn attribute-from-response [sevak-data attrib-name]
   (if (= swarmiji-sevak-init-value sevak-data)
     (throw (Exception. "Sevak not complete!")))
   (if (not (= :success (keyword (sevak-data :status))))
     (throw (Exception. "Sevak has errors!")))
-  (sevak-data :response))
+  (sevak-data attrib-name))
+
+(defn response-value-from [sevak-data]
+  (attribute-from-response sevak-data :response))
+
+(defn time-on-server [sevak-data]
+  (attribute-from-response sevak-data :time-on-server))
 
 (defn on-swarm [sevak-service & args]
   (let [sevak-start (ref (System/currentTimeMillis))
@@ -29,7 +35,9 @@
 	(= accessor :complete?) (not (= swarmiji-sevak-init-value @sevak-data))
 	(= accessor :value) (response-value-from @sevak-data)
 	(= accessor :status) (@sevak-data :status)
-	(= accessor :execution-time) @sevak-time
+	(= accessor :time-on-server) (time-on-server @sevak-data)
+	(= accessor :total-time) @sevak-time
+	(= accessor :time-for-messaging) (- @sevak-time (time-on-server @sevak-data))
 	(= accessor :exception) (@sevak-data :exception)
 	(= accessor :stacktrace) (@sevak-data :stacktrace)
 	(= accessor :__inner_ref) @sevak-data
@@ -57,7 +65,9 @@
 	(= accessor :distributed?) false
 	(= accessor :complete?) true
 	(= accessor :status) "success"
-	(= accessor :execution-time) (@response-with-time :time-taken)
+	(= accessor :time-on-server) (@response-with-time :time-taken)
+	(= accessor :time-for-messaging) 0
+	(= accessor :total-time) (@response-with-time :time-taken)
 	(= accessor :exception) nil
 	(= accessor :stacktrace) nil
 	(= accessor :_inner_ref) nil
