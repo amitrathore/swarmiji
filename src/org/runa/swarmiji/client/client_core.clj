@@ -51,17 +51,18 @@
   (list 'do (list 'wait-until-completion swarm-requests max-time-allowed) expr))
 
 (defn on-local [sevak-service-function & args]
-  (let [timer-string-writer (StringWriter. )]
+  (let [response-with-time (ref {})]
     (fn [accessor]
       (cond
 	(= accessor :distributed?) false
 	(= accessor :complete?) true
 	(= accessor :status) "success"
-	(= accessor :execution-time) (extract-time timer-string-writer)
+	(= accessor :execution-time) (@response-with-time :time-taken)
 	(= accessor :exception) nil
 	(= accessor :stacktrace) nil
 	(= accessor :_inner_ref) nil
-	(= accessor :value) (let [with-time (run-and-measure-timing (apply sevak-service-function args))
-				  
+	(= accessor :value) (do 
+			      (dosync (ref-set response-with-time (run-and-measure-timing (apply sevak-service-function args))))
+			      (@response-with-time :response))
 	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
