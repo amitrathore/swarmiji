@@ -19,6 +19,8 @@
 (defn pop-thread-bindings []
   (clojure.lang.Var/popThreadBindings))
 
-(defn extract-time [time-elapsed-string-writer]
-  (let [time-string (first (.split (last (.split (str time-elapsed-string-writer) ": ")) " msecs"))]
-    (Double/parseDouble time-string)))
+(defmacro run-and-measure-timing [expr]
+  `(let [start-time# (System/currentTimeMillis)
+	 response# ~expr
+	 end-time# (System/currentTimeMillis)]
+     {:time-taken (- end-time# start-time#) :response response# :start-time start-time# :end-time end-time#}))

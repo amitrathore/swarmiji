@@ -61,10 +61,7 @@
 	(= accessor :exception) nil
 	(= accessor :stacktrace) nil
 	(= accessor :_inner_ref) nil
-	(= accessor :value) (let [actual-out *out*]
-			      (binding [*out* timer-string-writer]
-				(time 
-				 (binding [*out* actual-out]
-				   (apply sevak-service-function args)))))
+	(= accessor :value) (let [with-time (run-and-measure-timing (apply sevak-service-function args))
+				  
 	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
