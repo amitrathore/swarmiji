@@ -5,6 +5,8 @@
 (require '(org.danlarkin [json :as json]))
 (import '(java.io StringWriter))
 
+(declare send-work-report)
+
 (def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
 
 (defn attribute-from-response [sevak-data attrib-name]
@@ -18,16 +20,19 @@
   (attribute-from-response sevak-data :response))
 
 (defn time-on-server [sevak-data]
-  (attribute-from-response sevak-data :time-on-server))
+  (attribute-from-response sevak-data :sevak-time))
 
-(defn on-swarm [sevak-service & args]
+(defn on-swarm [sevak-name sevak-service & args]
   (let [sevak-start (ref (System/currentTimeMillis))
-	sevak-time (ref nil)
+	total-sevak-time (ref nil)
 	sevak-data (ref swarmiji-sevak-init-value)
+	sevak-time (fn [] (time-on-server @sevak-data))
+	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
 	on-swarm-response (fn [response-json-object] 
-			      (dosync 
-			       (ref-set sevak-data response-json-object)
-			       (ref-set sevak-time (- (System/currentTimeMillis) @sevak-start))))
+			    (dosync 
+			      (ref-set sevak-data response-json-object)
+			      (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start))
+			      (send-work-report sevak-name args (sevak-time) (messaging-time))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (cond
@@ -35,9 +40,9 @@
 	(= accessor :complete?) (not (= swarmiji-sevak-init-value @sevak-data))
 	(= accessor :value) (response-value-from @sevak-data)
 	(= accessor :status) (@sevak-data :status)
-	(= accessor :time-on-server) (time-on-server @sevak-data)
-	(= accessor :total-time) @sevak-time
-	(= accessor :time-for-messaging) (- @sevak-time (time-on-server @sevak-data))
+	(= accessor :sevak-time) (sevak-time)
+	(= accessor :total-time) @total-sevak-time
+	(= accessor :messaging-time) (messaging-time)
 	(= accessor :exception) (@sevak-data :exception)
 	(= accessor :stacktrace) (@sevak-data :stacktrace)
 	(= accessor :__inner_ref) @sevak-data
@@ -65,8 +70,8 @@
 	(= accessor :distributed?) false
 	(= accessor :complete?) true
 	(= accessor :status) "success"
-	(= accessor :time-on-server) (@response-with-time :time-taken)
-	(= accessor :time-for-messaging) 0
+	(= accessor :sevak-time) (@response-with-time :time-taken)
+	(= accessor :messaging-time) 0
 	(= accessor :total-time) (@response-with-time :time-taken)
 	(= accessor :exception) nil
 	(= accessor :stacktrace) nil

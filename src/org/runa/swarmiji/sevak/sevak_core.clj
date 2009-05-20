@@ -16,7 +16,7 @@
   `(fn ~sevak-args 
      (if (swarmiji-distributed-mode?)
        (apply on-swarm (cons ~sevak-name ~sevak-args))
-       (apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
+       (apply on-local (concat [~sevak-name (@sevaks ~sevak-name)] ~sevak-args)))))
 
 (defmacro defsevak [service-name args expr]
   `(let [sevak-name# (keyword (str '~service-name))]
@@ -38,7 +38,7 @@
 			      (apply service-handler service-args)))
 	 value (response-with-time :response)
 	 time-elapsed (response-with-time :time-taken)]
-     {:response value :status :success :time-on-server time-elapsed})
+     {:response value :status :success :sevak-time time-elapsed})
      (catch Exception e 
        (log-exception e)
        {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
