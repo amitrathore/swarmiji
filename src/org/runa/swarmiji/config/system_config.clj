@@ -15,6 +15,7 @@
       :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
       :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode false
+      :diagnostics-mode true
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true
     }    
@@ -27,6 +28,7 @@
       :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
       :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
+      :diagnostics-mode true
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true
     }
@@ -39,6 +41,7 @@
       :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
       :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
+      :diagnostics-mode true
       :logsdir (str swarmiji-home "/logs")
       :log-to-console false
     }
@@ -75,6 +78,9 @@
 
 (defn swarmiji-distributed-mode? []
   ((operation-config) :distributed-mode))
+
+(defn swarmiji-diagnostics-mode? []
+  ((operation-config) :diagnostics-mode))
 
 (defn log-to-console? []
   ((operation-config) :log-to-console))

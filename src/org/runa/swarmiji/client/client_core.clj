@@ -44,7 +44,7 @@
 			    (if (complete?)
 			      (do
 				(dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
-				(send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data)))))
+				(if (swarmiji-diagnostics-mode?) (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data))))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (cond
