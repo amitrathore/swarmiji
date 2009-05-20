@@ -2,6 +2,7 @@
 
 (import '(java.util Random))
 (use '[clojure.contrib.duck-streams :only (spit)])
+(import '(java.lang.management ManagementFactory))
 
 (defn random-number-string []
   (str (Math/abs (.nextInt (Random. ) 10000000000))))
@@ -18,6 +19,10 @@
 
 (defn pop-thread-bindings []
   (clojure.lang.Var/popThreadBindings))
+
+(defn process-pid []
+  (let [m-name (.getName (ManagementFactory/getRuntimeMXBean))]
+    (first (.split m-name "@"))))
 
 (defmacro run-and-measure-timing [expr]
   `(let [start-time# (System/currentTimeMillis)

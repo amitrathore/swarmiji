@@ -13,6 +13,7 @@
       :q-username "guest"
       :q-password "guest"
       :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode false
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true
@@ -20,11 +21,11 @@
     "development" {
       :swarmiji-username "amit"
       :host "tank.cinchcorp.com"
-      ;:host "rohanda.local"
       :port 61613
       :q-username "guest"
       :q-password "guest"
       :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true
@@ -36,6 +37,7 @@
       :q-username "guest"
       :q-password "guest"
       :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
       :logsdir (str swarmiji-home "/logs")
       :log-to-console false
@@ -67,6 +69,9 @@
 
 (defn queue-sevak-q-name []
   (str ((operation-config) :sevak-request-queue) (swarmiji-user)))
+
+(defn queue-diagnostics-q-name []
+  (str ((operation-config) :sevak-diagnostics-queue) (swarmiji-user)))
 
 (defn swarmiji-distributed-mode? []
   ((operation-config) :distributed-mode))

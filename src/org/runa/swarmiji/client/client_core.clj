@@ -1,6 +1,9 @@
 (ns org.runa.swarmiji.client.client-core)
 
 (use 'org.runa.swarmiji.mpi.sevak-proxy)
+(use 'org.runa.swarmiji.mpi.transport)
+(use 'org.runa.swarmiji.utils.logger)
+(use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
 (require '(org.danlarkin [json :as json]))
 (import '(java.io StringWriter))
@@ -22,22 +25,31 @@
 (defn time-on-server [sevak-data]
   (attribute-from-response sevak-data :sevak-time))
 
-(defn on-swarm [sevak-name sevak-service & args]
+(defn return-q [sevak-data]
+  (attribute-from-response sevak-data :return-q-name))
+
+(defn sevak-name-from [sevak-data]
+  (attribute-from-response sevak-data :sevak-name))
+
+(defn on-swarm [sevak-service & args]
   (let [sevak-start (ref (System/currentTimeMillis))
 	total-sevak-time (ref nil)
 	sevak-data (ref swarmiji-sevak-init-value)
+	complete? (fn [] (not (= swarmiji-sevak-init-value @sevak-data)))
+	sevak-name (fn [] (sevak-name-from @sevak-data))
 	sevak-time (fn [] (time-on-server @sevak-data))
 	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
 	on-swarm-response (fn [response-json-object] 
-			    (dosync 
-			      (ref-set sevak-data response-json-object)
-			      (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start))
-			      (send-work-report sevak-name args (sevak-time) (messaging-time))))
+			    (dosync (ref-set sevak-data response-json-object))
+			    (if (complete?)
+			      (do
+				(dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
+				(send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data)))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (cond
 	(= accessor :distributed?) true
-	(= accessor :complete?) (not (= swarmiji-sevak-init-value @sevak-data))
+	(= accessor :complete?) (complete?)
 	(= accessor :value) (response-value-from @sevak-data)
 	(= accessor :status) (@sevak-data :status)
 	(= accessor :sevak-time) (sevak-time)
@@ -83,3 +95,12 @@
 			      (@response-with-time :response))
 	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
+(defn send-work-report [sevak-name args sevak-time messaging-time return-q]
+  (let [report {:sevak-name sevak-name 
+		:sevak-args args 
+		:sevak-time sevak-time 
+		:messaging-time messaging-time
+		:return-q-name return-q
+		:sevak-server-pid (process-pid)}]
+    (log-message "Work report for diagnostics:" report)
+    (send-on-transport (queue-diagnostics-q-name) report)))

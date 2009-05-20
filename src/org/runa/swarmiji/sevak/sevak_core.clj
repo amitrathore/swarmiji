@@ -16,7 +16,7 @@
   `(fn ~sevak-args 
      (if (swarmiji-distributed-mode?)
        (apply on-swarm (cons ~sevak-name ~sevak-args))
-       (apply on-local (concat [~sevak-name (@sevaks ~sevak-name)] ~sevak-args)))))
+       (apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
 
 (defmacro defsevak [service-name args expr]
   `(let [sevak-name# (keyword (str '~service-name))]
@@ -43,8 +43,10 @@
        (log-exception e)
        {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
-(defn async-sevak-handler [service-handler service-args return-q]
-  (let [response (handle-sevak-request service-handler service-args)]
+(defn async-sevak-handler [service-handler sevak-name service-args return-q]
+  (let [response (merge 
+		  {:return-q-name return-q :sevak-name sevak-name}
+		  (handle-sevak-request service-handler service-args))]
     (send-on-transport return-q response)))
 
 (defn sevak-request-handling-listener []
@@ -56,7 +58,7 @@
 	      service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
 	      service-handler (@sevaks (keyword service-name))
 	      sevak-agent (agent service-handler)]
-	  (send sevak-agent async-sevak-handler service-args return-q))
+	  (send sevak-agent async-sevak-handler service-name service-args return-q))
 	(catch Exception e
 	  (log-exception e))))))
 
@@ -78,6 +80,7 @@
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
   (log-message "System config:" (operation-config))
   (log-message "MPI transport Q:" (queue-sevak-q-name))
+  (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (start-sevak-listener))
 
