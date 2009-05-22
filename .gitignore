@@ -4,3 +4,4 @@
 .project
 config/config.clj
 scripts/furtive
+logs/*

@@ -48,10 +48,41 @@
   }
 )
 
-(defn operation-config []
+(def swarmiji-mysql-configs {
+      "development" {
+	     :classname "com.mysql.jdbc.Driver" 
+	     :subprotocol "mysql" 
+	     :user "root" 
+	     :password "password" 
+	     :subname (str "//localhost/swarmiji_development") 
+       }
+      "test" {
+	     :classname "com.mysql.jdbc.Driver" 
+	     :subprotocol "mysql" 
+             :user "root" 
+	     :password "password" 
+	     :subname (str "//localhost/swarmiji_development") 
+      }
+      "staging" {
+	     :classname "com.mysql.jdbc.Driver" 
+	     :subprotocol "mysql" 
+             :user "root" 
+	     :password "password" 
+	     :subname (str "//localhost/swarmiji_development") 
+      }
+   }
+)
+
+(defn environment-specific-config-from [configs]
   (if *swarmiji-env*
-    (operation-configs *swarmiji-env*)
+    (configs *swarmiji-env*)
     (throw (Exception. "SWARMIJI_ENV is not set"))))
+
+(defn operation-config []
+  (environment-specific-config-from operation-configs))
+
+(defn swarmiji-mysql-config []
+  (environment-specific-config-from swarmiji-mysql-configs))
 
 (def logfile (str ((operation-config) :logsdir) "/" *swarmiji-env* "_" (random-number-string) ".log"))
 

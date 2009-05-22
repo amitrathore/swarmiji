@@ -3,6 +3,8 @@
 (use 'org.runa.swarmiji.config.system-config)
 (require '(org.danlarkin [json :as json]))
 (import '(net.ser1.stomp Client Listener))
+(use 'org.runa.swarmiji.utils.exception-utils)
+(use 'org.runa.swarmiji.utils.logger)
 
 (defn new-queue-client []
   (Client. (queue-host) (queue-port), (queue-username) (queue-password)))
@@ -12,3 +14,12 @@
 	q-message-string (json/encode-to-str q-message-object)]
     (.send client q-name q-message-string)
     client))
+
+(defn queue-message-handler-for-function [the-function]
+  (proxy [Listener] []
+    (message [header-map message-body]
+      (try
+        (the-function (json/decode-from-str message-body))
+	(catch Exception e
+	  (log-exception e))))))
+    

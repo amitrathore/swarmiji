@@ -8,6 +8,8 @@
 (require '(org.danlarkin [json :as json]))
 (import '(java.io StringWriter))
 
+(def WORK-REPORT "WORK_REPORT")
+
 (declare send-work-report)
 
 (def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
@@ -28,6 +30,9 @@
 (defn return-q [sevak-data]
   (attribute-from-response sevak-data :return-q-name))
 
+(defn sevak-server-pid [sevak-data]
+  (attribute-from-response sevak-data :sevak-server-pid))
+
 (defn sevak-name-from [sevak-data]
   (attribute-from-response sevak-data :sevak-name))
 
@@ -44,7 +49,8 @@
 			    (if (complete?)
 			      (do
 				(dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
-				(if (swarmiji-diagnostics-mode?) (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data))))))
+				(if (swarmiji-diagnostics-mode?) 
+				  (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data))))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (cond
@@ -95,12 +101,13 @@
 			      (@response-with-time :response))
 	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
-(defn send-work-report [sevak-name args sevak-time messaging-time return-q]
-  (let [report {:sevak-name sevak-name 
-		:sevak-args args 
-		:sevak-time sevak-time 
-		:messaging-time messaging-time
-		:return-q-name return-q
-		:sevak-server-pid (process-pid)}]
+(defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
+  (let [report {:message_type WORK-REPORT
+		:sevak_name sevak-name
+		:sevak_args (str args)
+		:sevak_time sevak-time
+		:messaging_time messaging-time
+		:return_q_name return-q
+		:sevak_server_pid sevak-server-pid}]
     (log-message "Work report for diagnostics:" report)
     (send-on-transport (queue-diagnostics-q-name) report)))

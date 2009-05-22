@@ -45,7 +45,7 @@
 
 (defn async-sevak-handler [service-handler sevak-name service-args return-q]
   (let [response (merge 
-		  {:return-q-name return-q :sevak-name sevak-name}
+		  {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		  (handle-sevak-request service-handler service-args))]
     (send-on-transport return-q response)))
 
