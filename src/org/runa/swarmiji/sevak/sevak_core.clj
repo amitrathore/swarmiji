@@ -11,6 +11,8 @@
 
 (def sevaks (ref {}))
 (def swarmiji-bindings (ref {}))
+(def START-UP-REPORT "START_UP_REPORT")
+(def SEVAK-SERVER "SEVAK_SERVER")
 
 (defmacro sevak-runner [sevak-name sevak-args]
   `(fn ~sevak-args 
@@ -82,6 +84,7 @@
   (log-message "MPI transport Q:" (queue-sevak-q-name))
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
-  (start-sevak-listener))
+  (start-sevak-listener)
+  (send-on-transport (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER}))
 
   
