@@ -3,6 +3,7 @@
 (import '(java.util Random))
 (use '[clojure.contrib.duck-streams :only (spit)])
 (import '(java.lang.management ManagementFactory))
+(require '(org.danlarkin [json :as json]))
 
 (defn random-number-string []
   (str (Math/abs (.nextInt (Random. ) 10000000000))))
@@ -29,3 +30,6 @@
 	 response# ~expr
 	 end-time# (System/currentTimeMillis)]
      {:time-taken (- end-time# start-time#) :response response# :start-time start-time# :end-time end-time#}))
+
+(defn simulate-jsonified [hash-object]
+  (json/decode-from-str (json/encode-to-str hash-object)))

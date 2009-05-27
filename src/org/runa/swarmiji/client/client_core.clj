@@ -93,11 +93,12 @@
 	(= accessor :total-time) (@response-with-time :time-taken)
 	(= accessor :exception) nil
 	(= accessor :stacktrace) nil
-	(= accessor :_inner_ref) nil
+	(= accessor :_inner_ref) @response-with-time
 	(= accessor :value) (dosync 
 			      (ref-set response-with-time 
-				       (run-and-measure-timing 
-					 (apply sevak-service-function args)))
+				       (simulate-jsonified
+					(run-and-measure-timing 
+					 (apply sevak-service-function args))))
 			      (@response-with-time :response))
 	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
