@@ -11,7 +11,7 @@
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.sevak.sevak-core)
 
-(def jsonp-marker "/jsonp=")
+(def jsonp-marker "jsonp=")
 
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
@@ -19,8 +19,11 @@
 (defn is-jsonp? [uri-string]
   (.contains uri-string jsonp-marker))
 
+(defn is-rest-like-request? [request]
+  (empty? (.getParameterMap request)))
+
 (defn request-uri-from-jsonp-uri [jsonp-uri-string]
-  (let [end-point (.indexOf jsonp-uri-string jsonp-marker)]
+  (let [end-point (- (.indexOf jsonp-uri-string jsonp-marker) 1)]
     (.substring jsonp-uri-string 0 end-point)))
 
 (defn requested-route-from [uri-string handler-functions]
@@ -31,12 +34,26 @@
   (let [callback-token (last (.split uri-string "/"))]
     (last (.split callback-token "="))))
 
-(defn params-for-dispatch [uri-string requested-route]
+(defn params-string-from [uri-string requested-route]
   (let [uri-to-use (if (is-jsonp? uri-string)
 		     (request-uri-from-jsonp-uri uri-string)
-		     uri-string)
-	params-string (.substring uri-to-use (count requested-route))]
+		     uri-string)]
+    (.substring uri-to-use (count requested-route))))
+
+(defn singularize-map [a-map]
+  (let [first-val (fn [kv]
+		    {(first kv) (first (last kv))})]
+    (apply merge (map first-val a-map))))
+
+(defn params-for-mapped-dispatch [uri-string requested-route]
+  (let [params-string (params-string-from uri-string requested-route)]
     (rest (.split params-string "/"))))
+
+(defn params-for-dispatch [request requested-route]
+  (let [params (into {} (.getParameterMap request))]
+    (if (empty? params)
+      (params-for-mapped-dispatch (.getRequestURI request) requested-route)
+      (singularize-map params))))
 
 (defn prepare-response [uri-string response-text]
   (if (is-jsonp? uri-string)
@@ -49,9 +66,11 @@
 	  request-route (requested-route-from request-uri handler-functions)
 	  route-handler (handler-functions request-route)]
       (if route-handler
-	(let [params (params-for-dispatch request-uri request-route)
+	(let [params (params-for-dispatch request request-route)
 	      _ (log-message "Recieved request for (" request-route params ")")
-	      response-text (apply route-handler params)]
+	      response-text (if (is-rest-like-request? request)
+			      (apply route-handler params)
+			      (route-handler params))]
 	  (.println (.getWriter response) (prepare-response request-uri response-text)))
 	(log-message "Unable to respond to" request-uri)))))
 
