@@ -12,15 +12,18 @@
 (use 'org.runa.swarmiji.sevak.sevak-core)
 
 (defn singularize-values [a-map]
-  (let [kv (fn [e]
-	     {(first e) (aget (last e) 0)})]
-    (apply merge (map kv a-map))))	
+  (if (empty? a-map)
+    {}
+    (let [kv (fn [e]
+	       {(first e) (aget (last e) 0)})]
+      (apply merge (map kv a-map)))))
 
 (defn is-get? [request]
   (= (.toUpperCase (str (.getMethod request))) "GET"))
 
 (defn params-map-from [request]
-  (singularize-values (into {} (.getParameterMap request))))
+  (let [p-map (into {} (.getParameterMap request))]
+    (singularize-values p-map)))
 
 (defn route-for [request handlers]
   (let [registered (keys handlers)
@@ -73,8 +76,6 @@
       (if handler
 	(let [params (params-for request handler-functions)
 	      is-restful (is-restful? request)
-	      _ (log-message "is-rest:" is-restful)
-	      _ (log-message "is-jsonp:" (is-jsonp? request))
 	      response-text (response-from handler params is-restful)]
 	  (log-message "Recieved request for (" requested-route params ")")
 	  (.println (.getWriter response) (prepare-response response-text request)))
