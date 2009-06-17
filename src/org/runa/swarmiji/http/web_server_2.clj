@@ -25,15 +25,10 @@
   (let [p-map (into {} (.getParameterMap request))]
     (singularize-values p-map)))
 
-(defn route-for [request handlers]
-  (let [registered (keys handlers)
-	uri-string (.getRequestURI request)]
-    (first (filter #(.startsWith uri-string %) registered))))
-
-(defn handler-for [request handlers]
-  (handlers (route-for request handlers)))
-
 (defn is-jsonp? [request]
+  ((params-map-from request) "jsonp"))
+
+(defn jsonp-callback [request]
   ((params-map-from request) "jsonp"))
 
 (defn only-jsonp-param? [params-map]
@@ -44,6 +39,14 @@
   (let [params-map (params-map-from request)]
     (or (empty? params-map) 
 	(only-jsonp-param? params-map))))
+
+(defn route-for [request handlers]
+  (let [registered (keys handlers)
+	uri-string (.getRequestURI request)]
+    (first (filter #(.startsWith uri-string %) registered))))
+
+(defn handler-for [request handlers]
+  (handlers (route-for request handlers)))
 
 (defn parsed-params-from-uri [request handlers]
   (let [uri-string (.getRequestURI request)
@@ -60,9 +63,6 @@
   (if is-restful
     (apply handler params)
     (handler params)))
-
-(defn jsonp-callback [request]
-  ((params-map-from request) "jsonp"))
 
 (defn prepare-response [response-text request]
   (if (is-jsonp? request)
