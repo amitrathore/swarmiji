@@ -79,9 +79,9 @@
       "staging" {
 	     :classname "com.mysql.jdbc.Driver" 
 	     :subprotocol "mysql" 
-             :user "root" 
-	     :password "password" 
-	     :subname (str "//localhost/swarmiji_development") 
+             :user "cinch" 
+	     :password "ind6678" 
+	     :subname (str "//staging.cinchcorp.com/swarmiji_staging") 
       }
    }
 )
