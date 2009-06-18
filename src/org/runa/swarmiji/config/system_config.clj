@@ -32,6 +32,19 @@
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true
     }
+    "staging" {
+      :swarmiji-username "furtive"
+      :host "staging.cinchcorp.com"
+      :port 61613
+      :q-username "guest"
+      :q-password "guest"
+      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
+      :distributed-mode true
+      :diagnostics-mode true
+      :logsdir (str swarmiji-home "/mnt/pkgs/swarmiji/logs")
+      :log-to-console true
+    }
     "production" {
       :swarmiji-username "amit"
       :host "tank.cinchcorp.com"
