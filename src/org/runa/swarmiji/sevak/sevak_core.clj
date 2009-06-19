@@ -20,9 +20,9 @@
        (apply on-swarm (cons ~sevak-name ~sevak-args))
        (apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
 
-(defmacro defsevak [service-name args expr]
+(defmacro defsevak [service-name args & expr]
   `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks sevak-name# (fn ~args ~expr))))
+     (dosync (ref-set sevaks (assoc @sevaks sevak-name# (fn ~args (do ~@expr)))))
      (def ~service-name (sevak-runner sevak-name# ~args))))
 
 (defmacro with-swarmiji-bindings [body]
@@ -60,6 +60,8 @@
 	      service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
 	      service-handler (@sevaks (keyword service-name))
 	      sevak-agent (agent service-handler)]
+	  (if (nil? service-handler)
+	    (throw (Exception. (str "No handler found for: " service-name))))
 	  (send sevak-agent async-sevak-handler service-name service-args return-q))
 	(catch Exception e
 	  (log-exception e))))))
@@ -77,6 +79,16 @@
      (register-bindings ~bindings)
      (binding [~@bindings]
        ~@expr)))
+
+(defn destructured-hash [attribs]
+  (let [d-pair (fn [attrib]
+		 (list attrib (.replace (name attrib) "-" "_")))]		 
+  (apply hash-map (mapcat d-pair attribs))))
+
+(defmacro defwebmethod [method-name params & exprs]
+  `(defn ~method-name [~(destructured-hash params)]
+     (do
+       ~@exprs)))
 
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")

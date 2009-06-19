@@ -76,8 +76,8 @@
       (if handler
 	(let [params (params-for request handler-functions)
 	      is-restful (is-restful? request)
+	      _ (log-message "Recieved request for (" requested-route params ")")
 	      response-text (response-from handler params is-restful)]
-	  (log-message "Recieved request for (" requested-route params ")")
 	  (.println (.getWriter response) (prepare-response response-text request)))
 	(log-message "Unable to respond to" requested-route)))))
 
