@@ -4,7 +4,7 @@
 (use 'org.runa.swarmiji.utils.logger)
 
 (defn log-exception [e]
-  (log-message (.getMessage e))
+  (log-message (stack-trace e))
   (.printStackTrace e))
 
 (defn exception-name [e]
