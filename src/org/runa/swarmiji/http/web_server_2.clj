@@ -56,17 +56,17 @@
     (rest (.split params-string "/"))))
 
 (defn params-for [request handlers]
-  (try
    (if (is-restful? request)
      (parsed-params-from-uri request handlers)
-     (params-map-from request))
-   (catch Exception e
-     (log-exception e))))
+     (params-map-from request)))
     
 (defn response-from [handler params is-restful]
+  (try
   (if is-restful
     (apply handler params)
     (handler params)))
+   (catch Exception e
+     (log-exception e)))
 
 (defn prepare-response [response-text request]
   (if (is-jsonp? request)
