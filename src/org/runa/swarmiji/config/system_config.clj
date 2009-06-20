@@ -97,7 +97,7 @@
 (defn swarmiji-mysql-config []
   (environment-specific-config-from swarmiji-mysql-configs))
 
-(def logfile (str ((operation-config) :logsdir) "/" *swarmiji-env* "_" (random-number-string) ".log"))
+(def logfile (str ((operation-config) :logsdir) "/" *swarmiji-env* "_" (process-pid) ".log"))
 
 (defn swarmiji-user []
   ((operation-config) :swarmiji-username))
