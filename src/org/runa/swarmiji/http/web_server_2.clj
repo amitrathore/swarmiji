@@ -83,7 +83,7 @@
 	      _ (log-message "Recieved request for (" requested-route params ")")
 	      response-text (response-from handler params is-restful)]
 	  (.println (.getWriter response) (prepare-response response-text request)))
-	(log-message "Unable to respond to" requested-route)))))
+	(log-message "Unable to respond to" (.getRequestURI request))))))
 
 (defn grizzly-adapter-for [handler-functions-as-route-map]
   (proxy [GrizzlyAdapter] []
