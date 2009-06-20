@@ -62,11 +62,11 @@
     
 (defn response-from [handler params is-restful]
   (try
-  (if is-restful
+   (if is-restful
     (apply handler params)
-    (handler params)))
+    (handler params))
    (catch Exception e
-     (log-exception e)))
+     (log-exception e))))
 
 (defn prepare-response [response-text request]
   (if (is-jsonp? request)
