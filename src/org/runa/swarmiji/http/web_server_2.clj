@@ -7,6 +7,7 @@
 (import '(java.net HttpURLConnection))
 (use 'org.runa.swarmiji.utils.general-utils)
 (use 'org.runa.swarmiji.utils.logger)
+(use 'org.runa.swarmiji.utils.exception-utils)
 (require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.sevak.sevak-core)
@@ -55,9 +56,12 @@
     (rest (.split params-string "/"))))
 
 (defn params-for [request handlers]
-  (if (is-restful? request)
-    (parsed-params-from-uri request handlers)
-    (params-map-from request)))
+  (try
+   (if (is-restful? request)
+     (parsed-params-from-uri request handlers)
+     (params-map-from request))
+   (catch Exception e
+     (log-exception e))))
     
 (defn response-from [handler params is-restful]
   (if is-restful
