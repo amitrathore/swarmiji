@@ -22,6 +22,7 @@
     "development" {
       :swarmiji-username "amit"
       :host "tank.cinchcorp.com"
+      ;:host "arryn.local"
       :port 61613
       :q-username "guest"
       :q-password "guest"
