@@ -19,8 +19,8 @@ ActiveRecord::Base.establish_connection(
   :adapter => "mysql", 
   :host => ARGV[0],
   :database => "swarmiji_#{ARGV[1]}",
-  :username => "root", 
-  :password => "password"
+  :username => "cinch", 
+  :password => "secret"
 )
 
 ActiveRecord::Base.connection.instance_eval do
