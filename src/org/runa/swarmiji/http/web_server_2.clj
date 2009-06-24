@@ -11,6 +11,7 @@
 (require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.sevak.sevak-core)
+(use 'org.runa.swarmiji.http.helper)
 
 (defn singularize-values [a-map]
   (if (empty? a-map)
@@ -63,10 +64,10 @@
 (defn response-from [handler params is-restful]
   (try
    (if is-restful
-    (apply handler params)
-    (handler params))
-   (catch Exception e
-     (log-exception e))))
+     (apply handler params)
+     (handler params))
+  (catch Exception e
+    (log-exception e))))
 
 (defn prepare-response [response-text request]
   (if (is-jsonp? request)
@@ -74,16 +75,17 @@
     response-text))
     
 (defn service-http-request [handler-functions request response]
-  (if (is-get? request)
-    (let [requested-route (route-for request handler-functions)
-	  handler (handler-for request handler-functions)]
-      (if handler
-	(let [params (params-for request handler-functions)
-	      is-restful (is-restful? request)
-	      _ (log-message "Recieved request for (" requested-route params ")")
-	      response-text (response-from handler params is-restful)]
-	  (.println (.getWriter response) (prepare-response response-text request)))
-	(log-message "Unable to respond to" (.getRequestURI request))))))
+  (binding [*http-helper* (http-helper request response)]
+    (if (is-get? request)
+      (let [requested-route (route-for request handler-functions)
+	    handler (handler-for request handler-functions)]
+	(if handler
+	  (let [params (params-for request handler-functions)
+		is-restful (is-restful? request)
+		_ (log-message (str (.getServerName request) ":" (.getServerPort request)) "recieved request for (" requested-route params ")")
+		response-text (response-from handler params is-restful)]
+	    (.println (.getWriter response) (prepare-response response-text request)))
+	  (log-message "Unable to respond to" (.getRequestURI request)))))))
 
 (defn grizzly-adapter-for [handler-functions-as-route-map]
   (proxy [GrizzlyAdapter] []
