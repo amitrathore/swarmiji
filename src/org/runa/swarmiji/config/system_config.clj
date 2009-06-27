@@ -47,8 +47,8 @@
       :log-to-console true
     }
     "production" {
-      :swarmiji-username "amit"
-      :host "tank.cinchcorp.com"
+      :swarmiji-username "furtive"
+      :host "mq.production.runa.com"
       :port 61613
       :q-username "guest"
       :q-password "guest"
@@ -56,7 +56,7 @@
       :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
       :diagnostics-mode true
-      :logsdir (str swarmiji-home "/logs")
+      :logsdir "/mnt/log/swarmiji/"
       :log-to-console false
     }
   }
@@ -83,6 +83,13 @@
              :user "cinch" 
 	     :password "ind6678" 
 	     :subname (str "//staging.cinchcorp.com/swarmiji_staging") 
+      }
+      "production" {
+	     :classname "com.mysql.jdbc.Driver" 
+	     :subprotocol "mysql" 
+             :user "cinch" 
+	     :password "secret" 
+	     :subname (str "//db-primary.production.runa.com/swarmiji_production") 
       }
    }
 )
