@@ -1,6 +1,7 @@
 (ns org.runa.swarmiji.http.helper)
 
-(import '(com.sun.grizzly.util.http Cookie))
+(import '(com.sun.grizzly.util.http Cookie)
+	'(org.apache.turbine.util BrowserDetector))
 
 (def *http-helper* :__init__)
 
@@ -10,7 +11,8 @@
     (apply merge (map kv cookies))))
 
 (defn http-helper [request response]
-  (let [cookies (cookie-hash request)
+  (let [browser (BrowserDetector. (.getHeader request "user-agent"))
+	cookies (cookie-hash request)
 	add-cookie (fn [name value]
 		     (.addCookie response (Cookie. name value)))
 	read-cookie (fn [name]
@@ -22,19 +24,17 @@
 	(= command :add-cookie) (apply add-cookie args)
 	(= command :read-cookie) (apply read-cookie args)
 	(= command :ip-address) (.getRemoteAddr request)
-	(= command :header-names) (do
-				    (println "HEADERS:" (enumeration-seq (.getHeaderNames request)))
-				    (println ">> user-agent" (.getHeader request "user-agent")))
+	(= command :browser-name) (.getBrowserName browser)
+	(= command :browser-version) (.getBrowserVersion browser)
+	(= command :operating-system) (.getBrowserPlatform browser)
 	:default (throw (Exception. (str "Response-helper: Unknown command, " command)))))))
 
-(defn read-cookie [name]
-  (*http-helper* :read-cookie name))
-
-(defn set-cookie [name value]
-  (*http-helper* :add-cookie name value))
-
-(defn requester-ip []
-  (*http-helper* :ip-address))
+(defn read-cookie [name] (*http-helper* :read-cookie name))
+(defn set-cookie [name value] (*http-helper* :add-cookie name value))
+(defn requester-ip [] (*http-helper* :ip-address))
+(defn browser-name [] (*http-helper* :browser-name))
+(defn browser-version [] (*http-helper* :browser-version))
+(defn operating-system [] (*http-helper* :operating-system))
 
 (defn destructured-hash [attribs]
   (let [d-pair (fn [attrib]
