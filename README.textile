@@ -10,7 +10,7 @@ h2. Example
 
 The easiest way to understand how to use swarmiji is to see an example:
 
-<code><pre>
+<pre><code>
 (defn monthly-spend [month]
     (total-spend-for-days (days-of-month month))
 
@@ -23,7 +23,7 @@ The easiest way to understand how to use swarmiji is to see an example:
 
 Some imagination is needed - lets assume that total-spend-for-days is a long running process that calculates important stuff. Total-quarterly-spend, then takes three times as long. However, since each month's calculation is basically independent of each other, we could run this in parallel. If you'd this parallelism to take advantage of a horizontally scalable cluster, these computations need to run on different machines. With swarmiji, this is easy, and you'd modify the code to look like this -
 
-<code><pre>
+<pre><code>
 (defsevak monthly-spend [month]
     (total-spend-for-days (days-of-month month))
 
