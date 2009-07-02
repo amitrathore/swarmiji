@@ -10,23 +10,27 @@
 	kv (fn [c] {(.getName c) (.getValue c)})]
     (apply merge (map kv cookies))))
 
+(defn browser-detector [request]
+  (let [user-agent (.getHeader request "user-agent")]
+    (if user-agent
+      (BrowserDetector. user-agent))))
+
 (defn http-helper [request response]
-  (let [browser (BrowserDetector. (.getHeader request "user-agent"))
+  (let [browser (browser-detector request)
 	cookies (cookie-hash request)
 	add-cookie (fn [name value]
 		     (.addCookie response (Cookie. name value)))
 	read-cookie (fn [name]
 		      (if-not (empty? cookies)
-			      (cookies name)))
-	]
+			      (cookies name)))]
     (fn [command & args]
       (cond
 	(= command :add-cookie) (apply add-cookie args)
 	(= command :read-cookie) (apply read-cookie args)
 	(= command :ip-address) (.getRemoteAddr request)
-	(= command :browser-name) (.getBrowserName browser)
-	(= command :browser-version) (.getBrowserVersion browser)
-	(= command :operating-system) (.getBrowserPlatform browser)
+	(= command :browser-name) (if browser (.getBrowserName browser))
+	(= command :browser-version) (if browser (.getBrowserVersion browser))
+	(= command :operating-system) (if browser (.getBrowserPlatform browser))
 	:default (throw (Exception. (str "Response-helper: Unknown command, " command)))))))
 
 (defn read-cookie [name] (*http-helper* :read-cookie name))
