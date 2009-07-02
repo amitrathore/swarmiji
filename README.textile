@@ -58,7 +58,7 @@ h2. what does calling a sevak return?
 
 Calling a sevak looks exactly like calling a regular function. However while a regular function returns the result of the function body, a sevak returns a proxy object that is the representation of the computation happening somewhere on the cloud. This object then must be queried to get the result out. This object also has lots of other information about the computation which can also be queried for. Querying this object is easy - since this object is really a function, you just call it with a query symbol as its argument. The most commonly used one is :value and it looks like -
 
-(some-sevak-object :value) This code returns the final computed result of the sevak.
+(object-returned-from-sevak :value) This code returns the final computed result of the sevak.
 
 All the supported arguments supported are:  
 
@@ -75,6 +75,16 @@ All the supported arguments supported are:
 
 h2. installation
 
+There are a few moving parts to swarmiji.
+
+h3. rabbit-mq and the STOMP adapter
+
+There are many resources on the internet about installing rabbitmq and the associated STOMP adapter. Here's one <a href='http://www.lshift.net/blog/2008/02/02/how-to-run-rabbitmqs-experimental-stomp-adapter'>rabbitmq and stomp</a>
+
+h3. mysql
+
+If you want to use the diagnostics recording capability, you will need mysql.
+
 h2. configuration
 
 h3. environment variables
@@ -87,7 +97,7 @@ There is a configuration file which controls the system. This file has entries f
 
 <pre><code>
 (def operation-configs {
-    "test" {
+    "development" {
       :swarmiji-username "amit"
       :host "stomp.rabbitmq.runa.com"
       :port 61613
@@ -95,12 +105,12 @@ There is a configuration file which controls the system. This file has entries f
       :q-password "guest"
       :sevak-request-queue-prefix "RUNA_SWARMIJI_TRANSPORT_"
       :sevak-diagnostics-queue-prefix "RUNA_SWARMIJI_DIAGNOSTICS_"    
-      :distributed-mode false
-      :diagnostics-mode true
+      :distributed-mode true
+      :diagnostics-mode false
       :logsdir (str swarmiji-home "/logs")
       :log-to-console true }
     
-    "development" {
+    "test" {
        ...
     }
     
@@ -116,7 +126,13 @@ The host, port, q-username, q-password are for the rabbitmq server running with 
 
 sevak-request-queue-prefix and sevak-diagnostic-queue-prefix are both the prefixes used in the rabbitmq channels that are used to handle the distribution.  You can concatenate more qualifiers to these in order to allow the same setup to be shared among developers or even environments (eg. test, development, staging, etc.) 
 
+distributed-mode controls whether sevaks (when called) are sent off to run remotely or are executed locally (in the same process). This works transparently - and turning distribution off is great for unit-testing.
+
+diagnostics-mode controls whether sevak-servers send out meta-informational messages on the rabbitmq bus. These messages can be recorded into a mysql database by running an included recorder process. More information about this is below in the diagnostics section.
+
 logsdir is where the log files will be stored. Right now, it creates a log file for each sevak-server or web-server-2 process that is created. Log files are named by concatenating the environment name along with the process ID (pid) of the process, followed by dot log (.log) Logging needs to be improved in swarmiji since there can be dozens of sevak-servers running together. 
+
+log-to-console, if true, ensures that all log messages are also printed to the console. Good for development environments.
 
 h2. diagnostics
 
