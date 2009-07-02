@@ -1,0 +1,91 @@
+h1. swarmiji
+
+swarmiji is a framework that helps in writing distributed programs using the clojure programming language. I wrote it because our startup (<a href="http://runa.com">Runa</a>) needed computations to span not just clojure agents within single JVMs but across machines. This especially became the case as our load grew. 
+
+swarmiji uses the fantastic <a href="http://rabbitmq.com">RabbitMQ</a> as its central nervous system to communicate between service requesters and (possibly multiple) workers. It provides simple constructs to create these distributed services and makes it very easy to use them in your code. It has support for additional things like - automatic time-outs (if a worker fails), and a simple metrics collection system (to see how long services are taking, and where time is being spent). It also packages a very simple web-framework that allows clojure functions (that might use swarmiji) to be exposed as web-services.
+
+Contributions are welcome, as are recommendations for how to improve things.
+
+h2. Example
+
+The easiest way to understand how to use swarmiji is to see an example:
+
+<code><pre>
+(defn monthly-spend [month]
+    (total-spend-for-days (days-of-month month))
+
+(defn total-quarterly-spend []
+    (let [first (monthly-spend (first-month-of-quarter))
+          second (monthly-spend (second-month-of-quarter))
+          third (monthly-spend (third-month-of-quarter))]
+      (+ first second third)))
+</pre></code>
+
+Some imagination is needed - lets assume that total-spend-for-days is a long running process that calculates important stuff. Total-quarterly-spend, then takes three times as long. However, since each month's calculation is basically independent of each other, we could run this in parallel. If you'd this parallelism to take advantage of a horizontally scalable cluster, these computations need to run on different machines. With swarmiji, this is easy, and you'd modify the code to look like this -
+
+<code><pre>
+(defsevak monthly-spend [month]
+    (total-spend-for-days (days-of-month month))
+
+(defn total-quarterly-spend []
+    (let [first (monthly-spend (first-month-of-quarter))
+          second (monthly-spend (second-month-of-quarter))
+          third (monthly-spend (third-month-of-quarter))]
+      (from-swarm 1000 [first second third]
+        (+ (first :value) (second :value) (third :value))))
+</pre></code>
+
+What's happening here is that instead of using the good old defn to define monthly-spend, we use defsevak. Then, when you call the function, what is returned to you is not the value but a proxy object which represents the computation on some other CPU. You can call as many such sevaks as you want, and when you're ready to combine the results to produce the final result you use the from-swarm macro to synchronize. 
+
+
+h2. Sevaks
+
+In Hindi, the word sevak means servant or worker. In swarmiji, you define such workers using the defsevak macro. Sevaks can transparently run on another machines (or multiple machines) by simply changing a configuration parameter (distributed-mode) to true.
+
+h2. Usage
+
+defsevak
+sevak-proxy
+from-swarm
+with-sevak-proxies
+
+
+
+h2. swarmiji
+
+Swarm. Swamiji. Ahahaha.
+ 
+Copyright 2009 Amit Rathore
+
+
+
+
+
+
+
+from-swarm
+
+Sevaks can run on any machine that is available to do the work. The object returned by a call to a sevak represents this computation. Since the time taken to execute this computation is non-deterministic (depends on how much work there is, the load on the cluster, etc.) these object are essentially asynchronous in nature. Thus, when we're ready to use results from one or more sevaks, we must use a synchronization construct. This is what the from-swarm macro does - it accepts a time-out along with a list of sevaks to synchronize on - the process will basically wait at this point until all the sevaks complete.
+
+querying the sevak proxy object
+
+The object returned when a sevak is called is a representation of the computation happening on the cloud somewhere. This proxy object is quite rich in what information it can be queried for. This "object" is actually a clojure function which can accept messages like :distributed?, :complete?, :value, :status, :sevak-time, :total-time, :messaging-time, :exception, and :stacktrace.
+
+:distributed? the response to this messages is whether or not swarmiji is running in distributed-mode. swarmiji can be made to run in non-distributed-mode which is often useful for unit-testing, etc.
+
+:complete? 
+
+Round robin
+
+
+
+
+
+
+
+
+
+
+
+
+
