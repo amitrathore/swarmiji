@@ -8,7 +8,7 @@ Contributions are welcome, as are recommendations for how to improve things.
 
 h2. Example
 
-The easiest way to understand how to use swarmiji is to see an example:
+The easiest way to understand how to use swarmiji is to see an example. Consider the code below which is written in the traditional way:
 
 <pre><code>
 (defn monthly-spend [month]
@@ -21,7 +21,9 @@ The easiest way to understand how to use swarmiji is to see an example:
       (+ first second third)))
 </pre></code>
 
-Some imagination is needed - lets assume that total-spend-for-days is a long running process that calculates important stuff. Total-quarterly-spend, then takes three times as long. However, since each month's calculation is basically independent of each other, we could run this in parallel. If you'd this parallelism to take advantage of a horizontally scalable cluster, these computations need to run on different machines. With swarmiji, this is easy, and you'd modify the code to look like this -
+Some imagination is needed - lets assume that total-spend-for-days is a long running process that calculates important stuff. Total-quarterly-spend, then takes three times as long. However, since each month's calculation is basically independent of each other, we could run this in parallel. If you'd this parallelism to take advantage of a horizontally scalable cluster, these computations need to run on different machines. 
+
+The following code shows how the above can be converted into using swarmiji. This version runs in parallel on distributed machines:
 
 <pre><code>
 (defsevak monthly-spend [month]
@@ -35,7 +37,7 @@ Some imagination is needed - lets assume that total-spend-for-days is a long run
         (+ (first :value) (second :value) (third :value))))
 </pre></code>
 
-What's happening here is that instead of using the good old defn to define monthly-spend, we use defsevak. Then, when you call the function, what is returned to you is not the value but a proxy object which represents the computation on some other CPU. You can call as many such sevaks as you want, and when you're ready to combine the results to produce the final result you use the from-swarm macro to synchronize. 
+What's happening here is that instead of using the good old defn to define monthly-spend, we use defsevak. Then, when you call the function, what is returned is not the value but a proxy object which represents the computation on another CPU. You can call as many such sevaks as you want, and when you're ready to combine the results to produce the final result you use the from-swarm macro to synchronize. 
 
 
 h2. Sevaks
