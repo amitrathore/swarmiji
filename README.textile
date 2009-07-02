@@ -46,13 +46,15 @@ In Hindi, the word sevak means servant or worker. In swarmiji, you define such w
 
 defsevak works exactly like defn.
 
+h3. sevak-server
+
 h2. from-swarm
 
 Since each sevak runs asynchronously, there needs to be a construct that ensures all dispatched sevaks have completed. from-swarm is a macro that does just that - it accepts a timeout and a list of sevaks to wait on. Once the sevaks have all compelted, the code block is executed. If, instead, the sevaks don't all complete within the specified timeout (specified in milliseconds), an exception is thrown.
  
 It can get cumbersome to always pass a timeout wherever from-swarm is called, so its idiomatic to create a macro which wraps from-swarm and uses an appropriate global timeout value.
 
-h2. What does calling a sevak return?
+h2. what does calling a sevak return?
 
 Calling a sevak looks exactly like calling a regular function. However while a regular function returns the result of the function body, a sevak returns a proxy object that is the representation of the computation happening somewhere on the cloud. This object then must be queried to get the result out. This object also has lots of other information about the computation which can also be queried for. Querying this object is easy - since this object is really a function, you just call it with a query symbol as its argument. The most commonly used one is :value and it looks like -
 
@@ -71,9 +73,52 @@ All the supported arguments supported are:
 |:exception | returns the name of the exception thrown by the sevak on the remote computer |
 |:stacktrace | returns the stacktrace of the exception thrown by the sevak on the remote computer|
 
+h2. installation
 
-config
+h2. configuration
 
+h3. environment variables
+
+swarmiji needs two environment variables to configure itself - SWARMIJI_HOME and SWARMIJI_ENV. The first should be set to the path of where swarmiji has been installed. The directories within this should be the stuff that comes out of git - config/, and src/, and utils, etc.
+
+h3. config file
+
+There is a configuration file which controls the system. This file has entries for each environment that will be created, for example - development, test, staging etc. The config looks like:
+
+<pre><code>
+(def operation-configs {
+    "test" {
+      :swarmiji-username "amit"
+      :host "stomp.rabbitmq.runa.com"
+      :port 61613
+      :q-username "guest"
+      :q-password "guest"
+      :sevak-request-queue-prefix "RUNA_SWARMIJI_TRANSPORT_"
+      :sevak-diagnostics-queue-prefix "RUNA_SWARMIJI_DIAGNOSTICS_"    
+      :distributed-mode false
+      :diagnostics-mode true
+      :logsdir (str swarmiji-home "/logs")
+      :log-to-console true }
+    
+    "development" {
+       ...
+    }
+    
+    "staging" {
+       ...
+    }
+})
+</pre></code>
+
+swarmiji-username is used to name-space control messages on the rabbitmq channels used for communicating between sevaks etc. This way, multiple developers can use the same setup, and not step on each others toes.
+
+The host, port, q-username, q-password are for the rabbitmq server running with the STOMP adapter. This may change in the future and use AMQP directly.
+
+sevak-request-queue-prefix and sevak-diagnostic-queue-prefix are both the prefixes used in the rabbitmq channels that are used to handle the distribution.  You can concatenate more qualifiers to these in order to allow the same setup to be shared among developers or even environments (eg. test, development, staging, etc.) 
+
+logsdir is where the log files will be stored. Right now, it creates a log file for each sevak-server or web-server-2 process that is created. Log files are named by concatenating the environment name along with the process ID (pid) of the process, followed by dot log (.log) Logging needs to be improved in swarmiji since there can be dozens of sevak-servers running together. 
+
+h2. diagnostics
 
 h2. swarmiji
 

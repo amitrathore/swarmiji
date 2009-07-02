@@ -36,10 +36,10 @@
   ((operation-config) :q-password))
 
 (defn queue-sevak-q-name []
-  (str ((operation-config) :sevak-request-queue) (swarmiji-user)))
+  (str ((operation-config) :sevak-request-queue-prefix) (swarmiji-user)))
 
 (defn queue-diagnostics-q-name []
-  (str ((operation-config) :sevak-diagnostics-queue) (swarmiji-user)))
+  (str ((operation-config) :sevak-diagnostics-queue-prefix) (swarmiji-user)))
 
 (defn swarmiji-distributed-mode? []
   ((operation-config) :distributed-mode))
