@@ -6,7 +6,7 @@ swarmiji uses the fantastic <a href="http://rabbitmq.com">RabbitMQ</a> as its ce
 
 Contributions are welcome, as are recommendations for how to improve things.
 
-h2. Example
+h2. example
 
 The easiest way to understand how to use swarmiji is to see an example. Consider the code below which is written in the traditional way:
 
@@ -40,17 +40,39 @@ The following code shows how the above can be converted into using swarmiji. Thi
 What's happening here is that instead of using the good old defn to define monthly-spend, we use defsevak. Then, when you call the function, what is returned is not the value but a proxy object which represents the computation on another CPU. You can call as many such sevaks as you want, and when you're ready to combine the results to produce the final result you use the from-swarm macro to synchronize. 
 
 
-h2. Sevaks
+h2. sevaks and defsevak
 
-In Hindi, the word sevak means servant or worker. In swarmiji, you define such workers using the defsevak macro. Sevaks can transparently run on another machines (or multiple machines) by simply changing a configuration parameter (distributed-mode) to true.
+In Hindi, the word sevak means servant or worker. In swarmiji, you define such workers using the defsevak macro. Sevaks can transparently run on another machines (or multiple machines) by simply changing a configuration parameter (:distributed-mode) to true. 
 
-h2. Usage
+defsevak works exactly like defn.
 
-defsevak
-sevak-proxy
-from-swarm
-with-sevak-proxies
+h2. from-swarm
 
+Since each sevak runs asynchronously, there needs to be a construct that ensures all dispatched sevaks have completed. from-swarm is a macro that does just that - it accepts a timeout and a list of sevaks to wait on. Once the sevaks have all compelted, the code block is executed. If, instead, the sevaks don't all complete within the specified timeout (specified in milliseconds), an exception is thrown.
+ 
+It can get cumbersome to always pass a timeout wherever from-swarm is called, so its idiomatic to create a macro which wraps from-swarm and uses an appropriate global timeout value.
+
+h2. What does calling a sevak return?
+
+Calling a sevak looks exactly like calling a regular function. However while a regular function returns the result of the function body, a sevak returns a proxy object that is the representation of the computation happening somewhere on the cloud. This object then must be queried to get the result out. This object also has lots of other information about the computation which can also be queried for. Querying this object is easy - since this object is really a function, you just call it with a query symbol as its argument. The most commonly used one is :value and it looks like -
+
+(some-sevak-object :value) This code returns the final computed result of the sevak.
+
+All the supported arguments supported are:  
+
+|argument| what does it return? |
+|:value| the result of the sevak computation|
+|:distributed?| is this sevak running locally or on a remote computer?|
+|:complete? | returns true if the sevak has completed its job |
+|:status | returns :success if the sevak run was successful, else :error if there was a problem |
+|:sevak-time | returns the CPU time spent executing the sevak body |
+|:messaging-time | returns the time taken in the messaging overhead of sending and receiving the sevak over RabbitMQ |
+|:total-time | returns the total of the :sevak-time and :messaging-time |
+|:exception | returns the name of the exception thrown by the sevak on the remote computer |
+|:stacktrace | returns the stacktrace of the exception thrown by the sevak on the remote computer|
+
+
+config
 
 
 h2. swarmiji
@@ -69,9 +91,6 @@ from-swarm
 
 Sevaks can run on any machine that is available to do the work. The object returned by a call to a sevak represents this computation. Since the time taken to execute this computation is non-deterministic (depends on how much work there is, the load on the cluster, etc.) these object are essentially asynchronous in nature. Thus, when we're ready to use results from one or more sevaks, we must use a synchronization construct. This is what the from-swarm macro does - it accepts a time-out along with a list of sevaks to synchronize on - the process will basically wait at this point until all the sevaks complete.
 
-querying the sevak proxy object
-
-The object returned when a sevak is called is a representation of the computation happening on the cloud somewhere. This proxy object is quite rich in what information it can be queried for. This "object" is actually a clojure function which can accept messages like :distributed?, :complete?, :value, :status, :sevak-time, :total-time, :messaging-time, :exception, and :stacktrace.
 
 :distributed? the response to this messages is whether or not swarmiji is running in distributed-mode. swarmiji can be made to run in non-distributed-mode which is often useful for unit-testing, etc.
 
