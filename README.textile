@@ -124,19 +124,19 @@ There is a configuration file which controls the system. This file has entries f
 })
 </pre></code>
 
-swarmiji-username is used to name-space control messages on the rabbitmq channels used for communicating between sevaks etc. This way, multiple developers can use the same setup, and not step on each others toes.
+*swarmiji-username* is used to name-space control messages on the rabbitmq channels used for communicating between sevaks etc. This way, multiple developers can use the same setup, and not step on each others toes.
 
-The host, port, q-username, q-password are for the rabbitmq server running with the STOMP adapter. This may change in the future and use AMQP directly.
+The *host*, *port*, *q-username*, *q-password* are for the rabbitmq server running with the STOMP adapter. This may change in the future and use AMQP directly.
 
-sevak-request-queue-prefix and sevak-diagnostic-queue-prefix are both the prefixes used in the rabbitmq channels that are used to handle the distribution.  You can concatenate more qualifiers to these in order to allow the same setup to be shared among developers or even environments (eg. test, development, staging, etc.) 
+*sevak-request-queue-prefix* and *sevak-diagnostic-queue-prefix* are both the prefixes used in the rabbitmq channels that are used to handle the distribution.  You can concatenate more qualifiers to these in order to allow the same setup to be shared among developers or even environments (eg. test, development, staging, etc.) 
 
-distributed-mode controls whether sevaks (when called) are sent off to run remotely or are executed locally (in the same process). This works transparently - and turning distribution off is great for unit-testing.
+*distributed-mode* controls whether sevaks (when called) are sent off to run remotely or are executed locally (in the same process). This works transparently - and turning distribution off is great for unit-testing.
 
-diagnostics-mode controls whether sevak-servers send out meta-informational messages on the rabbitmq bus. These messages can be recorded into a mysql database by running an included recorder process. More information about this is below in the diagnostics section.
+*diagnostics-mode* controls whether sevak-servers send out meta-informational messages on the rabbitmq bus. These messages can be recorded into a mysql database by running an included recorder process. More information about this is below in the diagnostics section.
 
-logsdir is where the log files will be stored. Right now, it creates a log file for each sevak-server or web-server-2 process that is created. Log files are named by concatenating the environment name along with the process ID (pid) of the process, followed by dot log (.log) Logging needs to be improved in swarmiji since there can be dozens of sevak-servers running together. 
+*logsdir* is where the log files will be stored. Right now, it creates a log file for each sevak-server or web-server-2 process that is created. Log files are named by concatenating the environment name along with the process ID (pid) of the process, followed by dot log (.log) Logging needs to be improved in swarmiji since there can be dozens of sevak-servers running together. 
 
-log-to-console, if true, ensures that all log messages are also printed to the console. Good for development environments.
+*log-to-console*, if true, ensures that all log messages are also printed to the console. Good for development environments.
 
 The config file also contains a section to configure the mysql database used by the diagnostics recorder module. This section looks like:
 
