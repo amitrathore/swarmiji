@@ -164,7 +164,7 @@ The config file also contains a section to configure the mysql database used by 
 
 h2. web-server-2
 
-h2. Gotchas
+h2. gotchas
 
 h2. diagnostics
 
