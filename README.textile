@@ -88,7 +88,7 @@ Calling a sevak looks exactly like calling a regular function. However while a r
 
 All the supported arguments supported are:  
 
-|argument| what does it return? |
+|*argument*| *what does it return?* |
 |:value| the result of the sevak computation|
 |:distributed?| is this sevak running locally or on a remote computer?|
 |:complete? | returns true if the sevak has completed its job |
