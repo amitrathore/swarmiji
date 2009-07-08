@@ -48,7 +48,30 @@ defsevak itself works exactly like defn.
 
 h3. sevak-server
 
-A sevak-server is the process that loads up all the defined sevaks (using require, load and/or use) and calls boot-sevak-server. This basically makes all the defined sevaks available as "services" that can be called by a client by using the sevak function. The coordination happens over the rabbitmq bus. 
+A sevak-server is the process that loads up all the defined sevaks (using require, load and/or use) and calls boot-sevak-server. This basically makes all the defined sevaks available as "services" that can be called by a client by using the sevak function. The coordination happens over the rabbitmq bus. Here is an example -
+
+<code></pre>
+  ;;assume sevak_file1.clj defines add-numbers and multiply-numbers as sevaks
+  (defsevak add-numbers [n1 n2]
+    (+ n1 n2))
+    
+  (defsevak multiply-numbers [n1 n2]
+    (* n1 n2))
+    
+  ;;assume sevak_file2.clj defines subtract-numbers and divide-numbers as sevaks
+  (defsevak subtract-numbers [n1 n2]
+    (= n1 n2))
+  
+  (defsevak divide-numbers [n1 n2]
+    (/ n1 n2))
+    
+  ;;now in the file that calls boot-sevak-server:
+  (use 'sevak-file1)
+  (use 'sevak-file2)
+  
+  (boot-sevak-server)
+</pre></code>
+
 
 The way to handle increasing volumes of load is to just add more sevak-servers. Thus, by simply adding machines, more load can be handled. If you do have multiple sevak-servers, requests are handled in a round-robin fashion. This is the default way rabbitmq delivers messages when there are multiple subscribers - though this job allocation strategy may change in the future.
 
@@ -161,6 +184,8 @@ The config file also contains a section to configure the mysql database used by 
    }
 )
 </pre></code>
+
+h2. binding-for-swarmiji
 
 h2. web-server-2
 
