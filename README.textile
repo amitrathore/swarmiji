@@ -50,7 +50,7 @@ h3. sevak-server
 
 A sevak-server is the process that loads up all the defined sevaks (using require, load and/or use) and calls boot-sevak-server. This basically makes all the defined sevaks available as "services" that can be called by a client by using the sevak function. The coordination happens over the rabbitmq bus. Here is an example -
 
-<code></pre>
+<code><pre>
   ;;assume sevak_file1.clj defines add-numbers and multiply-numbers as sevaks
   (defsevak add-numbers [n1 n2]
     (+ n1 n2))
