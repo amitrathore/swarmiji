@@ -73,7 +73,7 @@ A sevak-server is the process that loads up all the defined sevaks (using requir
 </pre></code>
 
 
-The way to handle increasing volumes of load is to just add more sevak-servers. Thus, by simply adding machines, more load can be handled. If you do have multiple sevak-servers, requests are handled in a round-robin fashion. This is the default way rabbitmq delivers messages when there are multiple subscribers - though this job allocation strategy may change in the future.
+The way to handle increasing volumes of load is to just add more sevak-servers. This can be done by starting multiple processes that call boot-sevak-server, and this can be done on multiple machines. Thus, by simply adding machines, more load can be handled. If you do have multiple sevak-servers, requests are handled in a round-robin fashion. This is the default way rabbitmq delivers messages when there are multiple subscribers - though this job allocation strategy may change in the future.
 
 h2. from-swarm
 
