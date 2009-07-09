@@ -1,12 +1,12 @@
 (ns org.runa.swarmiji.utils.general-utils)
 
-(import '(java.util Random))
+(import '(java.util Random UUID))
 (use '[clojure.contrib.duck-streams :only (spit)])
 (import '(java.lang.management ManagementFactory))
 (require '(org.danlarkin [json :as json]))
 
-(defn random-number-string []
-  (str (Math/abs (.nextInt (Random. ) 10000000000))))
+(defn random-uuid []
+  (str (UUID/randomUUID)))
 
 (defn var-ize [var-vals]
   (loop [ret [] vvs (seq var-vals)]

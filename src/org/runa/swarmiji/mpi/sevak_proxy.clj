@@ -7,7 +7,7 @@
 (use 'org.runa.swarmiji.utils.general-utils)
 
 (defn return-queue-name []
-  (random-number-string))
+  (random-uuid))
 
 (defn sevak-queue-message [sevak-service args]
   (let [return-q-name (return-queue-name)]
