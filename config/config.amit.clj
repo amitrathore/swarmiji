@@ -5,8 +5,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
+      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode false
       :diagnostics-mode true
       :logsdir (str swarmiji-home "/logs")
@@ -19,8 +19,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
+      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
       :diagnostics-mode true
       :logsdir (str swarmiji-home "/logs")
@@ -32,8 +32,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
+      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
       :diagnostics-mode true
       :logsdir (str swarmiji-home "/mnt/pkgs/swarmiji/logs")
@@ -45,8 +45,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
+      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
+      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")    
       :distributed-mode true
       :diagnostics-mode true
       :logsdir "/mnt/log/swarmiji/"
