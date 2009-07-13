@@ -98,6 +98,10 @@ All the supported arguments supported are:
 |:total-time | returns the total of the :sevak-time and :messaging-time |
 |:exception | returns the name of the exception thrown by the sevak on the remote computer |
 |:stacktrace | returns the stacktrace of the exception thrown by the sevak on the remote computer|
+|:sevak-name | returns the name of the sevak|
+|:args | returns the args that the sevak was called with|
+
+
 
 h2. installation
 
