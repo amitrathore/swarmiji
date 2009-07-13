@@ -46,14 +46,15 @@
 	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
 	on-swarm-response (fn [response-json-object] 
 			    (dosync (ref-set sevak-data response-json-object))
-			    (if (complete?)
-			      (do
-				(dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
-				(if (swarmiji-diagnostics-mode?) 
-				  (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data))))))
+			    (do
+			      (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
+			      (if (swarmiji-diagnostics-mode?) 
+				(send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (cond
+	(= accessor :sevak-name) (name sevak-service)
+	(= accessor :args) args
 	(= accessor :distributed?) true
 	(= accessor :disconnect) (.disconnect on-swarm-proxy-client)
 	(= accessor :complete?) (complete?)
@@ -92,6 +93,8 @@
   (let [response-with-time (ref {})]
     (fn [accessor]
       (cond
+	(= accessor :sevak-name) sevak-service-function
+	(= accessor :args) args
 	(= accessor :distributed?) false
 	(= accessor :disconnect) nil
 	(= accessor :complete?) true
