@@ -25,25 +25,25 @@
      (dosync (ref-set sevaks (assoc @sevaks sevak-name# (fn ~args (do ~@expr)))))
      (def ~service-name (sevak-runner sevak-name# ~args))))
 
-(defmacro with-swarmiji-bindings [body]
+(defmacro with-swarmiji-bindings [& exprs]
   `(do
      (push-thread-bindings @swarmiji-bindings)
      (try
-      ~body
+       ~@exprs
       (finally
        (pop-thread-bindings)))))
 
 (defn handle-sevak-request [service-handler service-args]
-  (try
-   (let [response-with-time (run-and-measure-timing 
-			     (with-swarmiji-bindings
-			      (apply service-handler service-args)))
-	 value (response-with-time :response)
-	 time-elapsed (response-with-time :time-taken)]
-     {:response value :status :success :sevak-time time-elapsed})
-     (catch Exception e 
-       (log-exception e)
-       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
+  (with-swarmiji-bindings
+   (try
+    (let [response-with-time (run-and-measure-timing 
+			      (apply service-handler service-args))
+	  value (response-with-time :response)
+	  time-elapsed (response-with-time :time-taken)]
+      {:response value :status :success :sevak-time time-elapsed})
+    (catch Exception e 
+      (log-exception e)
+      {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
 
 (defn async-sevak-handler [service-handler sevak-name service-args return-q]
   (let [response (merge 
