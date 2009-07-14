@@ -6,12 +6,12 @@
 (import '(com.sun.grizzly.util.buf ByteChunk))
 (import '(java.net HttpURLConnection))
 (use 'org.runa.swarmiji.utils.general-utils)
-(use 'org.runa.swarmiji.utils.logger)
-(use 'org.runa.swarmiji.utils.exception-utils)
 (require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.sevak.sevak-core)
 (use 'org.runa.swarmiji.http.helper)
+(use 'org.rathore.amit.utils.config)
+(use 'org.rathore.amit.utils.logger)
 
 (defn singularize-values [a-map]
   (if (empty? a-map)
@@ -96,5 +96,6 @@
   (let [gws (GrizzlyWebServer. port)]
     (.addGrizzlyAdapter gws (grizzly-adapter-for handler-functions-as-route-map))
     (log-message "web-server-2: Using config:" (operation-config))
+    (log-message "web-server-2: RabbitMQ channel:" (queue-sevak-q-name))
     (log-message "Started swarmiji-http-gateway on port" port)
     (.start gws)))

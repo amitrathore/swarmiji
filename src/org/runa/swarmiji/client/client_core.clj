@@ -2,11 +2,12 @@
 
 (use 'org.runa.swarmiji.mpi.sevak-proxy)
 (use 'org.runa.swarmiji.mpi.transport)
-(use 'org.runa.swarmiji.utils.logger)
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
 (require '(org.danlarkin [json :as json]))
 (import '(java.io StringWriter))
+(use 'org.rathore.amit.utils.config)
+(use 'org.rathore.amit.utils.logger)
 
 (def WORK-REPORT "WORK_REPORT")
 

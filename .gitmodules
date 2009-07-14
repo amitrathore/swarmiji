@@ -1,3 +1,6 @@
 [submodule "lib/clojure/clj-record"]
 	path = lib/clojure/clj-record
 	url = git://github.com/duelinmarkers/clj-record.git
+[submodule "lib/clojure/clj-utils"]
+	path = lib/clojure/clj-utils
+	url = git://github.com/amitrathore/clj-utils.git

@@ -1,7 +1,8 @@
 (ns org.runa.swarmiji.monitor.recorder
   (:use [org.runa.swarmiji.mpi.transport])
   (:use [org.runa.swarmiji.config.system-config])
-  (:use [org.runa.swarmiji.utils.logger])
+  (:use [org.rathore.amit.utils.config])
+  (:use [org.rathore.amit.utils.logger])
   (:use [org.runa.swarmiji.monitor.control_message :as control-message])
   (:import (java.sql Date Time)))
 
@@ -15,10 +16,11 @@
   (control-message/insert with-timestamps)))
 
 (defn start []
-  (let [client (new-queue-client)
-	q-name (queue-diagnostics-q-name)
-	handler (queue-message-handler-for-function persist-message)]
-    (log-message "Swarmiji: Starting Control-Message-Recorder...")
-    (log-message "Listening on:" q-name)
-    (.subscribe client q-name handler)))
+  (binding [*rathore-utils-config* (config-for-rathore-utils "recorder")]
+    (let [client (new-queue-client)
+	  q-name (queue-diagnostics-q-name)
+	  handler (queue-message-handler-for-function persist-message)]
+      (log-message "Swarmiji: Starting Control-Message-Recorder...")
+      (log-message "Listening on:" q-name)
+      (.subscribe client q-name handler))))
     

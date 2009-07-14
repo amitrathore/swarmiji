@@ -3,8 +3,7 @@
 (use 'org.runa.swarmiji.config.system-config)
 (require '(org.danlarkin [json :as json]))
 (import '(net.ser1.stomp Client Listener))
-(use 'org.runa.swarmiji.utils.exception-utils)
-(use 'org.runa.swarmiji.utils.logger)
+(use 'org.rathore.amit.utils.logger)
 
 (defn new-queue-client []
   (Client. (queue-host) (queue-port), (queue-username) (queue-password)))

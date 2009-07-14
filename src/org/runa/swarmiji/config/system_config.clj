@@ -18,8 +18,6 @@
 (defn swarmiji-mysql-config []
   (environment-specific-config-from swarmiji-mysql-configs))
 
-(def logfile (str ((operation-config) :logsdir) "/" *swarmiji-env* "_" (process-pid) ".log"))
-
 (defn swarmiji-user []
   ((operation-config) :swarmiji-username))
 
@@ -49,3 +47,8 @@
 
 (defn log-to-console? []
   ((operation-config) :log-to-console))
+
+(defn config-for-rathore-utils [process-type-id]
+  {:log-to-console (log-to-console?) 
+   :logs-dir ((operation-config) :logsdir) 
+   :log-filename-prefix (str process-type-id "_" *swarmiji-env*)})
