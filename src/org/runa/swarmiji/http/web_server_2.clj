@@ -5,13 +5,27 @@
 (import '(com.sun.grizzly.tcp.http11 GrizzlyAdapter))
 (import '(com.sun.grizzly.util.buf ByteChunk))
 (import '(java.net HttpURLConnection))
-(use 'org.runa.swarmiji.utils.general-utils)
 (require '(org.danlarkin [json :as json]))
-(use 'org.runa.swarmiji.config.system-config)
-(use 'org.runa.swarmiji.sevak.sevak-core)
 (use 'org.runa.swarmiji.http.helper)
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
+(use 'org.rathore.amit.utils.clojure)
+
+(def webbing-bindings (ref {}))
+
+(defmacro with-webbing-bindings [body]
+  `(do
+     (push-thread-bindings @webbing-bindings)
+     (try ~body
+     (finally (pop-thread-bindings)))))
+
+(defmacro register-bindings [bindings]
+  `(dosync (ref-set webbing-bindings (hash-map ~@(var-ize bindings)))))
+
+(defmacro binding-for-webbing [bindings & expr]
+  `(do
+     (register-bindings ~bindings)
+     (binding [~@bindings] ~@expr)))
 
 (defn singularize-values [a-map]
   (if (empty? a-map)
@@ -89,13 +103,11 @@
 (defn grizzly-adapter-for [handler-functions-as-route-map]
   (proxy [GrizzlyAdapter] []
     (service [req res]
-      (with-swarmiji-bindings 
+      (with-webbing-bindings 
         (service-http-request handler-functions-as-route-map req res)))))
 
 (defn boot-web-server [handler-functions-as-route-map port]
   (let [gws (GrizzlyWebServer. port)]
     (.addGrizzlyAdapter gws (grizzly-adapter-for handler-functions-as-route-map))
-    (log-message "web-server-2: Using config:" (operation-config))
-    (log-message "web-server-2: RabbitMQ channel:" (queue-sevak-q-name))
-    (log-message "Started swarmiji-http-gateway on port" port)
+    (log-message "Started webbing-http-gateway on port" port)
     (.start gws)))

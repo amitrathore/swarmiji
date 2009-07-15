@@ -8,6 +8,7 @@
 (import '(java.io StringWriter))
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
+(use 'org.rathore.amit.utils.clojure)
 
 (def WORK-REPORT "WORK_REPORT")
 
