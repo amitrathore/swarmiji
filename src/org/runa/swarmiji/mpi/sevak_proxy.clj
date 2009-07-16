@@ -5,6 +5,12 @@
 (import '(net.ser1.stomp Client Listener))
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
+(use 'org.runa.swarmiji.sevak.bindings)
+(use 'org.rathore.amit.utils.logger)
+(use 'org.rathore.amit.utils.config)
+
+(def STOMP-HEADER (doto (new java.util.HashMap) 
+		    (.put "auto-delete" true)))
 
 (defn return-queue-name []
   (random-uuid))
@@ -18,10 +24,11 @@
 (defn listener-proxy [q-client return-q-name custom-handler]
   (proxy [Listener] []
     (message [headerMap messageBody]
+      (with-swarmiji-bindings	     
       (do
 	(custom-handler (json/decode-from-str messageBody))
 	(.unsubscribe q-client return-q-name)
-	(.disconnect q-client)))))
+	(.disconnect q-client))))))
 
 (defn register-callback [return-q-name custom-handler]
   (let [client (new-queue-client)

@@ -2,6 +2,7 @@
 
 (use 'org.runa.swarmiji.mpi.sevak-proxy)
 (use 'org.runa.swarmiji.mpi.transport)
+(use 'org.runa.swarmiji.sevak.bindings)
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
 (require '(org.danlarkin [json :as json]))
@@ -46,12 +47,12 @@
 	sevak-name (fn [] (sevak-name-from @sevak-data))
 	sevak-time (fn [] (time-on-server @sevak-data))
 	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
-	on-swarm-response (fn [response-json-object] 
-			    (dosync (ref-set sevak-data response-json-object))
-			    (do
-			      (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
-			      (if (swarmiji-diagnostics-mode?) 
-				(send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
+	on-swarm-response (fn [response-json-object]
+			     (dosync (ref-set sevak-data response-json-object))
+			     (do
+			       (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
+			       (if (swarmiji-diagnostics-mode?) 
+				 (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (cond
@@ -88,8 +89,11 @@
 	   (Thread/sleep 100)
 	   (recur (all-complete? swarm-requests) (+ elapsed-time 100)))))))
 
-(defmacro from-swarm [max-time-allowed swarm-requests expr]
-  (list 'do (list 'wait-until-completion swarm-requests max-time-allowed) expr))
+(defmacro from-swarm [max-time-allowed swarm-requests & expr]
+  `(do
+     (wait-until-completion ~swarm-requests ~max-time-allowed)
+     ~@expr))
+;  (list 'do (list 'wait-until-completion swarm-requests max-time-allowed) expr))
 
 (defn on-local [sevak-service-function & args]
   (let [response-with-time (ref {})]
@@ -123,5 +127,4 @@
 		:messaging_time messaging-time
 		:return_q_name return-q
 		:sevak_server_pid sevak-server-pid}]
-    (log-message "Work report for diagnostics:" report)
     (send-on-transport (queue-diagnostics-q-name) report)))

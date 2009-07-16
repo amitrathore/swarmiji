@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.monitor.recorder
   (:use [org.runa.swarmiji.mpi.transport])
+  (:use [org.runa.swarmiji.sevak.bindings])
   (:use [org.runa.swarmiji.config.system-config])
   (:use [org.rathore.amit.utils.config])
   (:use [org.rathore.amit.utils.logger])
@@ -16,7 +17,7 @@
   (control-message/insert with-timestamps)))
 
 (defn start []
-  (binding [*rathore-utils-config* (config-for-rathore-utils "recorder")]
+  (binding-for-swarmiji [*rathore-utils-config* (config-for-rathore-utils "recorder")]
     (let [client (new-queue-client)
 	  q-name (queue-diagnostics-q-name)
 	  handler (queue-message-handler-for-function persist-message)]

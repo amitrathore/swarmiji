@@ -6,33 +6,25 @@
 (use 'org.runa.swarmiji.client.client-core)
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
+(use 'org.runa.swarmiji.sevak.bindings)
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
 
 (def sevaks (ref {}))
-(def swarmiji-bindings (ref {}))
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
 (defmacro sevak-runner [sevak-name sevak-args]
   `(fn ~sevak-args 
-     (if (swarmiji-distributed-mode?)
-       (apply on-swarm (cons ~sevak-name ~sevak-args))
-       (apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
+      (if (swarmiji-distributed-mode?)
+	(apply on-swarm (cons ~sevak-name ~sevak-args))
+	(apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
 
 (defmacro defsevak [service-name args & expr]
   `(let [sevak-name# (keyword (str '~service-name))]
      (dosync (ref-set sevaks (assoc @sevaks sevak-name# (fn ~args (do ~@expr)))))
      (def ~service-name (sevak-runner sevak-name# ~args))))
-
-(defmacro with-swarmiji-bindings [& exprs]
-  `(do
-     (push-thread-bindings @swarmiji-bindings)
-     (try
-       ~@exprs
-      (finally
-       (pop-thread-bindings)))))
 
 (defn handle-sevak-request [service-handler service-args]
   (with-swarmiji-bindings
@@ -72,15 +64,6 @@
   (let [client (new-queue-client)
 	sevak-request-handler (sevak-request-handling-listener)]
     (.subscribe client (queue-sevak-q-name) sevak-request-handler)))
-
-(defmacro register-bindings [bindings]
-  `(dosync (ref-set swarmiji-bindings (hash-map ~@(var-ize bindings)))))
-
-(defmacro binding-for-swarmiji [bindings & expr]
-  `(do
-     (register-bindings ~bindings)
-     (binding [~@bindings]
-       ~@expr)))
 
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")

@@ -1,6 +1,7 @@
 (ns org.runa.swarmiji.mpi.transport)
 
 (use 'org.runa.swarmiji.config.system-config)
+(use 'org.runa.swarmiji.sevak.bindings)
 (require '(org.danlarkin [json :as json]))
 (import '(net.ser1.stomp Client Listener))
 (use 'org.rathore.amit.utils.logger)
@@ -14,12 +15,12 @@
     (.send client q-name q-message-string)
     (.disconnect client)))
 
-
 (defn queue-message-handler-for-function [the-function]
   (proxy [Listener] []
     (message [header-map message-body]
-      (try
-        (the-function (json/decode-from-str message-body))
-	(catch Exception e
-	  (log-exception e))))))
-    
+      (with-swarmiji-bindings
+        (try
+         (the-function (json/decode-from-str message-body))
+	 (catch Exception e
+	   (log-exception e)))))))
+  
