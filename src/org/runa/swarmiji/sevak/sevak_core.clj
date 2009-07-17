@@ -42,28 +42,41 @@
   (let [response (merge 
 		  {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		  (handle-sevak-request service-handler service-args))]
-    (send-on-transport return-q response)))
+    (send-on-transport-amqp return-q response)))
 
-(defn sevak-request-handling-listener []
-  (proxy [Listener] []
-    (message [headerMap messageBody]
-      (with-swarmiji-bindings
-       (try
-        (let [req-json (json/decode-from-str messageBody)
-	      _ (log-message "got request" req-json)
-	      service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
-	      service-handler (@sevaks (keyword service-name))
-	      sevak-agent (agent service-handler)]
-	  (if (nil? service-handler)
-	    (throw (Exception. (str "No handler found for: " service-name))))
-	  (send sevak-agent async-sevak-handler service-name service-args return-q))
-	(catch Exception e
-	  (log-exception e)))))))
+(defn sevak-request-handling-listener [req-json]
+  (with-swarmiji-bindings
+   (try
+    (let [_ (log-message "got request" req-json)
+	  service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
+	  service-handler (@sevaks (keyword service-name))
+	  sevak-agent (agent service-handler)]
+      (if (nil? service-handler)
+	(throw (Exception. (str "No handler found for: " service-name))))
+      (send sevak-agent async-sevak-handler service-name service-args return-q))
+    (catch Exception e
+      (log-exception e)))))
 
-(defn start-sevak-listener []
-  (let [client (new-queue-client)
-	sevak-request-handler (sevak-request-handling-listener)]
-    (.subscribe client (queue-sevak-q-name) sevak-request-handler)))
+;(defn sevak-request-handling-listener []
+;  (proxy [Listener] []
+;    (message [headerMap messageBody]
+;      (with-swarmiji-bindings
+;       (try
+;        (let [req-json (json/decode-from-str messageBody)
+;	      _ (log-message "got request" req-json)
+;	      service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
+;	      service-handler (@sevaks (keyword service-name))
+;	      sevak-agent (agent service-handler)]
+;	  (if (nil? service-handler)
+;	    (throw (Exception. (str "No handler found for: " service-name))))
+;	  (send sevak-agent async-sevak-handler service-name service-args return-q))
+;	(catch Exception e
+;	  (log-exception e)))))))
+
+;(defn start-sevak-listener []
+;  (let [client (new-queue-client)
+;	sevak-request-handler (sevak-request-handling-listener)]
+;    (.subscribe client (queue-sevak-q-name) sevak-request-handler)))
 
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
@@ -71,7 +84,5 @@
   (log-message "MPI transport Q:" (queue-sevak-q-name))
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
-  (start-sevak-listener)
-  (send-on-transport (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER}))
-
-  
+  (send-on-transport-amqp (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
+  (start-queue-message-handler-for-function-amqp (queue-sevak-q-name) sevak-request-handling-listener))

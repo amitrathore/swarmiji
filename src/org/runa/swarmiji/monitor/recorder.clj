@@ -16,12 +16,20 @@
         with-timestamps (merge {:created_at now :updated_at now} control-message)]
   (control-message/insert with-timestamps)))
 
+;(defn start []
+;  (binding-for-swarmiji [*rathore-utils-config* (config-for-rathore-utils "recorder")]
+;    (let [client (new-queue-client)
+;	  q-name (queue-diagnostics-q-name)
+;	  handler (queue-message-handler-for-function persist-message)]
+;      (log-message "Swarmiji: Starting Control-Message-Recorder...")
+;      (log-message "Listening on:" q-name)
+;      (.subscribe client q-name handler))))
+    
+
 (defn start []
   (binding-for-swarmiji [*rathore-utils-config* (config-for-rathore-utils "recorder")]
     (let [client (new-queue-client)
-	  q-name (queue-diagnostics-q-name)
-	  handler (queue-message-handler-for-function persist-message)]
+	  q-name (queue-diagnostics-q-name)]	  
       (log-message "Swarmiji: Starting Control-Message-Recorder...")
       (log-message "Listening on:" q-name)
-      (.subscribe client q-name handler))))
-    
+      (start-queue-message-handler-for-function-amqp q-name persist-message))))
