@@ -1,7 +1,6 @@
 (ns org.runa.swarmiji.sevak.sevak-core)
 
 (use 'org.runa.swarmiji.mpi.transport)
-(import '(net.ser1.stomp Client Listener))
 (require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.client.client-core)
 (use 'org.runa.swarmiji.config.system-config)
@@ -56,27 +55,6 @@
       (send sevak-agent async-sevak-handler service-name service-args return-q))
     (catch Exception e
       (log-exception e)))))
-
-;(defn sevak-request-handling-listener []
-;  (proxy [Listener] []
-;    (message [headerMap messageBody]
-;      (with-swarmiji-bindings
-;       (try
-;        (let [req-json (json/decode-from-str messageBody)
-;	      _ (log-message "got request" req-json)
-;	      service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
-;	      service-handler (@sevaks (keyword service-name))
-;	      sevak-agent (agent service-handler)]
-;	  (if (nil? service-handler)
-;	    (throw (Exception. (str "No handler found for: " service-name))))
-;	  (send sevak-agent async-sevak-handler service-name service-args return-q))
-;	(catch Exception e
-;	  (log-exception e)))))))
-
-;(defn start-sevak-listener []
-;  (let [client (new-queue-client)
-;	sevak-request-handler (sevak-request-handling-listener)]
-;    (.subscribe client (queue-sevak-q-name) sevak-request-handler)))
 
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")

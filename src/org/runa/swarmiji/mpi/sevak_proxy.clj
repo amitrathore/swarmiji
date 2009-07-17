@@ -3,7 +3,6 @@
 
 (use 'org.runa.swarmiji.mpi.transport)
 (require '(org.danlarkin [json :as json]))
-(import '(net.ser1.stomp Client Listener))
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
 (use 'org.runa.swarmiji.sevak.bindings)
@@ -21,21 +20,6 @@
     {:return-queue-name return-q-name
      :sevak-service-name sevak-service
      :sevak-service-args args}))
-
-;(defn listener-proxy [q-client return-q-name custom-handler]
-;  (proxy [Listener] []
-;    (message [headerMap messageBody]
-;      (with-swarmiji-bindings	     
-;      (do
-;	(custom-handler (json/decode-from-str messageBody))
-;	(.unsubscribe q-client return-q-name)
-;	(.disconnect q-client))))))
-
-;(defn register-callback [return-q-name custom-handler]
-;  (let [client (new-queue-client)
-;	callback (listener-proxy client return-q-name custom-handler)]
-;    (.subscribe client return-q-name callback)
-;    client))
 
 (defn register-callback [return-q-name custom-handler]
   (with-connection connection
