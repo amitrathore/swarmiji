@@ -39,7 +39,8 @@
   (with-connection connection 
     (with-open [channel (.createChannel connection)]
       (doto channel
-	(.queueDeclare q-name)
+	;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
+	(.queueDeclare q-name); true false false auto-delete-queue (new java.util.HashMap))
 	(.basicPublish "" q-name MessageProperties/MINIMAL_BASIC
 		       (.getBytes (json/encode-to-str q-message-object)))))))
 

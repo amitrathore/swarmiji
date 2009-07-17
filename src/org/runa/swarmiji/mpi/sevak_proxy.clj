@@ -40,12 +40,14 @@
 (defn register-callback [return-q-name custom-handler]
   (with-connection connection
     (with-open [channel (.createChannel connection)]
-      (.queueDeclare channel return-q-name)
+      ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
+      (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
       (let [consumer (QueueingConsumer. channel)]
 	(.basicConsume channel return-q-name false consumer)
 	(let [delivery (.nextDelivery consumer)
 	      message (json/decode-from-str (String. (.getBody delivery)))]
-	  (custom-handler message))))))
+	  (custom-handler message)
+	  (.queueDelete channel return-q-name))))))
 
 (defn new-proxy [sevak-service args callback-function]
   (let [request-json-object (sevak-queue-message sevak-service args)
