@@ -34,7 +34,7 @@
       (doto channel
 	;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
 	(.queueDeclare q-name); true false false auto-delete-queue (new java.util.HashMap))
-	(.basicPublish "" q-name true true nil (.getBytes (json/encode-to-str q-message-object)))))))
+	(.basicPublish "" q-name false true nil (.getBytes (json/encode-to-str q-message-object)))))))
 
 (defn start-queue-message-handler-for-function-amqp [q-name the-function]
   (with-connection connection
