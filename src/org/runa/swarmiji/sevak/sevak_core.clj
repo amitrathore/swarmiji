@@ -41,7 +41,7 @@
   (let [response (merge 
 		  {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		  (handle-sevak-request service-handler service-args))]
-    (send-on-transport-amqp return-q response)))
+    (send-message-on-queue return-q response)))
 
 (defn sevak-request-handling-listener [req-json]
   (with-swarmiji-bindings
@@ -62,5 +62,5 @@
   (log-message "MPI transport Q:" (queue-sevak-q-name))
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
-  (send-on-transport-amqp (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
-  (start-queue-message-handler-for-function-amqp (queue-sevak-q-name) sevak-request-handling-listener))
+  (send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
+  (start-handler-on-queue (queue-sevak-q-name) sevak-request-handling-listener))

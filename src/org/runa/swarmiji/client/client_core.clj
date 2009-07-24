@@ -127,4 +127,4 @@
 		:messaging_time messaging-time
 		:return_q_name return-q
 		:sevak_server_pid sevak-server-pid}]
-    (send-on-transport-amqp (queue-diagnostics-q-name) report)))
+    (send-message-on-queue (queue-diagnostics-q-name) report)))

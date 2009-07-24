@@ -8,6 +8,7 @@
 (use 'org.runa.swarmiji.sevak.bindings)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.config)
+(use 'org.rathore.amit.utils.rabbitmq)
 
 (def STOMP-HEADER (doto (new java.util.HashMap) 
 		    (.put "auto-delete" true)))
@@ -16,13 +17,12 @@
   (random-uuid))
 
 (defn sevak-queue-message [sevak-service args]
-  (let [return-q-name (return-queue-name)]
-    {:return-queue-name return-q-name
-     :sevak-service-name sevak-service
-     :sevak-service-args args}))
+  {:return-queue-name (return-queue-name)
+   :sevak-service-name sevak-service
+   :sevak-service-args args})
 
 (defn register-callback [return-q-name custom-handler]
-  (with-connection connection
+  (with-connection connection (queue-host) (queue-username) (queue-password)
     (with-open [channel (.createChannel connection)]
       ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
       (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
@@ -36,6 +36,6 @@
 (defn new-proxy [sevak-service args callback-function]
   (let [request-json-object (sevak-queue-message sevak-service args)
 	return-q-name (request-json-object :return-queue-name)]
-    (send-on-transport-amqp (queue-sevak-q-name) request-json-object)
+    (send-message-on-queue(queue-sevak-q-name) request-json-object)
     (register-callback return-q-name callback-function)))
 		       

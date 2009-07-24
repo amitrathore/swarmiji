@@ -20,4 +20,4 @@
   (binding-for-swarmiji [*rathore-utils-config* (config-for-rathore-utils "recorder")]
     (log-message "Swarmiji: Starting Control-Message-Recorder...")
     (log-message "Listening on:" (queue-diagnostics-q-name))
-    (start-queue-message-handler-for-function-amqp (queue-diagnostics-q-name) persist-message)))
+    (start-handler-on-queue (queue-diagnostics-q-name) persist-message)))
