@@ -22,20 +22,22 @@
    :sevak-service-args args})
 
 (defn register-callback [return-q-name custom-handler]
-  (with-connection connection (queue-host) (queue-username) (queue-password)
-    (with-open [channel (.createChannel connection)]
-      ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
-      (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
-      (let [consumer (QueueingConsumer. channel)]
-	(.basicConsume channel return-q-name false consumer)
-	(let [delivery (.nextDelivery consumer)
-	      message (json/decode-from-str (String. (.getBody delivery)))]
-	  (custom-handler message)
-	  (.queueDelete channel return-q-name))))))
+  (let [wait-for-message (fn [_]
+			   (with-connection connection (queue-host) (queue-username) (queue-password)
+			     (with-open [channel (.createChannel connection)]
+			       ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
+			       (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
+			       (let [consumer (QueueingConsumer. channel)]
+				 (.basicConsume channel return-q-name false consumer)
+				 (let [delivery (.nextDelivery consumer)
+				       message (json/decode-from-str (String. (.getBody delivery)))]
+				   (custom-handler message)
+				   (.queueDelete channel return-q-name))))))]
+    (send-off (agent :_ignore_) wait-for-message)))
 
 (defn new-proxy [sevak-service args callback-function]
   (let [request-json-object (sevak-queue-message sevak-service args)
 	return-q-name (request-json-object :return-queue-name)]
-    (send-message-on-queue(queue-sevak-q-name) request-json-object)
+    (send-message-on-queue (queue-sevak-q-name) request-json-object)
     (register-callback return-q-name callback-function)))
 		       
