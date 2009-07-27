@@ -59,7 +59,7 @@
 	(= accessor :sevak-name) (name sevak-service)
 	(= accessor :args) args
 	(= accessor :distributed?) true
-	(= accessor :disconnect) (.disconnect on-swarm-proxy-client)
+	(= accessor :disconnect) (.close on-swarm-proxy-client)
 	(= accessor :complete?) (complete?)
 	(= accessor :value) (response-value-from @sevak-data)
 	(= accessor :status) (@sevak-data :status)
