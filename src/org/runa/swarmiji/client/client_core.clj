@@ -39,6 +39,14 @@
 (defn sevak-name-from [sevak-data]
   (attribute-from-response sevak-data :sevak-name))
 
+(defn disconnect-proxy [sevak-proxy]
+  (let [conn (:connection sevak-proxy) chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
+    (try
+     (.queueDelete chan queue)
+     (.close conn)
+     (catch Exception e))))
+       ;no-op, this sevak-proxy should be aborted, thats it
+
 (defn on-swarm [sevak-service & args]
   (let [sevak-start (ref (System/currentTimeMillis))
 	total-sevak-time (ref nil)
@@ -59,7 +67,7 @@
 	(= accessor :sevak-name) (name sevak-service)
 	(= accessor :args) args
 	(= accessor :distributed?) true
-	(= accessor :disconnect) (.close on-swarm-proxy-client)
+	(= accessor :disconnect) (disconnect-proxy on-swarm-proxy-client)
 	(= accessor :complete?) (complete?)
 	(= accessor :value) (response-value-from @sevak-data)
 	(= accessor :status) (@sevak-data :status)

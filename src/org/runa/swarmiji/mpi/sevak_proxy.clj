@@ -23,9 +23,10 @@
 
 (defn register-callback [return-q-name custom-handler]
   (let [conn (new-connection-for (queue-host) (queue-username) (queue-password))
+	chan (.createChannel conn)
 	wait-for-message (fn [_]
 			   (with-open [connection conn]
-			     (with-open [channel (.createChannel connection)]
+			     (with-open [channel chan]
 			       ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
 			       (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
 			       (let [consumer (QueueingConsumer. channel)]
@@ -35,7 +36,7 @@
 				   (custom-handler message)
 				   (.queueDelete channel return-q-name))))))]
     (send-off (agent :_ignore_) wait-for-message)
-    conn))
+    {:connection conn :channel chan :queue return-q-name}))
 
 (defn new-proxy [sevak-service args callback-function]
   (let [request-json-object (sevak-queue-message sevak-service args)
