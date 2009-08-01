@@ -2,7 +2,7 @@ h1. swarmiji
 
 swarmiji is a framework that helps in writing distributed programs using the clojure programming language. I wrote it because our startup (<a href="http://runa.com">Runa</a>) needed computations to span not just clojure agents within single JVMs but across machines. This especially became the case as our load grew. 
 
-swarmiji uses the fantastic <a href="http://rabbitmq.com">RabbitMQ</a> as its central nervous system to communicate between service requesters and (possibly multiple) workers. It provides simple constructs to create these distributed services and makes it very easy to use them in your code. It has support for additional things like - automatic time-outs (if a worker fails), and a simple metrics collection system (to see how long services are taking, and where time is being spent). It also packages a very simple web-framework that allows clojure functions (that might use swarmiji) to be exposed as web-services.
+swarmiji uses the fantastic <a href="http://rabbitmq.com">RabbitMQ</a> as its central nervous system to communicate between service requesters and (possibly multiple) workers. It provides simple constructs to create these distributed services and makes it very easy to use them in your code. It has support for additional things like - automatic time-outs (if a worker fails), and a simple metrics collection system (to see how long services are taking, and where time is being spent). It also uses a very simple web-framework that allows clojure functions (that might use swarmiji) to be exposed as web-services.
 
 Contributions are welcome, as are recommendations for how to improve things.
 
@@ -102,14 +102,13 @@ All the supported arguments supported are:
 |:args | returns the args that the sevak was called with|
 
 
-
 h2. installation
 
 There are a few moving parts to swarmiji.
 
-h3. rabbit-mq and the STOMP adapter
+h3. RabbitMQ
 
-There are many resources on the internet about installing rabbitmq and the associated STOMP adapter. Here's one <a href='http://www.lshift.net/blog/2008/02/02/how-to-run-rabbitmqs-experimental-stomp-adapter'>rabbitmq and stomp</a>
+There are many resources on the internet about installing rabbitmq. Here are a couple <a href='http://www.rabbitmq.com/install.html'>Official installation instructions</a> and <a href='http://blog.ibd.com/scalable-deployment/building-rabbitmq-on-mac-osx-leopard/'>rabbitmq on Mac OS X</a>
 
 h3. mysql
 
@@ -190,7 +189,7 @@ The config file also contains a section to configure the mysql database used by 
 
 h2. binding-for-swarmiji
 
-h2. web-server-2
+h2. webbing
 
 h2. gotchas
 
