@@ -193,7 +193,7 @@ If your program uses the binding form to set special variables to something, you
 
 The binding-for-swarmiji works exactly the same way as binding (indeed, it sets up an actual binding under the covers) - but also allows the swarmiji runtime to automatically rebind the vars inside the sevak-server.
 
-Here's how it works - lets assume you're using my capjure library :) to do some HBase stuff from your sevaks. Capjure requires the *hbase-master* and *primary-keys-config* vars to be set up appropriately. So you would start your sevak-server from inside a binding-for-swarmiji call like this -
+Here's how it works - lets assume you're using my <a href="http://github.com/amitrathore/capjure/tree/master">capjure</a> library :) to do some HBase stuff from your sevaks. Capjure requires the *hbase-master* and *primary-keys-config* vars to be set up appropriately. So you would start your sevak-server from inside a binding-for-swarmiji call like this -
 
 <pre><code> 
 (use 'some.hbase-using.sevak-functions)
