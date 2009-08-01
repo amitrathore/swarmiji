@@ -189,6 +189,22 @@ The config file also contains a section to configure the mysql database used by 
 
 h2. binding-for-swarmiji
 
+If your program uses the binding form to set special variables to something, you will need to use the binding-for-swarmiji macro instead. To understand what is happening, it is useful to remember what vars are (thread-local variables) and what happens when, for example, you send a function that uses a var to an agent (a different thread). What happens is that it doesn't work unless you rebind the var inside the function.
+
+The binding-for-swarmiji works exactly the same way as binding (indeed, it sets up an actual binding under the covers) - but also allows the swarmiji runtime to automatically rebind the vars inside the sevak-server.
+
+Here's how it works - lets assume you're using my capjure library :) to do some HBase stuff from your sevaks. Capjure requires the *hbase-master* and *primary-keys-config* vars to be set up appropriately. So you would start your sevak-server from inside a binding-for-swarmiji call like this -
+
+<pre><code> 
+(use 'some.hbase-using.sevak-functions)
+
+(binding-for-swarmiji [*hbase-master* (valid-hbase-master-hostname) *primary-keys-config* (valid-primary-keys-config)]
+  (boot-sevak-server))
+</pre></code>
+
+And that's all - your HBase using sevaks would work just fine with no need to rebind anything. 
+
+
 h2. webbing
 
 h2. gotchas
