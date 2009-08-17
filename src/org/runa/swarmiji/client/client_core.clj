@@ -101,7 +101,6 @@
   `(do
      (wait-until-completion ~swarm-requests ~max-time-allowed)
      ~@expr))
-;  (list 'do (list 'wait-until-completion swarm-requests max-time-allowed) expr))
 
 (defn on-local [sevak-service-function & args]
   (let [response-with-time (ref {})]
