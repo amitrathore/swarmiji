@@ -1,7 +1,6 @@
 (ns org.runa.swarmiji.sevak.sevak-core)
 
 (use 'org.runa.swarmiji.mpi.transport)
-(require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.client.client-core)
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
@@ -43,11 +42,11 @@
 		  (handle-sevak-request service-handler service-args))]
     (send-message-on-queue return-q response)))
 
-(defn sevak-request-handling-listener [req-json]
+(defn sevak-request-handling-listener [req]
   (with-swarmiji-bindings
    (try
-    (let [_ (log-message "got request" req-json)
-	  service-name (req-json :sevak-service-name) service-args (req-json :sevak-service-args) return-q (req-json :return-queue-name)
+    (let [_ (log-message "got request" req)
+	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))
 	  sevak-agent (agent service-handler)]
       (if (nil? service-handler)

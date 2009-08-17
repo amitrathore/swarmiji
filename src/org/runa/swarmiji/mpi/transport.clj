@@ -1,6 +1,5 @@
 (ns org.runa.swarmiji.mpi.transport)
 (use 'org.runa.swarmiji.config.system-config)
-(require '(org.danlarkin [json :as json]))
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.rabbitmq)
 

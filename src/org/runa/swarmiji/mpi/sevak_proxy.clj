@@ -2,11 +2,12 @@
   (:import (com.rabbitmq.client Channel Connection ConnectionFactory QueueingConsumer)))
 
 (use 'org.runa.swarmiji.mpi.transport)
-(require '(org.danlarkin [json :as json]))
+;(require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
 (use 'org.runa.swarmiji.sevak.bindings)
 (use 'org.rathore.amit.utils.logger)
+(use 'org.rathore.amit.utils.clojure)
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.rabbitmq)
 
@@ -32,7 +33,7 @@
 			       (let [consumer (QueueingConsumer. channel)]
 				 (.basicConsume channel return-q-name false consumer)
 				 (let [delivery (.nextDelivery consumer)
-				       message (json/decode-from-str (String. (.getBody delivery)))]
+				       message (read-clojure-str (String. (.getBody delivery)))]
 				   (custom-handler message)
 				   (.queueDelete channel return-q-name))))))]
     (send-off (agent :_ignore_) wait-for-message)

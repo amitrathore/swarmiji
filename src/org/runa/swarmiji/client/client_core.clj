@@ -5,7 +5,6 @@
 (use 'org.runa.swarmiji.sevak.bindings)
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
-(require '(org.danlarkin [json :as json]))
 (import '(java.io StringWriter))
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
@@ -55,8 +54,8 @@
 	sevak-name (fn [] (sevak-name-from @sevak-data))
 	sevak-time (fn [] (time-on-server @sevak-data))
 	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
-	on-swarm-response (fn [response-json-object]
-			     (dosync (ref-set sevak-data response-json-object))
+	on-swarm-response (fn [response-object]
+			     (dosync (ref-set sevak-data response-object))
 			     (do
 			       (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
 			       (if (swarmiji-diagnostics-mode?) 
@@ -120,7 +119,7 @@
 	(= accessor :_inner_ref) @response-with-time
 	(= accessor :value) (dosync 
 			      (ref-set response-with-time 
-				       (simulate-jsonified
+				       (simulate-serialized
 					(run-and-measure-timing 
 					 (apply sevak-service-function args))))
 			      (@response-with-time :response))
