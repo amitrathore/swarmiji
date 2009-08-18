@@ -6,6 +6,7 @@
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
 (import '(java.io StringWriter))
+(import '(org.runa.swarmiji.exception SevakErrors))
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
@@ -20,7 +21,7 @@
   (if (= swarmiji-sevak-init-value sevak-data)
     (throw (Exception. "Sevak not complete!")))
   (if (not (= :success (keyword (sevak-data :status))))
-    (throw (Exception. "Sevak has errors!")))
+    (throw (SevakErrors. "Sevak has errors!")))
   (sevak-data attrib-name))
 
 (defn response-value-from [sevak-data]
