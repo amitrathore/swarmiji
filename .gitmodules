@@ -4,3 +4,6 @@
 [submodule "lib/clojure/clj-utils"]
 	path = lib/clojure/clj-utils
 	url = git://github.com/amitrathore/clj-utils.git
+[submodule "lib/clojure/postal"]
+	path = lib/clojure/postal
+	url = git://github.com/drewr/postal.git

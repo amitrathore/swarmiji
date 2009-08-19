@@ -30,7 +30,7 @@ echo "SWARMIJI_HOME is ${SWARMIJI_HOME}"
 echo "SWARMIJI_ENV is ${SWARMIJI_ENV}"
 
 swarmiji_jars="${SWARMIJI_HOME}/lib/java"
-swarmiji_clj="${SWARMIJI_HOME}/src/:${SWARMIJI_HOME}/lib/clojure/clj-record/src/:${SWARMIJI_HOME}/lib/clojure/clj-utils/src/"
+swarmiji_clj="${SWARMIJI_HOME}/src/:${SWARMIJI_HOME}/lib/clojure/clj-record/src/:${SWARMIJI_HOME}/lib/clojure/clj-utils/src/:${SWARMIJI_HOME}/lib/clojure/postal/src/clj/"
 
 clj_cp="."
 [ -f /etc/clojure.conf ] && . /etc/clojure.conf

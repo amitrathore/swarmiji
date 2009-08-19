@@ -4,15 +4,17 @@
   (:use [org.runa.swarmiji.config.system-config])
   (:use [org.rathore.amit.utils.config])
   (:use [org.rathore.amit.utils.logger])
+  (:use [org.rathore.amit.utils.clojure])
   (:use [org.runa.swarmiji.monitor.control_message :as control-message])
   (:import (java.sql Date Time)))
 
 (defn timestamp-for-sql [time-in-millis]
   (str (.toString (Date. time-in-millis)) " " (.toString (Time. time-in-millis))))
 
-(defn persist-message [control-message]
-  (log-message "control-message:" control-message)
-  (let [now (timestamp-for-sql (System/currentTimeMillis))
+(defn persist-message [control-message-str]
+  (let [control-message (read-clojure-str control-message-str)
+	_ (log-message "control-message:" control-message)
+	now (timestamp-for-sql (System/currentTimeMillis))
         with-timestamps (merge {:created_at now :updated_at now} control-message)]
   (control-message/insert with-timestamps)))
 

@@ -2,7 +2,6 @@
   (:import (com.rabbitmq.client Channel Connection ConnectionFactory QueueingConsumer)))
 
 (use 'org.runa.swarmiji.mpi.transport)
-;(require '(org.danlarkin [json :as json]))
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
 (use 'org.runa.swarmiji.sevak.bindings)
@@ -40,8 +39,8 @@
     {:connection conn :channel chan :queue return-q-name}))
 
 (defn new-proxy [sevak-service args callback-function]
-  (let [request-json-object (sevak-queue-message sevak-service args)
-	return-q-name (request-json-object :return-queue-name)]
-    (send-message-on-queue (queue-sevak-q-name) request-json-object)
+  (let [request-object (sevak-queue-message sevak-service args)
+	return-q-name (request-object :return-queue-name)]
+    (send-message-on-queue (queue-sevak-q-name) request-object)
     (register-callback return-q-name callback-function)))
 		       

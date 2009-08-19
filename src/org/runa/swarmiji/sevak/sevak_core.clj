@@ -42,10 +42,11 @@
 		  (handle-sevak-request service-handler service-args))]
     (send-message-on-queue return-q response)))
 
-(defn sevak-request-handling-listener [req]
+(defn sevak-request-handling-listener [req-str]
   (with-swarmiji-bindings
    (try
-    (let [_ (log-message "got request" req)
+    (let [req (read-clojure-str req-str)
+	  _ (log-message "got request" req)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))
 	  sevak-agent (agent service-handler)]
