@@ -52,14 +52,15 @@
 	total-sevak-time (ref nil)
 	sevak-data (ref swarmiji-sevak-init-value)
 	complete? (fn [] (not (= swarmiji-sevak-init-value @sevak-data)))
+	success? (fn [] (= (:status @sevak-data) :success))
 	sevak-name (fn [] (sevak-name-from @sevak-data))
 	sevak-time (fn [] (time-on-server @sevak-data))
 	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
 	on-swarm-response (fn [response-object]
-			     (dosync (ref-set sevak-data response-object))
+			    (dosync (ref-set sevak-data response-object))
 			     (do
 			       (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
-			       (if (swarmiji-diagnostics-mode?) 
+			       (if (and (swarmiji-diagnostics-mode?) (success?))
 				 (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
