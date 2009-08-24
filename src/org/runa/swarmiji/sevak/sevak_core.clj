@@ -52,7 +52,7 @@
 	  sevak-agent (agent service-handler)]
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
-      (send-off sevak-agent async-sevak-handler service-name service-args return-q))
+      (send sevak-agent async-sevak-handler service-name service-args return-q))
     (catch Exception e
       (log-exception e)))))
 
