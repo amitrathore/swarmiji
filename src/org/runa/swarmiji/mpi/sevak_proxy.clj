@@ -41,6 +41,6 @@
 (defn new-proxy [sevak-service args callback-function]
   (let [request-object (sevak-queue-message sevak-service args)
 	return-q-name (request-object :return-queue-name)]
-    (send-message-on-queue (queue-sevak-q-name) request-object)
-    (register-callback return-q-name callback-function)))
+    (register-callback return-q-name callback-function)
+    (send-message-on-queue (queue-sevak-q-name) request-object)))
 		       
