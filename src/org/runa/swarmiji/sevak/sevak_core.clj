@@ -37,10 +37,11 @@
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
 
 (defn async-sevak-handler [service-handler sevak-name service-args return-q]
-  (let [response (merge 
-		  {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
-		  (handle-sevak-request service-handler service-args))]
-    (send-message-on-queue return-q response)))
+  (with-swarmiji-bindings
+    (let [response (merge 
+		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
+		    (handle-sevak-request service-handler service-args))]
+      (send-message-on-queue return-q response))))
 
 (defn sevak-request-handling-listener [req-str]
   (with-swarmiji-bindings

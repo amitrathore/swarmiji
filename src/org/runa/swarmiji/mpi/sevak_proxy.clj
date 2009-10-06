@@ -9,6 +9,7 @@
 (use 'org.rathore.amit.utils.clojure)
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.rabbitmq)
+(use 'org.rathore.amit.utils.rabbitmq-multiplex)
 
 (def STOMP-HEADER (doto (new java.util.HashMap) 
 		    (.put "auto-delete" true)))
@@ -22,25 +23,30 @@
    :sevak-service-args args})
 
 (defn register-callback [return-q-name custom-handler]
-  (let [conn (new-connection-for (queue-host) (queue-username) (queue-password))
-	chan (.createChannel conn)
+  (let [chan (new-channel (queue-host) (queue-username) (queue-password))
 	wait-for-message (fn [_]
-			   (with-open [connection conn]
+			   (with-swarmiji-bindings
 			     (with-open [channel chan]
-			       ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
-			       (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
-			       (let [consumer (QueueingConsumer. channel)]
-				 (.basicConsume channel return-q-name false consumer)
-				 (let [delivery (.nextDelivery consumer)
-				       message (read-clojure-str (String. (.getBody delivery)))]
-				   (custom-handler message)
-				   (.queueDelete channel return-q-name))))))]
+    			       ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
+			     (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
+			     (let [consumer (QueueingConsumer. channel)]
+			       (.basicConsume channel return-q-name false consumer)
+			       (let [delivery (.nextDelivery consumer)
+				     message (read-clojure-str (String. (.getBody delivery)))]
+				 (custom-handler message)
+				 (.queueDelete channel return-q-name)
+				 (log-message "closed channel" return-q-name))))))]
+    (log-message "got new channel:" chan "now calling wait-for-message")
     (send-off (agent :_ignore_) wait-for-message)
-    {:connection conn :channel chan :queue return-q-name}))
+    (log-message "called wait-for-message")
+    {:channel chan :queue return-q-name}))
 
 (defn new-proxy [sevak-service args callback-function]
   (let [request-object (sevak-queue-message sevak-service args)
-	return-q-name (request-object :return-queue-name)]
-    (register-callback return-q-name callback-function)
-    (send-message-on-queue (queue-sevak-q-name) request-object)))
+	return-q-name (request-object :return-queue-name)
+	proxy-object (register-callback return-q-name callback-function)]
+    (log-message "registered callback")
+    (send-message-on-queue (queue-sevak-q-name) request-object)
+    (log-message "proxy-object:" proxy-object)
+    proxy-object))
 		       
