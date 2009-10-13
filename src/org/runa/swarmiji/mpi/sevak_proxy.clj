@@ -23,7 +23,8 @@
    :sevak-service-args args})
 
 (defn register-callback [return-q-name custom-handler]
-  (let [chan (new-channel (queue-host) (queue-username) (queue-password))
+  (let [;chan (new-channel (queue-host) (queue-username) (queue-password))
+	chan (*rabbitmq-multiplexer* :new-channel)
 	wait-for-message (fn [_]
 			   (with-swarmiji-bindings
 			     (with-open [channel chan]
@@ -36,7 +37,7 @@
 				 (custom-handler message)
 				 (.queueDelete channel return-q-name)
 				 (log-message "closed channel" return-q-name))))))]
-    (log-message "got new channel:" chan "now calling wait-for-message")
+    (log-message "got new channel:" (.hashCode chan) "now calling wait-for-message")
     (send-off (agent :_ignore_) wait-for-message)
     (log-message "called wait-for-message")
     {:channel chan :queue return-q-name}))
