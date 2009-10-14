@@ -52,6 +52,7 @@
   (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
     (try
      (.queueDelete chan queue)
+     (.abort chan)
      (catch Exception e))))
      ;no-op, this sevak-proxy should be aborted, thats it
 
