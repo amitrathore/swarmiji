@@ -23,24 +23,29 @@
    :sevak-service-args args})
 
 (defn register-callback [return-q-name custom-handler]
-  (let [;chan (new-channel (queue-host) (queue-username) (queue-password))
-	chan (*rabbitmq-multiplexer* :new-channel)
-	wait-for-message (fn [_]
-			   (with-swarmiji-bindings
-			     (with-open [channel chan]
-    			       ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
-			     (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
-			     (let [consumer (QueueingConsumer. channel)]
-			       (.basicConsume channel return-q-name false consumer)
-			       (let [delivery (.nextDelivery consumer)
-				     message (read-clojure-str (String. (.getBody delivery)))]
-				 (custom-handler message)
-				 (.queueDelete channel return-q-name)
-				 (log-message "closed channel" return-q-name))))))]
+  (let [chan (*rabbitmq-multiplexer* :new-channel)
+	wait-for-message (fn []
+			    (with-swarmiji-bindings
+			      (try
+			       (with-open [channel chan]
+					;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
+				 (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
+				 (let [consumer (QueueingConsumer. channel)]
+				   (.basicConsume channel return-q-name false consumer)
+				   (let [delivery (.nextDelivery consumer)
+					 message (read-clojure-str (String. (.getBody delivery)))]
+				     (custom-handler message)
+				     (.queueDelete channel return-q-name)
+				     (log-message "closed channel" return-q-name)))))
+			      (catch InterruptedException ie
+				(log-message "Encountered forced sevak-termination!")
+				(log-exception ie))))
+	thread (Thread. wait-for-message)]
     (log-message "got new channel:" (.hashCode chan) "now calling wait-for-message")
-    (send-off (agent :_ignore_) wait-for-message)
+    ;(send-off (agent :_ignore_) wait-for-message)
+    (.start thread)
     (log-message "called wait-for-message")
-    {:channel chan :queue return-q-name}))
+    {:channel chan :queue return-q-name :thread thread}))
 
 (defn new-proxy [sevak-service args callback-function]
   (let [request-object (sevak-queue-message sevak-service args)

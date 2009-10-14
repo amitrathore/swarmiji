@@ -39,22 +39,17 @@
 (defn sevak-name-from [sevak-data]
   (attribute-from-response sevak-data :sevak-name))
 
-(comment
 (defn disconnect-proxy [sevak-proxy]
-  (let [conn (:connection sevak-proxy) chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
+  (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy) thread (:thread sevak-proxy)]
     (try
-     (.queueDelete chan queue)
-     (.close conn)
-     (catch Exception e))))
-)
+     (with-swarmiji-bindings
+       (log-message "Force disconnecting!")
+       (.queueDelete chan queue)
+       (catch Exception e))
+       ;no-op, this sevak-proxy should be aborted, thats it
+       (finally
+	(.interrupt thread)))))
 
-(defn disconnect-proxy [sevak-proxy]
-  (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
-    (try
-     (.queueDelete chan queue)
-     (.abort chan)
-     (catch Exception e))))
-     ;no-op, this sevak-proxy should be aborted, thats it
 
 (defn on-swarm [sevak-service & args]
   (log-message "On-swarm!")
