@@ -43,13 +43,14 @@
   (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy) thread (:thread sevak-proxy)]
     (try
      (with-swarmiji-bindings
-       (log-message "Force disconnecting!")
        (.queueDelete chan queue)
        (catch Exception e))
        ;no-op, this sevak-proxy should be aborted, thats it
-       (finally
-	(.interrupt thread)))))
-
+     (finally
+      (if (.isAlive thread)
+        (do
+          (log-message "Force interrupt!")          
+          (.interrupt thread)))))))
 
 (defn on-swarm [sevak-service & args]
   (log-message "On-swarm!")
