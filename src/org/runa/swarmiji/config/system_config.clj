@@ -4,6 +4,7 @@
 
 (def *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
 (def swarmiji-home (or (.get (System/getenv) "SWARMIJI_HOME") (str (System/getProperty "user.home") "/workspace/swarmiji")))
+(def swarmiji-ns (System/getenv "SWARMIJI_NS"))
 
 (load-file (str swarmiji-home "/config/config.clj"))
 
@@ -51,4 +52,4 @@
 (defn config-for-rathore-utils [process-type-id]
   {:log-to-console (log-to-console?) 
    :logs-dir ((operation-config) :logsdir) 
-   :log-filename-prefix (str process-type-id "_" *swarmiji-env*)})
+    :log-filename-prefix (str process-type-id "_" *swarmiji-env*)})
