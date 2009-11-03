@@ -7,7 +7,7 @@
 
 (defn current-swarmiji-ns-for [env-var-name]
   (or (System/getenv env-var-name)
-      (throw (Exception. (str env-var-name "is not set")))))
+      (throw (Exception. (str env-var-name " is not set")))))
 
 (defn queue-name-prefixed-for [stem env-var-name]
   (str stem (current-swarmiji-ns-for env-var-name) "_" *swarmiji-env* "_"))
