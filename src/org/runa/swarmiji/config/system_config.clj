@@ -6,6 +6,13 @@
 (def swarmiji-home (or (.get (System/getenv) "SWARMIJI_HOME") (str (System/getProperty "user.home") "/workspace/swarmiji")))
 (def swarmiji-ns (System/getenv "SWARMIJI_NS"))
 
+(defn current-swarmiji-ns []
+  (or swarmiji-ns
+      (throw (Exception. "SWARMIJI_NS is not set"))))
+
+(defn queue-name-prefixed-by [stem]
+  (str stem (current-swarmiji-ns) "_" *swarmiji-env* "_"))
+
 (load-file (str swarmiji-home "/config/config.clj"))
 
 (defn environment-specific-config-from [configs]
