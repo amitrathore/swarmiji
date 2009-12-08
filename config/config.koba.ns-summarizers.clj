@@ -5,8 +5,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")
+      :sevak-request-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_TRANSPORT_" "SUMMARIZER_NS")
+      :sevak-diagnostics-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_DIAGNOSTICS_" "SUMMARIZER_NS")    
       :distributed-mode false
       :diagnostics-mode true
       :logsdir (str swarmiji-home "/logs")
@@ -18,8 +18,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")
+      :sevak-request-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_TRANSPORT_" "SUMMARIZER_NS")
+      :sevak-diagnostics-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_DIAGNOSTICS_" "SUMMARIZER_NS")
       :distributed-mode true
       :diagnostics-mode true
       :logsdir (str swarmiji-home "/logs")
@@ -31,8 +31,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")
+      :sevak-request-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_TRANSPORT_" "SUMMARIZER_NS")
+      :sevak-diagnostics-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_DIAGNOSTICS_" "SUMMARIZER_NS")
       :distributed-mode true
       :diagnostics-mode true
       :logsdir (str swarmiji-home "/mnt/pkgs/swarmiji/logs")
@@ -44,8 +44,8 @@
       :port 61613
       :q-username "guest"
       :q-password "guest"
-      :sevak-request-queue-prefix (str "RUNA_SWARMIJI_TRANSPORT_" *swarmiji-env* "_")
-      :sevak-diagnostics-queue-prefix (str "RUNA_SWARMIJI_DIAGNOSTICS_" *swarmiji-env* "_")
+      :sevak-request-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_TRANSPORT_" "SUMMARIZER_NS")
+      :sevak-diagnostics-queue-prefix (queue-name-prefixed-for "RUNA_SWARMIJI_DIAGNOSTICS_" "SUMMARIZER_NS")
       :distributed-mode true
       :diagnostics-mode true
       :logsdir "/mnt/log/swarmiji/"
