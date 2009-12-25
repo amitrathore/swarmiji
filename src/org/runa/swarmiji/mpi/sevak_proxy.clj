@@ -17,10 +17,12 @@
 (defn return-queue-name []
   (random-uuid))
 
-(defn sevak-queue-message [sevak-service args]
-  {:return-queue-name (return-queue-name)
-   :sevak-service-name sevak-service
+(defn sevak-queue-message-no-return [sevak-service args]
+  {:sevak-service-name sevak-service
    :sevak-service-args args})
+
+(defn sevak-queue-message-for-return [sevak-service args]
+  (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name)))
 
 (defn register-callback [return-q-name custom-handler]
   (let [chan (*rabbitmq-multiplexer* :new-channel)
@@ -48,12 +50,16 @@
     ;{:channel chan :queue return-q-name :thread thread}))
     {:channel chan :queue return-q-name}))
 
-(defn new-proxy [sevak-service args callback-function]
-  (let [request-object (sevak-queue-message sevak-service args)
-	return-q-name (request-object :return-queue-name)
-	proxy-object (register-callback return-q-name callback-function)]
-    (log-message "registered callback")
-    (send-message-on-queue (queue-sevak-q-name) request-object)
-    (log-message "proxy-object:" proxy-object)
-    proxy-object))
-		       
+(defn new-proxy 
+  ([sevak-service args callback-function]
+     (let [request-object (sevak-queue-message-for-return sevak-service args)
+	   return-q-name (request-object :return-queue-name)
+	   proxy-object (register-callback return-q-name callback-function)]
+       (log-message "registered callback")
+       (send-message-on-queue (queue-sevak-q-name) request-object)
+       (log-message "proxy-object:" proxy-object)
+       proxy-object))
+  ([sevak-service args]
+     (let [request-object (sevak-queue-message-no-return sevak-service args)]
+       (send-message-on-queue (queue-sevak-q-name) request-object)
+       nil)))

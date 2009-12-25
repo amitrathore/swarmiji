@@ -10,25 +10,33 @@
 (use 'org.rathore.amit.utils.clojure)
 
 (def sevaks (ref {}))
+
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
-(defmacro sevak-runner [sevak-name sevak-args]
+(defmacro sevak-runner [sevak-name needs-response sevak-args]
   `(fn ~sevak-args 
       (if (swarmiji-distributed-mode?)
-	(apply on-swarm (cons ~sevak-name ~sevak-args))
+	(if ~needs-response
+	    (apply on-swarm (cons ~sevak-name ~sevak-args))
+	    (apply on-swarm-no-response (cons ~sevak-name ~sevak-args)))
 	(apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
 
 (defmacro defsevak [service-name args & expr]
   `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks sevak-name# (fn ~args (do ~@expr)))))
-     (def ~service-name (sevak-runner sevak-name# ~args))))
+     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:return Boolean/TRUE :fn (fn ~args (do ~@expr))})))
+     (def ~service-name (sevak-runner sevak-name# Boolean/TRUE ~args))))
+
+(defmacro defseva [service-name args & expr]
+  `(let [seva-name# (keyword (str '~service-name))]
+     (dosync (ref-set sevaks (assoc @sevaks seva-name# {:return Boolean/FALSE :fn (fn ~args (do ~@expr))})))
+     (def ~service-name (sevak-runner seva-name# Boolean/FALSE ~args))))
 
 (defn handle-sevak-request [service-handler service-args]
   (with-swarmiji-bindings
    (try
     (let [response-with-time (run-and-measure-timing 
-			      (apply service-handler service-args))
+			      (apply (:fn service-handler) service-args))
 	  value (response-with-time :response)
 	  time-elapsed (response-with-time :time-taken)]
       {:response value :status :success :sevak-time time-elapsed})
@@ -41,7 +49,8 @@
     (let [response (merge 
 		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		    (handle-sevak-request service-handler service-args))]
-      (send-message-on-queue return-q response))))
+      (if (:return service-handler)
+	(send-message-on-queue return-q response)))))
 
 (defn sevak-request-handling-listener [req-str]
   (with-swarmiji-bindings

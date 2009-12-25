@@ -41,12 +41,13 @@
 
 (defn disconnect-proxy [sevak-proxy]
 ;  (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy) thread (:thread sevak-proxy)]
-  (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
-    (try
-     (with-swarmiji-bindings
-       (.queueDelete chan queue)
-       (catch Exception e)))))
-       ;no-op, this sevak-proxy should be aborted, thats it
+  (if sevak-proxy 
+    (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
+      (try
+       (with-swarmiji-bindings
+	 (.queueDelete chan queue)
+	 (catch Exception e))))))
+         ;no-op, this sevak-proxy should be aborted, thats it
 ;     (finally
 ;      (if (.isAlive thread)
 ;        (do
@@ -76,6 +77,7 @@
 	(= accessor :sevak-name) (name sevak-service)
 	(= accessor :args) args
 	(= accessor :distributed?) true
+	(= accessor :sevak-type) :sevak-with-return
 	(= accessor :disconnect) (disconnect-proxy on-swarm-proxy-client)
 	(= accessor :complete?) (complete?)
 	(= accessor :value) (response-value-from @sevak-data)
@@ -86,6 +88,29 @@
 	(= accessor :exception) (@sevak-data :exception)
 	(= accessor :stacktrace) (@sevak-data :stacktrace)
 	(= accessor :__inner_ref) @sevak-data
+	:default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
+
+
+(defn on-swarm-no-response [sevak-service & args]
+  (log-message "On-swarm-no-response!")
+  (let [on-swarm-proxy-client (new-proxy (name sevak-service) args)]
+    (log-message "Created sevak proxy:" on-swarm-proxy-client)
+    (fn [accessor]
+      (cond
+	(= accessor :sevak-name) (name sevak-service)
+	(= accessor :args) args
+	(= accessor :distributed?) true
+	(= accessor :sevak-type) :seva-without-return
+	(= accessor :disconnect) (disconnect-proxy on-swarm-proxy-client)
+	(= accessor :complete?) :not_applicable
+	(= accessor :value) :not_applicable
+	(= accessor :status) :not_applicable
+	(= accessor :sevak-time) :not_applicable
+	(= accessor :total-time) :not_applicable
+	(= accessor :messaging-time) :not_applicable
+	(= accessor :exception) :not_applicable
+	(= accessor :stacktrace) :not_applicable
+	(= accessor :__inner_ref) :not_applicable
 	:default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
 
 (defn all-complete? [swarm-requests]
