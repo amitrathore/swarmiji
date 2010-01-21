@@ -156,7 +156,7 @@
 			      (ref-set response-with-time 
 				       (simulate-serialized
 					(run-and-measure-timing 
-					 (apply sevak-service-function args))))
+					 (apply (:fn sevak-service-function) args))))
 			      (@response-with-time :response))
 	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
