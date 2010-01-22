@@ -138,6 +138,11 @@
 
 (defn on-local [sevak-service-function & args]
   (let [response-with-time (ref {})]
+    (dosync 
+     (ref-set response-with-time 
+              (simulate-serialized
+               (run-and-measure-timing 
+                (apply (:fn sevak-service-function) args)))))
     (fn [accessor]
       (cond
 	(= accessor :sevak-name) sevak-service-function
@@ -152,12 +157,7 @@
 	(= accessor :exception) nil
 	(= accessor :stacktrace) nil
 	(= accessor :_inner_ref) @response-with-time
-	(= accessor :value) (dosync 
-			      (ref-set response-with-time 
-				       (simulate-serialized
-					(run-and-measure-timing 
-					 (apply (:fn sevak-service-function) args))))
-			      (@response-with-time :response))
+	(= accessor :value) (@response-with-time :response)
 	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
