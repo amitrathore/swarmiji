@@ -113,27 +113,27 @@
 
 (defn on-local [sevak-service-function & args]
   (let [response-with-time (ref {})]
+    (dosync 
+     (ref-set response-with-time 
+              (simulate-serialized
+               (run-and-measure-timing 
+                (apply sevak-service-function args)))))
     (fn [accessor]
       (cond
-	(= accessor :sevak-name) sevak-service-function
-	(= accessor :args) args
-	(= accessor :distributed?) false
-	(= accessor :disconnect) nil
-	(= accessor :complete?) true
-	(= accessor :status) "success"
-	(= accessor :sevak-time) (@response-with-time :time-taken)
-	(= accessor :messaging-time) 0
-	(= accessor :total-time) (@response-with-time :time-taken)
-	(= accessor :exception) nil
-	(= accessor :stacktrace) nil
-	(= accessor :_inner_ref) @response-with-time
-	(= accessor :value) (dosync 
-			      (ref-set response-with-time 
-				       (simulate-serialized
-					(run-and-measure-timing 
-					 (apply sevak-service-function args))))
-			      (@response-with-time :response))
-	:default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
+       (= accessor :sevak-name) sevak-service-function
+       (= accessor :args) args
+       (= accessor :distributed?) false
+       (= accessor :disconnect) nil
+       (= accessor :complete?) true
+       (= accessor :status) "success"
+       (= accessor :sevak-time) (@response-with-time :time-taken)
+       (= accessor :messaging-time) 0
+       (= accessor :total-time) (@response-with-time :time-taken)
+       (= accessor :exception) nil
+       (= accessor :stacktrace) nil
+       (= accessor :_inner_ref) @response-with-time
+       (= accessor :value) (@response-with-time :response)
+       :default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
   (let [report {:message_type WORK-REPORT
