@@ -73,4 +73,6 @@
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
-  (start-handler-on-queue (queue-sevak-q-name) sevak-request-handling-listener))
+  (future (with-swarmiji-bindings (start-handler-on-queue (sevak-fanout-exchange-name) "fanout" (random-queue-name) sevak-request-handling-listener)))
+  (future (with-swarmiji-bindings (start-handler-on-queue (queue-sevak-q-name) sevak-request-handling-listener)))
+  (log-message "Sevak Server Started!"))

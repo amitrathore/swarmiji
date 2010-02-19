@@ -46,6 +46,9 @@
 (defn queue-diagnostics-q-name []
   (str ((operation-config) :sevak-diagnostics-queue-prefix) (swarmiji-user)))
 
+(defn sevak-fanout-exchange-name []
+  (str ((operation-config) :sevak-fanout-exchange-prefix) (swarmiji-user)))
+
 (defn swarmiji-distributed-mode? []
   ((operation-config) :distributed-mode))
 

@@ -11,11 +11,8 @@
 (use 'org.rathore.amit.utils.rabbitmq)
 (use 'org.rathore.amit.utils.rabbitmq-multiplex)
 
-(def STOMP-HEADER (doto (new java.util.HashMap) 
-		    (.put "auto-delete" true)))
-
-(defn return-queue-name []
-  (random-uuid))
+;(def STOMP-HEADER (doto (new java.util.HashMap) 
+;		    (.put "auto-delete" true)))
 
 (defn sevak-queue-message-no-return [sevak-service args]
   {:sevak-service-name sevak-service
@@ -63,3 +60,6 @@
      (let [request-object (sevak-queue-message-no-return sevak-service args)]
        (send-message-on-queue (queue-sevak-q-name) request-object)
        nil)))
+
+(defn multicast-to-all [sevak-name & args]
+  (fanout-message-to-all (sevak-queue-message-no-return sevak-name args)))

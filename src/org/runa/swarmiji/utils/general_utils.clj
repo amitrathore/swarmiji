@@ -8,6 +8,12 @@
 (defn random-uuid []
   (str (UUID/randomUUID)))
 
+(defn return-queue-name []
+  (random-uuid))
+
+(defn random-queue-name []
+  (random-uuid))
+
 (defn process-pid []
   (let [m-name (.getName (ManagementFactory/getRuntimeMXBean))]
     (first (.split m-name "@"))))
