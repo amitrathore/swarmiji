@@ -84,24 +84,8 @@
 
 
 (defn on-swarm-no-response [sevak-service & args]
-  (let [on-swarm-proxy-client (new-proxy (name sevak-service) args)]
-    (fn [accessor]
-      (cond
-	(= accessor :sevak-name) (name sevak-service)
-	(= accessor :args) args
-	(= accessor :distributed?) true
-	(= accessor :sevak-type) :seva-without-return
-	(= accessor :disconnect) (disconnect-proxy on-swarm-proxy-client)
-	(= accessor :complete?) :not_applicable
-	(= accessor :value) :not_applicable
-	(= accessor :status) :not_applicable
-	(= accessor :sevak-time) :not_applicable
-	(= accessor :total-time) :not_applicable
-	(= accessor :messaging-time) :not_applicable
-	(= accessor :exception) :not_applicable
-	(= accessor :stacktrace) :not_applicable
-	(= accessor :__inner_ref) :not_applicable
-	:default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
+  (new-proxy (name sevak-service) args)
+  nil)
 
 (defn all-complete? [swarm-requests]
   (every? #(% :complete?) swarm-requests))
