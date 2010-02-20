@@ -56,7 +56,6 @@
   (with-swarmiji-bindings
    (try
     (let [req (read-clojure-str req-str)
-	  _ (log-message "got request" req)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))
 	  sevak-agent (agent service-handler)]
