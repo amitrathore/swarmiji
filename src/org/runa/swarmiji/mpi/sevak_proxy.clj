@@ -61,5 +61,5 @@
        (send-message-on-queue (queue-sevak-q-name) request-object)
        nil)))
 
-(defn multicast-to-all [sevak-name & args]
-  (fanout-message-to-all (sevak-queue-message-no-return sevak-name args)))
+(defmacro multicast-to-sevak-servers [sevak-name & args]
+  `(fanout-message-to-all (sevak-queue-message-no-return (str '~sevak-name) '~args)))
