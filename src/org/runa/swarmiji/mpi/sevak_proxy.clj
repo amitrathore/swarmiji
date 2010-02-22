@@ -19,21 +19,12 @@
 
 (defn register-callback [return-q-name custom-handler]
   (let [chan (*rabbitmq-multiplexer* :new-channel)
-	wait-for-message (fn [_]
-			    (with-swarmiji-bindings
-			      (try
-			       (with-open [channel chan]
-				 ;q-declare args: queue-name, passive, durable, exclusive, autoDelete other-args-map
-				 (.queueDeclare channel return-q-name); true false false true (new java.util.HashMap))
-				 (let [consumer (QueueingConsumer. channel)]
-				   (.basicConsume channel return-q-name false consumer)
-				   (let [delivery (.nextDelivery consumer)
-					 message (read-clojure-str (String. (.getBody delivery)))]
-				     (custom-handler message)
-				     (.queueDelete channel return-q-name)))))
-			      (catch InterruptedException ie
-				(log-exception ie))))]
-    (send-off (agent :_ignore_) wait-for-message)
+        consumer (consumer-for chan return-q-name)
+        on-response (fn [msg]
+                      (custom-handler (read-clojure-str msg))
+                      (.queueDelete chan return-q-name)
+                      (.close chan))]
+    (future (on-response (delivery-from chan consumer)))
     {:channel chan :queue return-q-name}))
 
 (defn new-proxy 
