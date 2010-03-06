@@ -40,21 +40,15 @@
   (attribute-from-response sevak-data :sevak-name))
 
 (defn disconnect-proxy [sevak-proxy]
-;  (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy) thread (:thread sevak-proxy)]
-  (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
-    (try
-     (with-swarmiji-bindings
-       (.queueDelete chan queue)
-       (catch Exception e)))))
-       ;no-op, this sevak-proxy should be aborted, thats it
-;     (finally
-;      (if (.isAlive thread)
-;        (do
-;          (log-message "Force interrupt!")          
-;          (.interrupt thread)))))))
+  (if sevak-proxy 
+    (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
+      (try
+       (with-swarmiji-bindings
+	 (.queueDelete chan queue)
+	 (catch Exception e))))))
+         ;no-op, this sevak-proxy should be aborted, thats it
 
 (defn on-swarm [sevak-service & args]
-  (log-message "On-swarm!")
   (let [sevak-start (ref (System/currentTimeMillis))
 	total-sevak-time (ref nil)
 	sevak-data (ref swarmiji-sevak-init-value)
@@ -70,12 +64,12 @@
 			       (if (and (swarmiji-diagnostics-mode?) (success?))
 				 (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
-    (log-message "Created sevak proxy:" on-swarm-proxy-client)
     (fn [accessor]
       (cond
 	(= accessor :sevak-name) (name sevak-service)
 	(= accessor :args) args
 	(= accessor :distributed?) true
+	(= accessor :sevak-type) :sevak-with-return
 	(= accessor :disconnect) (disconnect-proxy on-swarm-proxy-client)
 	(= accessor :complete?) (complete?)
 	(= accessor :value) (response-value-from @sevak-data)
@@ -87,6 +81,11 @@
 	(= accessor :stacktrace) (@sevak-data :stacktrace)
 	(= accessor :__inner_ref) @sevak-data
 	:default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
+
+
+(defn on-swarm-no-response [sevak-service & args]
+  (new-proxy (name sevak-service) args)
+  nil)
 
 (defn all-complete? [swarm-requests]
   (every? #(% :complete?) swarm-requests))
@@ -117,7 +116,7 @@
      (ref-set response-with-time 
               (simulate-serialized
                (run-and-measure-timing 
-                (apply sevak-service-function args)))))
+                (apply (:fn sevak-service-function) args)))))
     (fn [accessor]
       (cond
        (= accessor :sevak-name) sevak-service-function
