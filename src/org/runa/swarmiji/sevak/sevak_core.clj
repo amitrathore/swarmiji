@@ -59,6 +59,7 @@
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))
 	  sevak-agent (agent service-handler)]
+      (log-message (format "Received Sevak Request : %s with Args : %s " service-name  service-args ) )
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
       (send sevak-agent async-sevak-handler service-name service-args return-q))

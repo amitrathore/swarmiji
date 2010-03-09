@@ -40,4 +40,4 @@
        nil)))
 
 (defmacro multicast-to-sevak-servers [sevak-name & args]
-  `(fanout-message-to-all (sevak-queue-message-no-return (str '~sevak-name) '~args)))
+  `(fanout-message-to-all (sevak-queue-message-no-return (str '~sevak-name) (list ~@args))))
