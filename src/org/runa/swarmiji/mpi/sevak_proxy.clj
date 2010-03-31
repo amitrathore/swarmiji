@@ -18,7 +18,7 @@
   (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name)))
 
 (defn register-callback [return-q-name custom-handler]
-  (let [chan (*rabbitmq-multiplexer* :new-channel)
+  (let [chan (new-channel)
 	wait-for-message (fn [_]
 			    (with-swarmiji-bindings
 			      (try
