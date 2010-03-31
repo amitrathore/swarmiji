@@ -7,10 +7,10 @@
 (defn send-message-on-queue [q-name q-message-object]
   (with-swarmiji-bindings
     (with-exception-logging 
-      (send-on-q q-name (str q-message-object)))))
+      (send-message q-name q-message-object))))
 
 (defn fanout-message-to-all [message-object]
-  (send-on-q (sevak-fanout-exchange-name) "" (str message-object)))
+  (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE "" message-object))
 
 (defn start-handler-on-queue 
   ([q-name handler-function]
@@ -22,3 +22,5 @@
        (with-exception-logging 
          (start-queue-message-handler-for-function-amqp (queue-host) (queue-username) (queue-password) exchange-name exchange-type q-name handler-function)))))
 
+(defn init-rabbit []
+  (init-rabbitmq-connection (queue-host) (queue-username) (queue-password)))

@@ -28,7 +28,7 @@
 				 (let [consumer (QueueingConsumer. channel)]
 				   (.basicConsume channel return-q-name false consumer)
 				   (let [delivery (.nextDelivery consumer)
-					 message (read-clojure-str (String. (.getBody delivery)))]
+                                         message (read-string (String. (.getBody delivery)))]
 				     (custom-handler message)
 				     (.queueDelete channel return-q-name)))))
 			      (catch InterruptedException ie

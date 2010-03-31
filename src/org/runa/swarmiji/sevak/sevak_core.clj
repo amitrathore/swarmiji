@@ -55,7 +55,7 @@
 (defn sevak-request-handling-listener [req-str]
   (with-swarmiji-bindings
    (try
-    (let [req (read-clojure-str req-str)
+    (let [req (read-string req-str)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))
 	  sevak-agent (agent service-handler)]

@@ -19,4 +19,4 @@
     (first (.split m-name "@"))))
 
 (defn simulate-serialized [hash-object]
-  (read-clojure-str (str hash-object)))
+  (read-string (str hash-object)))
