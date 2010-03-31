@@ -1,6 +1,7 @@
 (ns org.runa.swarmiji.sevak.sevak-core)
 
 (use 'org.runa.swarmiji.mpi.transport)
+(use 'org.rathore.amit.utils.rabbitmq)
 (use 'org.runa.swarmiji.client.client-core)
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.utils.general-utils)
@@ -73,7 +74,13 @@
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (init-rabbit)
-  (send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
-  (future (with-swarmiji-bindings (start-handler-on-queue (sevak-fanout-exchange-name) "fanout" (random-queue-name) sevak-request-handling-listener)))
-  (future (with-swarmiji-bindings (start-handler-on-queue (queue-sevak-q-name) sevak-request-handling-listener)))
+  ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
+  (future 
+    (with-swarmiji-bindings 
+      ;(start-handler-on-queue (sevak-fanout-exchange-name) "fanout" (random-queue-name) sevak-request-handling-listener)
+      (start-queue-message-handler-for-function-amqp (queue-host) (queue-username) (queue-password) (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE (random-queue-name) sevak-request-handling-listener)))
+  (future 
+    (with-swarmiji-bindings 
+      ;(start-handler-on-queue (queue-sevak-q-name) sevak-request-handling-listener)
+      (start-queue-message-handler-for-function-amqp (queue-host) (queue-username) (queue-password) (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener)))
   (log-message "Sevak Server Started!"))
