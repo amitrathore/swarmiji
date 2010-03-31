@@ -59,6 +59,7 @@
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))
 	  sevak-agent (agent service-handler)]
+      (log-message "Received request for" service-name "with args:" service-args)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
       (send sevak-agent async-sevak-handler service-name service-args return-q))
@@ -71,6 +72,7 @@
   (log-message "MPI transport Q:" (queue-sevak-q-name))
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
+  (init-rabbit)
   (send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (future (with-swarmiji-bindings (start-handler-on-queue (sevak-fanout-exchange-name) "fanout" (random-queue-name) sevak-request-handling-listener)))
   (future (with-swarmiji-bindings (start-handler-on-queue (queue-sevak-q-name) sevak-request-handling-listener)))
