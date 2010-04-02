@@ -13,4 +13,5 @@
   (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE "" message-object))
 
 (defn init-rabbit []
+  (log-message "Swarmiji: RabbitMQ host is" (queue-host))
   (init-rabbitmq-connection (queue-host) (queue-username) (queue-password)))
