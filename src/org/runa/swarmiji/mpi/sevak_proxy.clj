@@ -19,7 +19,7 @@
 
 (defn register-callback [return-q-name custom-handler]
   (let [chan (new-channel)
-        consumer (consumer-for chan return-q-name)
+        consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
                       (custom-handler (read-string msg))
                       (.queueDelete chan return-q-name)
