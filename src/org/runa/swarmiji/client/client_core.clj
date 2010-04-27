@@ -94,21 +94,41 @@
   (doseq [req swarm-requests]
     (req :disconnect)))
 
-(defn wait-until-completion [swarm-requests allowed-time]
-  (loop [all-complete (all-complete? swarm-requests) elapsed-time 0]
-    (if (> elapsed-time allowed-time)
-      (do
-	(disconnect-all swarm-requests)
-	(throw (RuntimeException. (str "Swarmiji reports: This operation has taken more than " allowed-time " milliseconds."))))
-       (if (not all-complete)
-	 (do
-	   (Thread/sleep 100)
-	   (recur (all-complete? swarm-requests) (+ elapsed-time 100)))))))
+(defn throw-exception [allowed-time]
+  (throw (RuntimeException. (str "Swarmiji reports: This operation has taken more than " allowed-time " milliseconds."))))
+
+(defn wait-until-completion
+  ([swarm-requests allowed-time]
+     (wait-until-completion swarm-requests allowed-time throw-exception))
+  ([swarm-requests allowed-time error-fn]
+     (loop [all-complete (all-complete? swarm-requests) elapsed-time 0]
+       (if (> elapsed-time allowed-time)
+         (do
+           (disconnect-all swarm-requests)
+           (error-fn allowed-time))
+         (if (not all-complete)
+           (do
+             (Thread/sleep 100)
+             (recur (all-complete? swarm-requests) (+ elapsed-time 100))))))))
+
+(defn wait-until-completion-no-exception
+  [swarm-requests allowed-time]
+  (wait-until-completion swarm-requests allowed-time (constantly nil)))
 
 (defmacro from-swarm [max-time-allowed swarm-requests & expr]
   `(do
      (wait-until-completion ~swarm-requests ~max-time-allowed)
      ~@expr))
+
+(defmacro from-swarm-no-exception [max-time-allowed swarm-requests & expr]
+  `(do
+     (wait-until-completion-no-exception ~swarm-requests ~max-time-allowed)
+     ~@expr))
+
+(defn retry-sevaks [retry-timeout sevaks sevak-fn]
+  (let [incomplete-sevaks (filter #(not (% :complete?)) sevaks)
+        new-sevaks (map #(apply sevak-fn (% :args)) incomplete-sevaks)]
+    (from-swarm retry-timeout new-sevaks)))
 
 (defn on-local [sevak-service-function & args]
   (let [response-with-time (ref {})]
