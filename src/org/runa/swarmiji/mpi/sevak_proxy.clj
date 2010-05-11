@@ -17,22 +17,24 @@
 (defn sevak-queue-message-for-return [sevak-service args]
   (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name)))
 
-(defn register-callback [return-q-name custom-handler]
+(defn register-callback [return-q-name custom-handler request-object]
   (let [chan (new-channel)
         consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
                       (custom-handler (read-string msg))
                       (.queueDelete chan return-q-name)
                       (.close chan))]
-    (future (on-response (delivery-from chan consumer)))
+    (future
+     (do 
+       (send-message-on-queue (queue-sevak-q-name) request-object)
+       (on-response (delivery-from chan consumer))))
     {:channel chan :queue return-q-name}))
 
 (defn new-proxy 
   ([sevak-service args callback-function]
      (let [request-object (sevak-queue-message-for-return sevak-service args)
 	   return-q-name (request-object :return-queue-name)
-	   proxy-object (register-callback return-q-name callback-function)]
-       (send-message-on-queue (queue-sevak-q-name) request-object)
+	   proxy-object (register-callback return-q-name callback-function request-object)]
        proxy-object))
   ([sevak-service args]
      (let [request-object (sevak-queue-message-no-return sevak-service args)]
