@@ -23,12 +23,12 @@
         on-response (fn [msg]
                       (custom-handler (read-string msg))
                       (.queueDelete chan return-q-name)
-                      (.close chan))]
-    (future
-     (do 
-       (send-message-on-queue (queue-sevak-q-name) request-object)
-       (on-response (delivery-from chan consumer))))
-    {:channel chan :queue return-q-name}))
+                      (.close chan))
+        f (future
+            (do 
+              (send-message-on-queue (queue-sevak-q-name) request-object)
+              (on-response (delivery-from chan consumer))))]
+    {:channel chan :queue return-q-name :proxy-future f :consumer consumer}))
 
 (defn new-proxy 
   ([sevak-service args callback-function]

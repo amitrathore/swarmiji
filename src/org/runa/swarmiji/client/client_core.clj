@@ -41,10 +41,11 @@
 
 (defn disconnect-proxy [sevak-proxy]
   (if sevak-proxy 
-    (let [chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
+    (let [{:keys [channel queue proxy-future]} sevak-proxy] ;[chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
       (try
        (with-swarmiji-bindings
-	 (.queueDelete chan queue)
+	 (.queueDelete channel queue)
+         (future-cancel proxy-future)
 	 (catch Exception e))))))
          ;no-op, this sevak-proxy should be aborted, thats it
 
@@ -65,21 +66,22 @@
 				 (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
 	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
     (fn [accessor]
-      (cond
-	(= accessor :sevak-name) (name sevak-service)
-	(= accessor :args) args
-	(= accessor :distributed?) true
-	(= accessor :sevak-type) :sevak-with-return
-	(= accessor :disconnect) (disconnect-proxy on-swarm-proxy-client)
-	(= accessor :complete?) (complete?)
-	(= accessor :value) (response-value-from @sevak-data)
-	(= accessor :status) (@sevak-data :status)
-	(= accessor :sevak-time) (sevak-time)
-	(= accessor :total-time) @total-sevak-time
-	(= accessor :messaging-time) (messaging-time)
-	(= accessor :exception) (@sevak-data :exception)
-	(= accessor :stacktrace) (@sevak-data :stacktrace)
-	(= accessor :__inner_ref) @sevak-data
+      (condp = accessor
+	:sevak-name (name sevak-service)
+	:args args
+	:distributed? true
+	:sevak-type :sevak-with-return
+	:disconnect (disconnect-proxy on-swarm-proxy-client)
+	:complete? (complete?)
+	:value (response-value-from @sevak-data)
+	:status (@sevak-data :status)
+	:sevak-time (sevak-time)
+	:total-time @total-sevak-time
+	:messaging-time (messaging-time)
+	:exception (@sevak-data :exception)
+	:stacktrace (@sevak-data :stacktrace)
+	:__inner_ref @sevak-data
+        :sevak-proxy on-swarm-proxy-client
 	:default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
 
 
