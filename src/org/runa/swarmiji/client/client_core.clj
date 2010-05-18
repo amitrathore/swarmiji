@@ -10,12 +10,15 @@
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
+(use 'org.runa.swarmiji.mpi.supervisor)
 
 (def WORK-REPORT "WORK_REPORT")
 
 (declare send-work-report)
 
 (def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
+
+;(start-supervisor)
 
 (defn attribute-from-response [sevak-data attrib-name]
   (if (= swarmiji-sevak-init-value sevak-data)
@@ -41,11 +44,10 @@
 
 (defn disconnect-proxy [sevak-proxy]
   (if sevak-proxy 
-    (let [{:keys [channel queue proxy-future]} sevak-proxy] ;[chan (:channel sevak-proxy) queue (:queue sevak-proxy)]
+    (let [{:keys [channel queue]} sevak-proxy]
       (try
        (with-swarmiji-bindings
 	 (.queueDelete channel queue)
-         (future-cancel proxy-future)
 	 (catch Exception e))))))
          ;no-op, this sevak-proxy should be aborted, thats it
 
