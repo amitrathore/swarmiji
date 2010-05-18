@@ -1,10 +1,14 @@
-(ns org.runa.swarmiji.mpi.supervisor
+(ns org.runa.swarmiji.mpi.supervised-threadpool
   (:use org.runa.swarmiji.sevak.bindings
         org.rathore.amit.utils.clojure
-        org.rathore.amit.utils.logger))
+        org.rathore.amit.utils.logger)
+  (:import java.util.concurrent.ExecutorService
+           java.util.concurrent.Executors))
 
 (def THREAD-TIMEOUT-MILLIS 20000)
 (def SUPERVISE-EVERY-MILLIS 10000)
+(def THREADPOOL-SIZE (* 3 (.availableProcessors (Runtime/getRuntime))))
+(def THREADPOOL (Executors/newFixedThreadPool THREADPOOL-SIZE))
 
 (def running-sevaks (ref {}))
 
@@ -16,12 +20,14 @@
   (dosync (alter running-sevaks dissoc return-queue-name)))
 
 (defn on-swarmiji-future [return-queue-name thunk]
-  (let [work (fn [_]
+  (let [work (fn []
                (with-swarmiji-bindings
                 (log-message "claiming" (.getName (Thread/currentThread)) "for" return-queue-name)
                 (claim-thread return-queue-name)
                 (thunk)))]
-    (send (agent nil) work)))
+    ;(send (agent nil) work)
+    (.submit THREADPOOL work)
+))
 
 (defn preempt-swarmiji-future [[rqn {:keys [thread]}]]
   (.interrupt thread)

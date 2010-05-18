@@ -10,7 +10,7 @@
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
-(use 'org.runa.swarmiji.mpi.supervisor)
+(use 'org.runa.swarmiji.mpi.supervised-threadpool)
 
 (def WORK-REPORT "WORK_REPORT")
 
@@ -18,7 +18,7 @@
 
 (def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
 
-;(start-supervisor)
+(start-supervisor)
 
 (defn attribute-from-response [sevak-data attrib-name]
   (if (= swarmiji-sevak-init-value sevak-data)

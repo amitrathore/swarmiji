@@ -9,7 +9,7 @@
 (use 'org.rathore.amit.utils.clojure)
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.rabbitmq)
-(use 'org.runa.swarmiji.mpi.supervisor)
+(use 'org.runa.swarmiji.mpi.supervised-threadpool)
 
 (defn sevak-queue-message-no-return [sevak-service args]
   {:sevak-service-name sevak-service
