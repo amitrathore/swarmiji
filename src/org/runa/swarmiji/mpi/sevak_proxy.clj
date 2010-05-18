@@ -24,11 +24,11 @@
         on-response (fn [msg]
                       (custom-handler (read-string msg))
                       (.queueDelete chan return-q-name)
-                      (.close chan))
+                      (.close chan)
+                      (mark-completion return-q-name))
         f (fn []
-            (do 
-              (send-message-on-queue (queue-sevak-q-name) request-object)
-              (on-response (delivery-from chan consumer))))]
+            (send-message-on-queue (queue-sevak-q-name) request-object)
+            (on-response (delivery-from chan consumer)))]
     (on-swarmiji-future return-q-name f)
     {:channel chan :queue return-q-name :consumer consumer}))
 

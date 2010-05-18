@@ -21,13 +21,9 @@
 
 (defn on-swarmiji-future [return-queue-name thunk]
   (let [work (fn []
-               (with-swarmiji-bindings
-                (log-message "claiming" (.getName (Thread/currentThread)) "for" return-queue-name)
-                (claim-thread return-queue-name)
-                (thunk)))]
-    ;(send (agent nil) work)
-    (.submit THREADPOOL work)
-))
+               (claim-thread return-queue-name)
+               (thunk))]
+    (.submit THREADPOOL work)))
 
 (defn preempt-swarmiji-future [[rqn {:keys [thread]}]]
   (.interrupt thread)
