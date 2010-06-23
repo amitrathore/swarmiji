@@ -6,6 +6,7 @@
            java.util.concurrent.Executors))
 
 (def THREAD-TIMEOUT-MILLIS 20000)
+(def *SUPERVISOR-ENABLED* true)
 (def SUPERVISE-EVERY-MILLIS 10000)
 (def THREADPOOL-SIZE (* 3 (.availableProcessors (Runtime/getRuntime))))
 (def THREADPOOL (Executors/newFixedThreadPool THREADPOOL-SIZE))
@@ -45,4 +46,5 @@
 (def start-supervisor 
      (create-runonce 
       (fn []
-        (future (supervise SUPERVISE-EVERY-MILLIS)))))
+        (if *SUPERVISOR-ENABLED*
+          (future (supervise SUPERVISE-EVERY-MILLIS))))))
