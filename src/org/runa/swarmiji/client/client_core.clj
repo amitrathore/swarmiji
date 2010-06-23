@@ -18,8 +18,6 @@
 
 (def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
 
-(start-supervisor)
-
 (defn attribute-from-response [sevak-data attrib-name]
   (if (= swarmiji-sevak-init-value sevak-data)
     (throw (Exception. "Sevak not complete!")))
