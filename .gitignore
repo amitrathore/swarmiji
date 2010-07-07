@@ -5,3 +5,9 @@
 config/config.clj
 scripts/furtive
 logs/*
+pom.xml
+lib/
+lib/*
+classes/
+classes/*
+swarmiji.jar
