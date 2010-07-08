@@ -10,6 +10,6 @@
                  [org.clojars.sethtrain/postal "0.2.0"]
                  [clj-utils "0.1.0"]
                  [org.clojars.macourtney/clj-record "1.0.1"]
-                 [org.runa.swarmiji/swarmiji-java "0.1"]]
+                 [org.clojars.amit/swarmiji-java "0.2.0"]]
   :dev-dependencies [[swank-clojure "1.2.1"]])
 
