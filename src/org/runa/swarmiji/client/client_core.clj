@@ -10,7 +10,6 @@
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
-(use 'org.runa.swarmiji.mpi.supervised-threadpool)
 
 (def WORK-REPORT "WORK_REPORT")
 

@@ -9,7 +9,7 @@
 (use 'org.rathore.amit.utils.clojure)
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.rabbitmq)
-(use 'org.runa.swarmiji.mpi.supervised-threadpool)
+(use 'org.rathore.amit.medusa.core)
 
 (defn sevak-queue-message-no-return [sevak-service args]
   {:sevak-service-name sevak-service
@@ -24,12 +24,11 @@
         on-response (fn [msg]
                       (custom-handler (read-string msg))
                       (.queueDelete chan return-q-name)
-                      (.close chan)
-                      (mark-completion return-q-name))
+                      (.close chan))
         f (fn []
             (send-message-on-queue (queue-sevak-q-name) request-object)
             (on-response (delivery-from chan consumer)))]
-    (on-swarmiji-future return-q-name f)
+    (medusa-future-thunk return-q-name f)
     {:channel chan :queue return-q-name :consumer consumer}))
 
 (defn new-proxy 
