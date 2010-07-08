@@ -9,6 +9,7 @@
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
+(use 'org.rathore.amit.medusa.core)
 
 (def sevaks (ref {}))
 
@@ -58,12 +59,11 @@
    (try
     (let [req (read-string req-str)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
-	  service-handler (@sevaks (keyword service-name))
-	  sevak-agent (agent service-handler)]
-      (log-message "Received request for" service-name "with args:" service-args)
+	  service-handler (@sevaks (keyword service-name))]
+      (log-message "[" (number-of-queued-tasks) "]: Received request for" service-name "with args:" service-args)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
-      (send sevak-agent async-sevak-handler service-name service-args return-q))
+      (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q)))
     (catch Exception e
       (log-exception e)))))
 
@@ -74,6 +74,7 @@
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (init-rabbit)
+  (init-medusa)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (future 
     (with-swarmiji-bindings 

@@ -19,6 +19,7 @@
   (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name)))
 
 (defn register-callback [return-q-name custom-handler request-object]
+  (init-medusa)
   (let [chan (new-channel)
         consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
@@ -28,6 +29,7 @@
         f (fn []
             (send-message-on-queue (queue-sevak-q-name) request-object)
             (on-response (delivery-from chan consumer)))]
+    (log-message "[" (number-of-queued-tasks) "]: Dispatching request")
     (medusa-future-thunk return-q-name f)
     {:channel chan :queue return-q-name :consumer consumer}))
 
