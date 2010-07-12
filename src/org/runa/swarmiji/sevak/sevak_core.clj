@@ -74,7 +74,7 @@
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (init-rabbit)
-  (init-medusa)
+  (init-medusa 300)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (future 
     (with-swarmiji-bindings 
