@@ -74,6 +74,7 @@
 	:complete? (complete?)
 	:value (response-value-from @sevak-data)
 	:status (@sevak-data :status)
+	:success? (success?)
 	:sevak-time (sevak-time)
 	:total-time @total-sevak-time
 	:messaging-time (messaging-time)
@@ -146,6 +147,7 @@
        (= accessor :disconnect) nil
        (= accessor :complete?) true
        (= accessor :status) "success"
+       (= accessor :success?) true
        (= accessor :sevak-time) (@response-with-time :time-taken)
        (= accessor :messaging-time) 0
        (= accessor :total-time) (@response-with-time :time-taken)
