@@ -60,7 +60,7 @@
     (let [req (read-string req-str)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))]
-      (log-message "[" (number-of-queued-tasks) "]: Received request for" service-name "with args:" service-args)
+      (log-message "[" (number-of-queued-tasks) "]: Received request for" service-name "With args:" service-args)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
       (let [f (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q))]
