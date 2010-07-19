@@ -63,7 +63,10 @@
       (log-message "[" (number-of-queued-tasks) "]: Received request for" service-name "with args:" service-args)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
-      (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q)))
+      (let [f (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q))]
+        (when (> (number-of-queued-tasks) 10)
+          (.get f))
+        f))
     (catch Exception e
       (log-exception e)))))
 
