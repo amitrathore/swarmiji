@@ -42,6 +42,8 @@
 	  value (response-with-time :response)
 	  time-elapsed (response-with-time :time-taken)]
       {:response value :status :success :sevak-time time-elapsed})
+    (catch InterruptedException ie
+      (throw ie))
     (catch Exception e 
       (log-exception e)
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
@@ -60,7 +62,7 @@
     (let [req (read-string req-str)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))]
-      (log-message "[" (number-of-queued-tasks) "]: Received request for" service-name "With args:" service-args)
+      (log-message "[ in-q pool completed" (number-of-queued-tasks) (current-pool-size) (completed-task-count) "]: Received request for" service-name "With args:" service-args)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
       (let [f (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q))]
