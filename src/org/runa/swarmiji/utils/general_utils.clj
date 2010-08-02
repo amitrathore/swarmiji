@@ -8,8 +8,8 @@
 (defn random-uuid []
   (str (UUID/randomUUID)))
 
-(defn return-queue-name []
-  (random-uuid))
+(defn return-queue-name [sevak-name]
+  (str (System/currentTimeMillis) "_" sevak-name "_" (random-uuid)))
 
 (defn random-queue-name []
   (random-uuid))

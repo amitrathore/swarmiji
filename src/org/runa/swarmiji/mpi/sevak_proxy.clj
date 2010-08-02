@@ -16,7 +16,7 @@
    :sevak-service-args args})
 
 (defn sevak-queue-message-for-return [sevak-service args]
-  (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name)))
+  (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name sevak-service)))
 
 (defn register-callback [return-q-name custom-handler request-object]
   (init-medusa 140)

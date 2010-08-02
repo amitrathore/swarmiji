@@ -102,15 +102,15 @@
   ([swarm-requests allowed-time]
      (wait-until-completion swarm-requests allowed-time throw-exception))
   ([swarm-requests allowed-time error-fn]
-     (loop [all-complete (all-complete? swarm-requests) elapsed-time 0]
-       (if (> elapsed-time allowed-time)
-         (do
-           (disconnect-all swarm-requests)
-           (error-fn allowed-time))
-         (if (not all-complete)
-           (do
-             (Thread/sleep 100)
-             (recur (all-complete? swarm-requests) (+ elapsed-time 100))))))))
+     (try
+      (loop [all-complete (all-complete? swarm-requests) elapsed-time 0]
+        (if (> elapsed-time allowed-time)
+          (error-fn allowed-time)
+          (when-not all-complete
+            (Thread/sleep 100)
+            (recur (all-complete? swarm-requests) (+ elapsed-time 100)))))
+      (finally
+       (disconnect-all swarm-requests)))))
 
 (defn wait-until-completion-no-exception
   [swarm-requests allowed-time]
