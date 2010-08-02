@@ -45,7 +45,7 @@
     (catch InterruptedException ie
       (throw ie))
     (catch Exception e 
-      (log-message "Error processing" service-name "with args:" service-args)
+      (log-message "ERROR!" (class e) "detected while running" service-name "with args:" service-args)
       (log-exception e)
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
 
