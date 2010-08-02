@@ -34,7 +34,7 @@
      (dosync (ref-set sevaks (assoc @sevaks seva-name# {:return Boolean/FALSE :fn (fn ~args (do ~@expr))})))
      (def ~service-name (sevak-runner seva-name# Boolean/FALSE ~args))))
 
-(defn handle-sevak-request [service-handler service-args]
+(defn handle-sevak-request [service-name service-handler service-args]
   (with-swarmiji-bindings
    (try
     (let [response-with-time (run-and-measure-timing 
@@ -45,6 +45,7 @@
     (catch InterruptedException ie
       (throw ie))
     (catch Exception e 
+      (log-message "Error processing" service-name "with args:" service-args)
       (log-exception e)
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
 
@@ -52,7 +53,7 @@
   (with-swarmiji-bindings
     (let [response (merge 
 		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
-		    (handle-sevak-request service-handler service-args))]
+		    (handle-sevak-request sevak-name service-handler service-args))]
       (if (and return-q (:return service-handler))
 	(send-message-on-queue return-q response)))))
 
