@@ -73,6 +73,14 @@
     (catch Exception e
       (log-exception e)))))
 
+(defn start-handler [h]
+  (future 
+    (with-swarmiji-bindings 
+      (log-message "starting message handler")
+      (h)
+      (log-message "message handler exited! Restarting!")
+      (System/exit 1))))
+
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
   (log-message "System config:" (operation-config))
@@ -82,10 +90,10 @@
   (init-rabbit)
   (init-medusa 300)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
-  (future 
-    (with-swarmiji-bindings 
-      (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE (random-queue-name) sevak-request-handling-listener)))
-  (future 
-    (with-swarmiji-bindings 
-      (start-queue-message-handler (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener)))
+  (start-handler
+   #(start-queue-message-handler (sevak-fanout-exchange-name) 
+                                 FANOUT-EXCHANGE-TYPE (random-queue-name) sevak-request-handling-listener))
+  (start-handler
+   #(start-queue-message-handler (queue-sevak-q-name)
+                                 (queue-sevak-q-name) sevak-request-handling-listener))
   (log-message "Sevak Server Started!"))
