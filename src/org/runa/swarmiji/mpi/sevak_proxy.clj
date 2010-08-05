@@ -20,7 +20,7 @@
 
 (defn register-callback [return-q-name custom-handler request-object]
   (init-medusa 140)
-  (let [chan (new-channel)
+  (let [chan (create-channel)
         consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
                       (custom-handler (read-string msg))

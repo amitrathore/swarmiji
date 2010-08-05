@@ -71,6 +71,7 @@
           (.get f))
         f))
     (catch Exception e
+      (log-message "Error in sevak-request-handling-listener:" (class e))
       (log-exception e)))))
 
 (defn boot-sevak-server []
@@ -82,10 +83,25 @@
   (init-rabbit)
   (init-medusa 300)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
-  (future 
-    (with-swarmiji-bindings 
-      (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE (random-queue-name) sevak-request-handling-listener)))
-  (future 
-    (with-swarmiji-bindings 
-      (start-queue-message-handler (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener)))
+
+(future 
+  (with-swarmiji-bindings
+    (try
+     (log-message "Listening for update broadcasts...")
+     (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE (random-queue-name) sevak-request-handling-listener)
+     (log-message "Done with broadcasts!")
+     (catch Exception e
+       (log-message "Error in update broadcasts future!")
+       (log-exception e)))))
+
+(future 
+  (with-swarmiji-bindings 
+    (try
+     (log-message "Starting to serve sevak requests...")
+     (start-queue-message-handler (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener)
+     (log-message "Done with sevak requests!")
+     (catch Exception e
+       (log-message "Error in sevak-servicing future!")
+       (log-exception e)))))
+  
   (log-message "Sevak Server Started!"))
