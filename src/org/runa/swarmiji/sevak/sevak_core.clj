@@ -45,8 +45,7 @@
     (catch InterruptedException ie
       (throw ie))
     (catch Exception e 
-      (log-message "ERROR!" (class e) "detected while running" service-name "with args:" service-args)
-      (log-exception e)
+      (log-exception e (str "SEVAK ERROR! " (class e) " detected while running " service-name " with args: " service-args))
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
 
 (defn async-sevak-handler [service-handler sevak-name service-args return-q]
@@ -63,7 +62,7 @@
     (let [req (read-string req-str)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))]
-      (log-message "[ in-q pool completed" (number-of-queued-tasks) (current-pool-size) (completed-task-count) "]: Received request for" service-name "With args:" service-args)
+      (log-message "[ in-q pool completed" (number-of-queued-tasks) (current-pool-size) (completed-task-count) "]: Received request for" service-name "with args:" service-args "and return-q:" return-q)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
       (let [f (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q))]
