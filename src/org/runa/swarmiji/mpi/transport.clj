@@ -4,6 +4,11 @@
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.rabbitmq)
 
+(defn send-message-no-declare [q-name q-message-object]
+  (with-swarmiji-bindings
+    (with-exception-logging 
+      (send-message-if-queue q-name q-message-object))))
+
 (defn send-message-on-queue [q-name q-message-object]
   (with-swarmiji-bindings
     (with-exception-logging 

@@ -54,7 +54,7 @@
 		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		    (handle-sevak-request sevak-name service-handler service-args))]
       (if (and return-q (:return service-handler))
-	(send-message-on-queue return-q response)))))
+	(send-message-no-declare return-q response)))))
 
 (defn sevak-request-handling-listener [req-str]
   (with-swarmiji-bindings
@@ -85,13 +85,15 @@
 
 (future 
   (with-swarmiji-bindings
-    (try
-     (log-message "Listening for update broadcasts...")
-     (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE (random-queue-name) sevak-request-handling-listener)
-     (log-message "Done with broadcasts!")
-     (catch Exception e
-       (log-message "Error in update broadcasts future!")
-       (log-exception e)))))
+    (let [broadcasts-q (random-queue-name "BROADCASTS_")]
+      (try
+       (log-message "Listening for update broadcasts...")
+       (.addShutdownHook (Runtime/getRuntime) (Thread. #(delete-queue broadcasts-q)))
+       (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) sevak-request-handling-listener)
+       (log-message "Done with broadcasts!")    
+       (catch Exception e         
+         (log-message "Error in update broadcasts future!")
+         (log-exception e))))))
 
 (future 
   (with-swarmiji-bindings 
