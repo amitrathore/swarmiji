@@ -20,18 +20,7 @@
 
 (defn register-callback [return-q-name custom-handler request-object]
   (init-medusa 140)
-  (let [chan (create-channel)
-        consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
-        on-response (fn [msg]
-                      (custom-handler (read-string msg))
-                      (.queueDelete chan return-q-name)
-                      (.close chan))
-        f (fn []
-            (send-message-on-queue (queue-sevak-q-name) request-object)
-            (on-response (delivery-from chan consumer)))]
-    (log-message "[" (number-of-queued-tasks) "]: Dispatching request")
-    (medusa-future-thunk return-q-name f)
-    {:channel chan :queue return-q-name :consumer consumer}))
+  (register-callback-or-fallback return-q-name custom-handler request-object))
 
 (defn new-proxy 
   ([sevak-service args callback-function]
