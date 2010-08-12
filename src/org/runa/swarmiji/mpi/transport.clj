@@ -7,8 +7,7 @@
 (use 'org.rathore.amit.medusa.core)
 
 (def rabbit-down-messages (atom {}))
-
-(declare add-to-rabbit-down-queue start-retry-rabbit)
+(def *guaranteed-sevaks*)
 
 (defn send-message-no-declare [q-name q-message-object]
   (with-swarmiji-bindings
@@ -23,10 +22,8 @@
 (defn fanout-message-to-all [message-object]
   (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE "" message-object))
 
-(defn init-rabbit []
-  (log-message "Swarmiji: RabbitMQ host is" (queue-host))
-  (init-rabbitmq-connection (queue-host) (queue-username) (queue-password))
-  (start-retry-rabbit 10000))
+(defn should-fallback [sevak-name]
+  (some #{(keyword sevak-name)} *guaranteed-sevaks*))
 
 (defn send-and-register-callback [return-q-name custom-handler request-object]
   (let [chan (create-channel)
@@ -42,21 +39,23 @@
     (medusa-future-thunk return-q-name f)
     {:channel chan :queue return-q-name :consumer consumer}))
 
+(defn add-to-rabbit-down-queue [return-queue-name custom-handler request-object]
+  (swap! rabbit-down-messages assoc (System/currentTimeMillis) [return-queue-name custom-handler request-object]))
+
 (defn register-callback-or-fallback [return-q-name custom-handler request-object]
   (try
    (send-and-register-callback return-q-name custom-handler request-object)
    (catch java.net.ConnectException ce
-     (add-to-rabbit-down-queue return-q-name custom-handler request-object))))
-
-(defn add-to-rabbit-down-queue [return-queue-name custom-handler request-object]
-  (swap! rabbit-down-messages assoc (System/currentTimeMillis) [return-queue-name custom-handler request-object]))
+     (if (should-fallback (:sevak-service-name request-object))
+       (add-to-rabbit-down-queue return-q-name custom-handler request-object)))))
 
 (defn retry-message [timestamp [return-queue-name custom-handler request-object]]
    (with-swarmiji-bindings
      (try
       (send-and-register-callback return-queue-name custom-handler request-object)
       (swap! rabbit-down-messages dissoc timestamp)
-      (catch java.net.ConnectException ce) ;;ignore, will try again later
+      (catch java.net.ConnectException ce
+        (log-message "RabbitMQ still down, will retry" (count @rabbit-down-messages) "messages...")) ;;ignore, will try again later
       (catch Exception e 
         (log-exception e "Trouble in swarmiji auto-retry!")))))
 
@@ -69,3 +68,8 @@
 (defrunonce start-retry-rabbit [sleep-millis]
   (future
     (retry-periodically sleep-millis)))
+
+(defn init-rabbit []
+  (log-message "Swarmiji: RabbitMQ host is" (queue-host))
+  (init-rabbitmq-connection (queue-host) (queue-username) (queue-password))
+  (start-retry-rabbit 10000))
