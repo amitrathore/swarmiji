@@ -88,7 +88,7 @@
     (let [broadcasts-q (random-queue-name "BROADCASTS_")]
       (try
        (log-message "Listening for update broadcasts...")
-       (.addShutdownHook (Runtime/getRuntime) (Thread. #(delete-queue broadcasts-q)))
+       (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
        (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) sevak-request-handling-listener)
        (log-message "Done with broadcasts!")    
        (catch Exception e         
