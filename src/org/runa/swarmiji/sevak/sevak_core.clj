@@ -45,8 +45,7 @@
     (catch InterruptedException ie
       (throw ie))
     (catch Exception e 
-      (log-message "ERROR!" (class e) "detected while running" service-name "with args:" service-args)
-      (log-exception e)
+      (log-exception e (str "SEVAK ERROR! " (class e) " detected while running " service-name " with args: " service-args))
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error}))))
 
 (defn async-sevak-handler [service-handler sevak-name service-args return-q]
@@ -55,7 +54,7 @@
 		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		    (handle-sevak-request sevak-name service-handler service-args))]
       (if (and return-q (:return service-handler))
-	(send-message-on-queue return-q response)))))
+	(send-message-no-declare return-q response)))))
 
 (defn sevak-request-handling-listener [req-str]
   (with-swarmiji-bindings
@@ -63,7 +62,7 @@
     (let [req (read-string req-str)
 	  service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
 	  service-handler (@sevaks (keyword service-name))]
-      (log-message "[ in-q pool completed" (number-of-queued-tasks) (current-pool-size) (completed-task-count) "]: Received request for" service-name "With args:" service-args)
+      (log-message "[ in-q pool completed" (number-of-queued-tasks) (current-pool-size) (completed-task-count) "]: Received request for" service-name "with args:" service-args "and return-q:" return-q)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
       (let [f (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q))]
@@ -71,17 +70,8 @@
           (.get f))
         f))
     (catch Exception e
+      (log-message "Error in sevak-request-handling-listener:" (class e))
       (log-exception e)))))
-
-(defn start-handler [h]
-  (future 
-    (with-swarmiji-bindings 
-      (log-message "starting message handler")
-      (try
-       (h)
-       (finally
-        (log-message "message handler exited! Restarting!")
-        (System/exit 1))))))
 
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
@@ -92,10 +82,27 @@
   (init-rabbit)
   (init-medusa 300)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
-  (start-handler 
-   #(start-queue-message-handler (sevak-fanout-exchange-name) 
-                                 FANOUT-EXCHANGE-TYPE (random-queue-name) sevak-request-handling-listener))
-  (start-handler
-   #(start-queue-message-handler (queue-sevak-q-name)
-                                 (queue-sevak-q-name) sevak-request-handling-listener))
-  (log-message "Sevak Server Started!"))
+
+  (future 
+   (with-swarmiji-bindings
+     (let [broadcasts-q (random-queue-name "BROADCASTS_")]
+       (try
+        (log-message "Listening for update broadcasts...")
+        (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
+        (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) sevak-request-handling-listener)
+        (log-message "Done with broadcasts!")    
+        (catch Exception e         
+          (log-message "Error in update broadcasts future!")
+          (log-exception e))))))
+  
+  (future 
+   (with-swarmiji-bindings 
+     (try
+      (log-message "Starting to serve sevak requests...")
+      (start-queue-message-handler (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener)
+      (log-message "Done with sevak requests!")
+      (catch Exception e
+        (log-message "Error in sevak-servicing future!")
+        (log-exception e)))))
+  
+(log-message "Sevak Server Started!"))
