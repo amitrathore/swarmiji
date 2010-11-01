@@ -29,13 +29,17 @@
   (let [chan (create-channel)
         consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
-                      (custom-handler (read-string msg))
-                      (.queueDelete chan return-q-name)
-                      (.close chan))
+                      (with-swarmiji-bindings
+                        (try
+                          (custom-handler msg)
+                          (finally
+                           (.queueDelete chan return-q-name)
+                           (.close chan)))))
         f (fn []
             (send-message-on-queue (queue-sevak-q-name) request-object)
             (on-response (delivery-from chan consumer)))]
-    (log-message "[" (number-of-queued-tasks) "]: Dispatching request")
+    (log-message "[" (number-of-queued-tasks) (futures-count)
+                 "]: Dispatching request on " return-q-name)
     (medusa-future-thunk return-q-name f)
     {:channel chan :queue return-q-name :consumer consumer}))
 
