@@ -48,6 +48,13 @@
 	 (catch Exception e))))))
          ;no-op, this sevak-proxy should be aborted, thats it
 
+(defn unserialized-response [response-obj-string]
+  (try
+    (read-string response-obj-string)
+    (catch Exception e 
+      (log-exception e (str "Read failed on " response-obj-string))
+      {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
+
 (defn on-swarm [sevak-service & args]
   (let [sevak-start (ref (System/currentTimeMillis))
 	total-sevak-time (ref nil)
@@ -57,8 +64,8 @@
 	sevak-name (fn [] (sevak-name-from @sevak-data))
 	sevak-time (fn [] (time-on-server @sevak-data))
 	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
-	on-swarm-response (fn [response-object]
-			    (dosync (ref-set sevak-data response-object))
+	on-swarm-response (fn [response-object-string]
+			    (dosync (ref-set sevak-data (unserialized-response response-object-string)))
 			     (do
 			       (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
 			       (if (and (swarmiji-diagnostics-mode?) (success?))
