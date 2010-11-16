@@ -19,7 +19,7 @@
   (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name sevak-service)))
 
 (defn register-callback [return-q-name custom-handler request-object]
-  (init-medusa 140)
+  (init-medusa (medusa-client-thread-count))
   (register-callback-or-fallback return-q-name custom-handler request-object))
 
 (defn new-proxy 

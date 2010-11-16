@@ -80,9 +80,12 @@
   (log-message "System config:" (operation-config))
   (log-message "MPI transport Q:" (queue-sevak-q-name))
   (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
+  (log-message "Medusa server threads:" (medusa-server-thread-count))
+  (log-message "Medusa client threads:" (medusa-client-thread-count))
+  (log-message "RabbitMQ prefetch-count:" (rabbitmq-prefetch-count))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (init-rabbit)
-  (init-medusa 300)
+  (init-medusa (medusa-server-thread-count))
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
 
   (future 
@@ -101,7 +104,7 @@
    (with-swarmiji-bindings 
      (try
       (log-message "Starting to serve sevak requests...")
-      (with-prefetch-count 300
+      (with-prefetch-count (rabbitmq-prefetch-count)
         (start-queue-message-handler (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener))
       (log-message "Done with sevak requests!")
       (catch Exception e

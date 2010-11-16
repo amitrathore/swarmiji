@@ -58,6 +58,15 @@
 (defn log-to-console? []
   ((operation-config) :log-to-console))
 
+(defn rabbitmq-prefetch-count []
+  ((operation-config) :rabbit-prefetch-count))
+
+(defn medusa-server-thread-count []
+  ((operation-config) :medusa-server-thread-count))
+
+(defn medusa-client-thread-count []
+  ((operation-config) :medusa-client-thread-count))
+
 (defn config-for-rathore-utils [process-type-id]
   {:log-to-console (log-to-console?) 
    :logs-dir ((operation-config) :logsdir) 
