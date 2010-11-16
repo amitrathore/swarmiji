@@ -4,6 +4,7 @@
 (use '[clojure.contrib.duck-streams :only (spit)])
 (import '(java.lang.management ManagementFactory))
 (use 'org.rathore.amit.utils.clojure)
+(use 'org.rathore.amit.utils.rabbitmq)
 
 (defn random-uuid []
   (str (UUID/randomUUID)))
@@ -23,3 +24,7 @@
 
 (defn simulate-serialized [hash-object]
   (read-string (str hash-object)))
+
+(defmacro with-prefetch-count [prefetch-count & body]
+  `(binding [*PREFETCH-COUNT* ~prefetch-count]
+     (do ~@body)))
