@@ -16,23 +16,33 @@
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
-(defmacro sevak-runner [sevak-name needs-response sevak-args]
+(defmacro sevak-runner [realtime? sevak-name needs-response sevak-args]
   `(fn ~sevak-args 
       (if (swarmiji-distributed-mode?)
 	(if ~needs-response
-	    (apply on-swarm (cons ~sevak-name ~sevak-args))
-	    (apply on-swarm-no-response (cons ~sevak-name ~sevak-args)))
+	    (apply on-swarm ~realtime? ~sevak-name ~sevak-args)
+	    (apply on-swarm-no-response ~realtime? ~sevak-name ~sevak-args))
 	(apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
 
 (defmacro defsevak [service-name args & expr]
   `(let [sevak-name# (keyword (str '~service-name))]
      (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:return Boolean/TRUE :fn (fn ~args (do ~@expr))})))
-     (def ~service-name (sevak-runner sevak-name# Boolean/TRUE ~args))))
+     (def ~service-name (sevak-runner true sevak-name# Boolean/TRUE ~args))))
 
 (defmacro defseva [service-name args & expr]
   `(let [seva-name# (keyword (str '~service-name))]
      (dosync (ref-set sevaks (assoc @sevaks seva-name# {:return Boolean/FALSE :fn (fn ~args (do ~@expr))})))
-     (def ~service-name (sevak-runner seva-name# Boolean/FALSE ~args))))
+     (def ~service-name (sevak-runner true seva-name# Boolean/FALSE ~args))))
+
+(defmacro defsevak-nr [service-name args & expr]
+  `(let [sevak-name# (keyword (str '~service-name))]
+     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:return Boolean/TRUE :fn (fn ~args (do ~@expr))})))
+     (def ~service-name (sevak-runner false sevak-name# Boolean/TRUE ~args))))
+
+(defmacro defseva-nr [service-name args & expr]
+  `(let [seva-name# (keyword (str '~service-name))]
+     (dosync (ref-set sevaks (assoc @sevaks seva-name# {:return Boolean/FALSE :fn (fn ~args (do ~@expr))})))
+     (def ~service-name (sevak-runner false seva-name# Boolean/FALSE ~args))))
 
 (defn handle-sevak-request [service-name service-handler service-args ack-fn]
   (with-swarmiji-bindings
@@ -78,8 +88,6 @@
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
   (log-message "System config:" (operation-config))
-  (log-message "MPI transport Q:" (queue-sevak-q-name))
-  (log-message "MPI diagnostics Q:" (queue-diagnostics-q-name))
   (log-message "Medusa server threads:" (medusa-server-thread-count))
   (log-message "Medusa client threads:" (medusa-client-thread-count))
   (log-message "RabbitMQ prefetch-count:" (rabbitmq-prefetch-count))
@@ -103,12 +111,23 @@
   (future 
    (with-swarmiji-bindings 
      (try
-      (log-message "Starting to serve sevak requests...")
+      (log-message "Starting to serve realtime sevak requests...")
       (with-prefetch-count (rabbitmq-prefetch-count)
-        (start-queue-message-handler (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener))
+        (start-queue-message-handler (queue-sevak-q-name true) (queue-sevak-q-name true) sevak-request-handling-listener))
       (log-message "Done with sevak requests!")
       (catch Exception e
         (log-message "Error in sevak-servicing future!")
         (log-exception e)))))
+
+  (future 
+    (with-swarmiji-bindings 
+      (try
+       (log-message "Starting to serve non-realtime sevak requests...")
+       (with-prefetch-count (rabbitmq-prefetch-count)
+         (start-queue-message-handler (queue-sevak-q-name false) (queue-sevak-q-name false) sevak-request-handling-listener))
+       (log-message "Done with sevak requests!")
+       (catch Exception e
+         (log-message "Error in sevak-servicing future!")
+         (log-exception e)))))
   
 (log-message "Sevak Server Started!"))

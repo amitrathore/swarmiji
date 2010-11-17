@@ -18,19 +18,19 @@
 (defn sevak-queue-message-for-return [sevak-service args]
   (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name sevak-service)))
 
-(defn register-callback [return-q-name custom-handler request-object]
+(defn register-callback [realtime? return-q-name custom-handler request-object]
   (init-medusa (medusa-client-thread-count))
-  (register-callback-or-fallback return-q-name custom-handler request-object))
+  (register-callback-or-fallback realtime? return-q-name custom-handler request-object))
 
 (defn new-proxy 
-  ([sevak-service args callback-function]
+  ([realtime? sevak-service args callback-function]
      (let [request-object (sevak-queue-message-for-return sevak-service args)
 	   return-q-name (request-object :return-queue-name)
-	   proxy-object (register-callback return-q-name callback-function request-object)]
+	   proxy-object (register-callback realtime? return-q-name callback-function request-object)]
        proxy-object))
-  ([sevak-service args]
+  ([realtime? sevak-service args]
      (let [request-object (sevak-queue-message-no-return sevak-service args)]
-       (send-message-on-queue (queue-sevak-q-name) request-object)
+       (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
        nil)))
 
 (defmacro multicast-to-sevak-servers [sevak-name & args]

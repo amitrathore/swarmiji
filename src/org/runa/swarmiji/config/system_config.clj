@@ -40,8 +40,10 @@
 (defn queue-password []
   ((operation-config) :q-password))
 
-(defn queue-sevak-q-name []
-  (str ((operation-config) :sevak-request-queue-prefix) (swarmiji-user)))
+(defn queue-sevak-q-name [realtime?]
+  (if realtime?
+    (str ((operation-config) :sevak-request-queue-prefix) "realtime_" (swarmiji-user))
+    (str ((operation-config) :sevak-request-queue-prefix) "non_realtime_" (swarmiji-user))))
 
 (defn queue-diagnostics-q-name []
   (str ((operation-config) :sevak-diagnostics-queue-prefix) (swarmiji-user)))

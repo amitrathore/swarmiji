@@ -56,7 +56,7 @@
       (log-exception e (str "Read failed on " response-obj-string))
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
-(defn on-swarm [sevak-service & args]
+(defn on-swarm [realtime? sevak-service & args]
   (let [sevak-start (ref (System/currentTimeMillis))
 	total-sevak-time (ref nil)
 	sevak-data (ref swarmiji-sevak-init-value)
@@ -71,7 +71,7 @@
 			       (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
 			       (if (and (swarmiji-diagnostics-mode?) (success?))
 				 (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
-	on-swarm-proxy-client (new-proxy (name sevak-service) args on-swarm-response)]
+	on-swarm-proxy-client (new-proxy realtime? (name sevak-service) args on-swarm-response)]
     (fn [accessor]
       (condp = accessor
 	:sevak-name (name sevak-service)
@@ -92,8 +92,8 @@
 	:default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
 
 
-(defn on-swarm-no-response [sevak-service & args]
-  (new-proxy (name sevak-service) args)
+(defn on-swarm-no-response [realtime? sevak-service & args]
+  (new-proxy realtime? (name sevak-service) args)
   nil)
 
 (defn all-complete? [swarm-requests]

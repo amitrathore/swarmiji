@@ -25,7 +25,7 @@
 (defn should-fallback [sevak-name]
   (some #{(keyword sevak-name)} *guaranteed-sevaks*))
 
-(defn send-and-register-callback [return-q-name custom-handler request-object]
+(defn send-and-register-callback [realtime? return-q-name custom-handler request-object]
   (let [chan (create-channel)
         consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
@@ -36,27 +36,25 @@
                            (.queueDelete chan return-q-name)
                            (.close chan)))))
         f (fn []
-            (send-message-on-queue (queue-sevak-q-name) request-object)
+            (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
             (on-response (delivery-from chan consumer)))]
-    (log-message "[" (number-of-queued-tasks) (futures-count)
-                 "]: Dispatching request on " return-q-name)
     (medusa-future-thunk return-q-name f)
     {:channel chan :queue return-q-name :consumer consumer}))
 
-(defn add-to-rabbit-down-queue [return-queue-name custom-handler request-object]
-  (swap! rabbit-down-messages assoc (System/currentTimeMillis) [return-queue-name custom-handler request-object]))
+(defn add-to-rabbit-down-queue [realtime? return-queue-name custom-handler request-object]
+  (swap! rabbit-down-messages assoc (System/currentTimeMillis) [realtime? return-queue-name custom-handler request-object]))
 
-(defn register-callback-or-fallback [return-q-name custom-handler request-object]
+(defn register-callback-or-fallback [realtime? return-q-name custom-handler request-object]
   (try
-   (send-and-register-callback return-q-name custom-handler request-object)
+   (send-and-register-callback realtime? return-q-name custom-handler request-object)
    (catch java.net.ConnectException ce
      (if (should-fallback (:sevak-service-name request-object))
-       (add-to-rabbit-down-queue return-q-name custom-handler request-object)))))
+       (add-to-rabbit-down-queue realtime? return-q-name custom-handler request-object)))))
 
-(defn retry-message [timestamp [return-queue-name custom-handler request-object]]
+(defn retry-message [timestamp [realtime? return-queue-name custom-handler request-object]]
    (with-swarmiji-bindings
      (try
-      (send-and-register-callback return-queue-name custom-handler request-object)
+      (send-and-register-callback realtime? return-queue-name custom-handler request-object)
       (swap! rabbit-down-messages dissoc timestamp)
       (catch java.net.ConnectException ce
         (log-message "RabbitMQ still down, will retry" (count @rabbit-down-messages) "messages...")) ;;ignore, will try again later
