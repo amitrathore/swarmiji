@@ -9,15 +9,15 @@
 (def rabbit-down-messages (atom {}))
 (def *guaranteed-sevaks*)
 
-(defn send-message-no-declare [q-name q-message-object]
+(defn send-message-no-declare [realtime? q-name q-message-object]
   (with-swarmiji-bindings
     (with-exception-logging 
-      (send-message-if-queue q-name q-message-object))))
+      (send-message-if-queue realtime? q-name q-message-object))))
 
-(defn send-message-on-queue [q-name q-message-object]
+(defn send-message-on-queue [realtime? q-name q-message-object]
   (with-swarmiji-bindings
     (with-exception-logging 
-      (send-message q-name q-message-object))))
+      (send-message realtime? q-name q-message-object))))
 
 (defn fanout-message-to-all [message-object]
   (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE "" message-object))
@@ -36,7 +36,7 @@
                            (.queueDelete chan return-q-name)
                            (.close chan)))))
         f (fn []
-            (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
+            (send-message-on-queue realtime? (queue-sevak-q-name) request-object)
             (on-response (delivery-from chan consumer)))]
     (medusa-future-thunk return-q-name f)
     {:channel chan :queue return-q-name :consumer consumer}))

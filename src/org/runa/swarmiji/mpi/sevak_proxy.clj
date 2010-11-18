@@ -30,7 +30,7 @@
        proxy-object))
   ([realtime? sevak-service args]
      (let [request-object (sevak-queue-message-no-return sevak-service args)]
-       (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
+       (send-message-on-queue realtime? (queue-sevak-q-name) request-object)
        nil)))
 
 (defmacro multicast-to-sevak-servers [sevak-name & args]

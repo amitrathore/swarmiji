@@ -66,7 +66,7 @@
 		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		    (handle-sevak-request sevak-name service-handler service-args ack-fn))]
       (if (and return-q (:return service-handler))
-	(send-message-no-declare return-q response)))))
+	(send-message-no-declare true return-q response)))))
 
 (defn sevak-request-handling-listener [req-str ack-fn]
   (with-swarmiji-bindings
@@ -113,21 +113,10 @@
      (try
       (log-message "Starting to serve realtime sevak requests...")
       (with-prefetch-count (rabbitmq-prefetch-count)
-        (start-queue-message-handler (queue-sevak-q-name true) (queue-sevak-q-name true) sevak-request-handling-listener))
+        (start-queue-message-handler (queue-sevak-q-name) (queue-sevak-q-name) sevak-request-handling-listener))
       (log-message "Done with sevak requests!")
       (catch Exception e
         (log-message "Error in sevak-servicing future!")
         (log-exception e)))))
-
-  (future 
-    (with-swarmiji-bindings 
-      (try
-       (log-message "Starting to serve non-realtime sevak requests...")
-       (with-prefetch-count (rabbitmq-prefetch-count)
-         (start-queue-message-handler (queue-sevak-q-name false) (queue-sevak-q-name false) sevak-request-handling-listener))
-       (log-message "Done with sevak requests!")
-       (catch Exception e
-         (log-message "Error in sevak-servicing future!")
-         (log-exception e)))))
   
 (log-message "Sevak Server Started!"))
