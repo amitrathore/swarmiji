@@ -24,25 +24,22 @@
 	    (apply on-swarm-no-response ~realtime? ~sevak-name ~sevak-args))
 	(apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
 
-(defmacro defsevak [service-name args & expr]
+(defmacro create-runner [realtime? service-name needs-response? args expr]
   `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:return Boolean/TRUE :fn (fn ~args (do ~@expr))})))
-     (def ~service-name (sevak-runner true sevak-name# Boolean/TRUE ~args))))
+     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:return ~needs-response? :fn (fn ~args (do ~@expr))})))
+     (def ~service-name (sevak-runner ~realtime? sevak-name# ~needs-response? ~args))))
+
+(defmacro defsevak [service-name args & expr]
+  `(create-runner true ~service-name true ~args ~expr))
 
 (defmacro defseva [service-name args & expr]
-  `(let [seva-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks seva-name# {:return Boolean/FALSE :fn (fn ~args (do ~@expr))})))
-     (def ~service-name (sevak-runner true seva-name# Boolean/FALSE ~args))))
+  `(create-runner true ~service-name false ~args ~expr))
 
 (defmacro defsevak-nr [service-name args & expr]
-  `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:return Boolean/TRUE :fn (fn ~args (do ~@expr))})))
-     (def ~service-name (sevak-runner false sevak-name# Boolean/TRUE ~args))))
+  `(create-runner false ~service-name true ~args ~expr))
 
 (defmacro defseva-nr [service-name args & expr]
-  `(let [seva-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks seva-name# {:return Boolean/FALSE :fn (fn ~args (do ~@expr))})))
-     (def ~service-name (sevak-runner false seva-name# Boolean/FALSE ~args))))
+  `(create-runner false ~service-name false ~args ~expr))
 
 (defn handle-sevak-request [service-name service-handler service-args ack-fn]
   (with-swarmiji-bindings
