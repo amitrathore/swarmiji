@@ -11,6 +11,7 @@
 (use 'org.rathore.amit.utils.clojure)
 
 (def sevaks (ref {}))
+(def sevaks-to-reload (atom []))
 
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
@@ -25,7 +26,7 @@
 
 (defmacro create-runner [realtime? service-name needs-response? args expr]
   `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:return ~needs-response? :fn (fn ~args (do ~@expr))})))
+     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:name sevak-name# :return ~needs-response? :fn (fn ~args (do ~@expr)) :ns *ns*})))
      (def ~service-name (sevak-runner ~realtime? sevak-name# ~needs-response? ~args))))
 
 (defmacro defsevak [service-name args & expr]
@@ -39,6 +40,21 @@
 
 (defmacro defseva-nr [service-name args & expr]
   `(create-runner false ~service-name false ~args ~expr))
+
+(defn always-reload-sevaks [& sevak-name-keywords]
+  (reset! sevaks-to-reload sevak-name-keywords))
+
+(defmacro always-reload [& names]
+  `(apply always-reload-sevaks (map keyword '~names)))
+
+(defn should-reload? [sevak-name-keyword]
+  (some #{sevak-name-keyword} @sevaks-to-reload))
+
+(defn reload-ns-if-needed [service-name]
+  (if-let [service-handler (@sevaks (keyword service-name))]
+    (when (should-reload? (:name service-handler))
+      (log-message "RELOADING:" (ns-name (:ns service-handler)))
+      (use (ns-name (:ns service-handler)) :reload))))
 
 (defn handle-sevak-request [service-name service-handler service-args ack-fn]
   (with-swarmiji-bindings
@@ -69,6 +85,7 @@
     (try
       (let [req (read-string req-str)
             service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
+            _  (reload-ns-if-needed service-name)
             service-handler (@sevaks (keyword service-name))]
         (log-message "Received request for" service-name "with args:" service-args "and return-q:" return-q)
         (if (nil? service-handler)
@@ -92,6 +109,19 @@
       (.start (Thread. #(processor n))))))
 
 
+(defn start-broadcast-processor []
+  (future 
+    (with-swarmiji-bindings
+      (let [broadcasts-q (random-queue-name "BROADCASTS_")]
+        (try
+         (log-message "Listening for update broadcasts...")
+         (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
+         (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) sevak-request-handling-listener)
+         (log-message "Done with broadcasts!")    
+         (catch Exception e         
+           (log-message "Error in update broadcasts future!")
+           (log-exception e)))))))
+
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
   (log-message "System config:" (operation-config))
@@ -100,19 +130,7 @@
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (init-rabbit)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
-
-  (future 
-   (with-swarmiji-bindings
-     (let [broadcasts-q (random-queue-name "BROADCASTS_")]
-       (try
-        (log-message "Listening for update broadcasts...")
-        (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
-        (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) sevak-request-handling-listener)
-        (log-message "Done with broadcasts!")    
-        (catch Exception e         
-          (log-message "Error in update broadcasts future!")
-          (log-exception e))))))
-
+  (start-broadcast-processor)
   (start-processors (queue-sevak-q-name true) 10 "Starting to serve realtime sevak requests..." )
   (start-processors (queue-sevak-q-name false) 10 "Starting to serve non-realtime sevak requests..." )
   (log-message "Sevak Server Started!"))
