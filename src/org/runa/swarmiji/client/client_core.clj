@@ -140,12 +140,11 @@
     (from-swarm retry-timeout new-sevaks)))
 
 (defn on-local [sevak-service-function & args]
-  (let [response-with-time (ref {})]
-    (dosync 
-     (ref-set response-with-time 
-              (simulate-serialized
-               (run-and-measure-timing 
-                (apply (:fn sevak-service-function) args)))))
+  (let [response-with-time (ref {})
+        result (simulate-serialized
+                (run-and-measure-timing 
+                 (apply (:fn sevak-service-function) args)))]
+    (dosync (ref-set response-with-time result))
     (fn [accessor]
       (cond
        (= accessor :sevak-name) sevak-service-function
