@@ -74,13 +74,22 @@
         (log-message "[ in-q pool completed" (number-of-queued-tasks) (current-pool-size) (completed-task-count) "]: Received request for" service-name "with args:" service-args "and return-q:" return-q)
       (if (nil? service-handler)
 	(throw (Exception. (str "No handler found for: " service-name))))
-      (let [f (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q ack-fn))]
-;        (when (> (number-of-queued-tasks) 10)
-;          (.get f))
-        f))
+      (medusa-future-thunk return-q #(async-sevak-handler service-handler service-name service-args return-q ack-fn)))
       (catch Exception e
         (log-message "Error in sevak-request-handling-listener:" (class e))
         (log-exception e)))))
+
+(defn start-processor [routing-key start-log-message]
+  (future 
+   (with-swarmiji-bindings 
+     (try
+      (log-message start-log-message)
+      (with-prefetch-count (rabbitmq-prefetch-count)
+        (start-queue-message-handler routing-key routing-key sevak-request-handling-listener))
+      (log-message "Done with sevak requests!")
+      (catch Exception e
+        (log-message "Error in sevak-servicing future!")
+        (log-exception e))))))
 
 (defn boot-sevak-server []
   (log-message "Starting sevaks in" *swarmiji-env* "mode")
@@ -104,27 +113,7 @@
         (catch Exception e         
           (log-message "Error in update broadcasts future!")
           (log-exception e))))))
-  
-  (future 
-   (with-swarmiji-bindings 
-     (try
-      (log-message "Starting to serve realtime sevak requests...")
-      (with-prefetch-count (rabbitmq-prefetch-count)
-        (start-queue-message-handler (queue-sevak-q-name true) (queue-sevak-q-name true) sevak-request-handling-listener))
-      (log-message "Done with sevak requests!")
-      (catch Exception e
-        (log-message "Error in sevak-servicing future!")
-        (log-exception e)))))
 
-  (future 
-    (with-swarmiji-bindings 
-      (try
-       (log-message "Starting to serve non-realtime sevak requests...")
-       (with-prefetch-count (rabbitmq-prefetch-count)
-         (start-queue-message-handler (queue-sevak-q-name false) (queue-sevak-q-name false) sevak-request-handling-listener))
-       (log-message "Done with sevak requests!")
-       (catch Exception e
-         (log-message "Error in sevak-servicing future!")
-         (log-exception e)))))
-  
-(log-message "Sevak Server Started!"))
+  (start-processor (queue-sevak-q-name true) "Starting to serve realtime sevak requests..." )
+  (start-processor (queue-sevak-q-name false) "Starting to serve non-realtime sevak requests..." )
+  (log-message "Sevak Server Started!"))
