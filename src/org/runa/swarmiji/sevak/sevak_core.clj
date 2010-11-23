@@ -11,7 +11,7 @@
 (use 'org.rathore.amit.utils.clojure)
 
 (def sevaks (ref {}))
-(def sevaks-to-reload (atom []))
+(def namespaces-to-reload (atom []))
 
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
@@ -41,20 +41,13 @@
 (defmacro defseva-nr [service-name args & expr]
   `(create-runner false ~service-name false ~args ~expr))
 
-(defn always-reload-sevaks [& sevak-name-keywords]
-  (reset! sevaks-to-reload sevak-name-keywords))
+(defn always-reload-namespaces [& namespaces]
+  (reset! namespaces-to-reload namespaces))
 
-(defmacro always-reload [& names]
-  `(apply always-reload-sevaks (map keyword '~names)))
-
-(defn should-reload? [sevak-name-keyword]
-  (some #{sevak-name-keyword} @sevaks-to-reload))
-
-(defn reload-ns-if-needed [service-name]
-  (if-let [service-handler (@sevaks (keyword service-name))]
-    (when (should-reload? (:name service-handler))
-      (log-message "RELOADING:" (ns-name (:ns service-handler)))
-      (use (ns-name (:ns service-handler)) :reload))))
+(defn reload-namespaces []
+  (log-message "RELOADING:" @namespaces-to-reload)
+  (doseq [n @namespaces-to-reload]
+    (require n :reload)))
 
 (defn handle-sevak-request [service-name service-handler service-args ack-fn]
   (with-swarmiji-bindings
@@ -85,7 +78,7 @@
     (try
       (let [req (read-string req-str)
             service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
-            _  (reload-ns-if-needed service-name)
+            _  (reload-namespaces)
             service-handler (@sevaks (keyword service-name))]
         (log-message "Received request for" service-name "with args:" service-args "and return-q:" return-q)
         (if (nil? service-handler)
