@@ -16,18 +16,21 @@
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
-(defmacro sevak-runner [realtime? sevak-name needs-response sevak-args]
-  `(fn ~sevak-args 
-      (if (swarmiji-distributed-mode?)
-	(if ~needs-response
-	    (apply on-swarm ~realtime? ~sevak-name ~sevak-args)
-	    (apply on-swarm-no-response ~realtime? ~sevak-name ~sevak-args))
-	(apply on-local (cons (@sevaks ~sevak-name) ~sevak-args)))))
+(defmacro sevak-runner [realtime? sevak-name needs-response]
+  `(fn [& ~'sevak-args] 
+     (if (swarmiji-distributed-mode?)
+       (if ~needs-response
+         (apply on-swarm ~realtime? ~sevak-name ~'sevak-args)
+         (apply on-swarm-no-response ~realtime? ~sevak-name ~'sevak-args))
+       (apply on-local (cons (@sevaks ~sevak-name) ~'sevak-args)))))
+
+(defn sevak-info [sevak-name realtime? needs-response? function]
+  {:name sevak-name :return needs-response? :realtime realtime? :fn function})
 
 (defmacro create-runner [realtime? service-name needs-response? args expr]
   `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (ref-set sevaks (assoc @sevaks sevak-name# {:name sevak-name# :return ~needs-response? :fn (fn ~args (do ~@expr)) :ns *ns*})))
-     (def ~service-name (sevak-runner ~realtime? sevak-name# ~needs-response? ~args))))
+     (dosync (alter sevaks assoc sevak-name# (sevak-info sevak-name# ~realtime? ~needs-response? (fn ~args (do ~@expr)))))
+     (def ~service-name (sevak-runner ~realtime? sevak-name# ~needs-response?))))
 
 (defmacro defsevak [service-name args & expr]
   `(create-runner true ~service-name true ~args ~expr))
@@ -40,6 +43,14 @@
 
 (defmacro defseva-nr [service-name args & expr]
   `(create-runner false ~service-name false ~args ~expr))
+
+(defmacro create-sevak-from-function 
+  ([function needs-response? realtime?]
+     `(let [sevak-name# (keyword '~function)]
+        (dosync (alter sevaks assoc sevak-name# (sevak-info sevak-name# ~realtime? ~needs-response? ~function)))
+        (def ~function (sevak-runner ~realtime? (keyword sevak-name#) ~needs-response?))))
+  ([function]
+     (create-sevak-from-function function true true)))
 
 (defn always-reload-namespaces [& namespaces]
   (reset! namespaces-to-reload namespaces))
@@ -121,6 +132,7 @@
   (log-message "Medusa client threads:" (medusa-client-thread-count))
   (log-message "RabbitMQ prefetch-count:" (rabbitmq-prefetch-count))
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
+  (log-message "Will always reload these namespaces:" @namespaces-to-reload)
   (init-rabbit)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (start-broadcast-processor)
