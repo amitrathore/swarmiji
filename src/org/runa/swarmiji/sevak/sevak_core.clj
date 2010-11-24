@@ -9,6 +9,7 @@
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
+(use 'alex-and-georges.debug-repl)
 
 (def sevaks (ref {}))
 (def namespaces-to-reload (atom []))
@@ -16,22 +17,32 @@
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
-(defmacro sevak-runner [realtime? sevak-name needs-response]
-  `(fn [& ~'sevak-args] 
-     (if (swarmiji-distributed-mode?)
-       (if ~needs-response
-         (apply on-swarm ~realtime? ~sevak-name ~'sevak-args)
-         (apply on-swarm-no-response ~realtime? ~sevak-name ~'sevak-args))
-       (apply on-local (cons (@sevaks ~sevak-name) ~'sevak-args)))))
+(defn ns-qualified-name 
+  ([sevak-name-keyword the-name-space]
+     (str (ns-name the-name-space) "/" (name sevak-name-keyword))))
 
 (defn sevak-info [sevak-name realtime? needs-response? function]
   {:name sevak-name :return needs-response? :realtime realtime? :fn function})
 
+(defn register-sevak [sevak-name function-info]
+  (dosync 
+   (alter sevaks assoc sevak-name function-info)))
+
+(defmacro sevak-runner [realtime? sevak-name needs-response]
+  (let [defining-ns *ns*]
+    `(fn [& ~'sevak-args] 
+       (if-not (swarmiji-distributed-mode?)
+         (apply on-local (cons (@sevaks ~sevak-name) ~'sevak-args))
+         (if ~needs-response
+           (apply on-swarm ~realtime? (ns-qualified-name ~sevak-name ~defining-ns)  ~'sevak-args)
+           (apply on-swarm-no-response ~realtime? (ns-qualified-name ~sevak-name ~defining-ns) ~'sevak-args))))))
+
 (defmacro create-sevak-from-function 
   ([function realtime? needs-response?]
-     `(let [sevak-name# (keyword '~function)]
-        (dosync (alter sevaks assoc sevak-name# (sevak-info sevak-name# ~realtime? ~needs-response? ~function)))
-        (def ~function (sevak-runner ~realtime? sevak-name# ~needs-response?))))
+     (let [sevak-name-keyword (keyword function)]
+       `(do
+          (register-sevak (ns-qualified-name ~sevak-name-keyword *ns*) (sevak-info ~sevak-name-keyword ~realtime? ~needs-response? ~function))
+          (def ~function (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?)))))
   ([function]
      (create-sevak-from-function function true true)))
 
@@ -90,9 +101,10 @@
       (let [req (read-string req-str)
             service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
             _  (reload-namespaces)
-            service-handler (@sevaks (keyword service-name))]
+            service-handler (@sevaks service-name)]
         (log-message "Received request for" service-name "with args:" service-args "and return-q:" return-q)
-        (if (nil? service-handler)
+        (when (nil? service-handler)
+          (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
         (async-sevak-handler service-handler service-name service-args return-q ack-fn))
       (catch Exception e
@@ -136,6 +148,6 @@
   (init-rabbit)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (start-broadcast-processor)
-  (start-processors (queue-sevak-q-name true) 10 "Starting to serve realtime sevak requests..." )
-  (start-processors (queue-sevak-q-name false) 10 "Starting to serve non-realtime sevak requests..." )
+  (start-processors (queue-sevak-q-name true) 1 "Starting to serve realtime sevak requests..." )
+  (start-processors (queue-sevak-q-name false) 1 "Starting to serve non-realtime sevak requests..." )
   (log-message "Sevak Server Started!"))

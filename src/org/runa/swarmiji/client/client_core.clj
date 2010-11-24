@@ -71,10 +71,10 @@
 			       (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start)))
 			       (if (and (swarmiji-diagnostics-mode?) (success?))
 				 (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))))
-	on-swarm-proxy-client (new-proxy realtime? (name sevak-service) args on-swarm-response)]
+	on-swarm-proxy-client (new-proxy realtime? sevak-service args on-swarm-response)]
     (fn [accessor]
       (condp = accessor
-	:sevak-name (name sevak-service)
+	:sevak-name sevak-service
 	:args args
 	:distributed? true
 	:sevak-type :sevak-with-return
@@ -93,7 +93,7 @@
 
 
 (defn on-swarm-no-response [realtime? sevak-service & args]
-  (new-proxy realtime? (name sevak-service) args)
+  (new-proxy realtime? sevak-service args)
   nil)
 
 (defn all-complete? [swarm-requests]
