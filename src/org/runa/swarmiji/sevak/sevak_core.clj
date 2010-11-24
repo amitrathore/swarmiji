@@ -27,30 +27,30 @@
 (defn sevak-info [sevak-name realtime? needs-response? function]
   {:name sevak-name :return needs-response? :realtime realtime? :fn function})
 
-(defmacro create-runner [realtime? service-name needs-response? args expr]
-  `(let [sevak-name# (keyword (str '~service-name))]
-     (dosync (alter sevaks assoc sevak-name# (sevak-info sevak-name# ~realtime? ~needs-response? (fn ~args (do ~@expr)))))
-     (def ~service-name (sevak-runner ~realtime? sevak-name# ~needs-response?))))
-
-(defmacro defsevak [service-name args & expr]
-  `(create-runner true ~service-name true ~args ~expr))
-
-(defmacro defseva [service-name args & expr]
-  `(create-runner true ~service-name false ~args ~expr))
-
-(defmacro defsevak-nr [service-name args & expr]
-  `(create-runner false ~service-name true ~args ~expr))
-
-(defmacro defseva-nr [service-name args & expr]
-  `(create-runner false ~service-name false ~args ~expr))
-
 (defmacro create-sevak-from-function 
-  ([function needs-response? realtime?]
+  ([function realtime? needs-response?]
      `(let [sevak-name# (keyword '~function)]
         (dosync (alter sevaks assoc sevak-name# (sevak-info sevak-name# ~realtime? ~needs-response? ~function)))
-        (def ~function (sevak-runner ~realtime? (keyword sevak-name#) ~needs-response?))))
+        (def ~function (sevak-runner ~realtime? sevak-name# ~needs-response?))))
   ([function]
      (create-sevak-from-function function true true)))
+
+(defmacro create-function-and-sevak [service-name realtime? needs-response? args expr]
+  `(do 
+     (def ~service-name (fn ~args (do ~@expr)))
+     (create-sevak-from-function ~service-name ~realtime? ~needs-response?)))
+
+(defmacro defsevak [service-name args & expr]
+  `(create-function-and-sevak ~service-name true true ~args ~expr))
+
+(defmacro defseva [service-name args & expr]
+  `(create-function-and-sevak ~service-name true false ~args ~expr))
+
+(defmacro defsevak-nr [service-name args & expr]
+  `(create-function-and-sevak ~service-name false true ~args ~expr))
+
+(defmacro defseva-nr [service-name args & expr]
+  `(create-function-and-sevak ~service-name false false ~args ~expr))
 
 (defn always-reload-namespaces [& namespaces]
   (reset! namespaces-to-reload namespaces))
@@ -81,7 +81,7 @@
     (let [response (merge 
 		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
 		    (handle-sevak-request sevak-name service-handler service-args ack-fn))]
-      (if (and return-q (:return service-handler))
+      (when (and return-q (:return service-handler))
 	(send-message-no-declare return-q response)))))
 
 (defn sevak-request-handling-listener [req-str ack-fn]
