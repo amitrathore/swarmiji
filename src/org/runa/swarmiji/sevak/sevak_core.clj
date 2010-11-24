@@ -71,29 +71,27 @@
   (doseq [n @namespaces-to-reload]
     (require n :reload)))
 
-(defn handle-sevak-request [service-name service-handler service-args ack-fn]
-  (with-swarmiji-bindings
-   (try
-    (let [response-with-time (run-and-measure-timing 
-			      (apply (:fn service-handler) service-args))
-	  value (response-with-time :response)
-	  time-elapsed (response-with-time :time-taken)]
-      {:response value :status :success :sevak-time time-elapsed})
-    (catch InterruptedException ie
-      (throw ie))
-    (catch Exception e 
-      (log-exception e (str "SEVAK ERROR! " (class e) " detected while running " service-name " with args: " service-args))
-      {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})
-    (finally
-     (ack-fn)))))
+(defn execute-sevak [service-name service-handler service-args ack-fn]
+  (try
+   (let [response-with-time (run-and-measure-timing 
+                             (apply (:fn service-handler) service-args))
+         value (response-with-time :response)
+         time-elapsed (response-with-time :time-taken)]
+     {:response value :status :success :sevak-time time-elapsed})
+   (catch InterruptedException ie
+     (throw ie))
+   (catch Exception e 
+     (log-exception e (str "SEVAK ERROR! " (class e) " detected while running " service-name " with args: " service-args))
+     {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})
+   (finally
+    (ack-fn))))
 
-(defn async-sevak-handler [service-handler sevak-name service-args return-q ack-fn]
-  (with-swarmiji-bindings
-    (let [response (merge 
-		    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
-		    (handle-sevak-request sevak-name service-handler service-args ack-fn))]
-      (when (and return-q (:return service-handler))
-	(send-message-no-declare return-q response)))))
+(defn handle-sevak-request [service-handler sevak-name service-args return-q ack-fn]
+  (let [response (merge 
+                  {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
+                  (execute-sevak sevak-name service-handler service-args ack-fn))]
+    (when (and return-q (:return service-handler))
+      (send-message-no-declare return-q response))))
 
 (defn sevak-request-handling-listener [req-str ack-fn]
   (with-swarmiji-bindings
@@ -106,7 +104,7 @@
         (when (nil? service-handler)
           (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
-        (async-sevak-handler service-handler service-name service-args return-q ack-fn))
+        (handle-sevak-request service-handler service-name service-args return-q ack-fn))
       (catch Exception e
         (log-message "Error in sevak-request-handling-listener:" (class e))
         (log-exception e)))))
@@ -148,6 +146,6 @@
   (init-rabbit)
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (start-broadcast-processor)
-  (start-processors (queue-sevak-q-name true) 1 "Starting to serve realtime sevak requests..." )
-  (start-processors (queue-sevak-q-name false) 1 "Starting to serve non-realtime sevak requests..." )
+  (start-processors (queue-sevak-q-name true) (medusa-server-thread-count) "Starting to serve realtime sevak requests..." )
+  (start-processors (queue-sevak-q-name false) (medusa-server-thread-count) "Starting to serve non-realtime sevak requests..." )
   (log-message "Sevak Server Started!"))
