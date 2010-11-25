@@ -17,13 +17,6 @@
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
-(defn ns-qualified-name 
-  ([sevak-name-keyword the-name-space]
-     (str (ns-name the-name-space) "/" (name sevak-name-keyword))))
-
-(defn sevak-info [sevak-name realtime? needs-response? function]
-  {:name sevak-name :return needs-response? :realtime realtime? :fn function})
-
 (defn register-sevak [sevak-name function-info]
   (dosync 
    (alter sevaks assoc sevak-name function-info)))
@@ -39,10 +32,11 @@
 
 (defmacro create-sevak-from-function 
   ([function realtime? needs-response?]
-     (let [sevak-name-keyword (keyword function)]
+     (let [{:keys [ns name]} (meta (resolve function))
+           sevak-name-keyword (keyword name)]
        `(do
           (register-sevak (ns-qualified-name ~sevak-name-keyword *ns*) (sevak-info ~sevak-name-keyword ~realtime? ~needs-response? ~function))
-          (def ~function (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?)))))
+          (def ~name (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?)))))
   ([function]
      (create-sevak-from-function function true true)))
 

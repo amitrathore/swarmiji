@@ -9,6 +9,13 @@
 (defn random-uuid []
   (str (UUID/randomUUID)))
 
+(defn ns-qualified-name 
+  ([sevak-name-keyword the-name-space]
+     (str (ns-name the-name-space) "/" (name sevak-name-keyword))))
+
+(defn sevak-info [sevak-name realtime? needs-response? function]
+  {:name sevak-name :return needs-response? :realtime realtime? :fn function})
+
 (defn return-queue-name [sevak-name]
   (str (System/currentTimeMillis) "_" sevak-name "_" (random-uuid)))
 
