@@ -25,7 +25,7 @@
   (let [defining-ns *ns*]
     `(fn [& ~'sevak-args] 
        (if-not (swarmiji-distributed-mode?)
-         (apply on-local (cons (@sevaks ~sevak-name) ~'sevak-args))
+         (apply on-local (@sevaks (ns-qualified-name ~sevak-name ~defining-ns)) ~'sevak-args)
          (if ~needs-response
            (apply on-swarm ~realtime? (ns-qualified-name ~sevak-name ~defining-ns)  ~'sevak-args)
            (apply on-swarm-no-response ~realtime? (ns-qualified-name ~sevak-name ~defining-ns) ~'sevak-args))))))
