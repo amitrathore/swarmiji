@@ -65,7 +65,7 @@
   (doseq [n @namespaces-to-reload]
     (require n :reload)))
 
-(defn execute-sevak [service-name service-handler service-args ack-fn]
+(defn execute-sevak [service-name service-handler service-args]
   (try
    (let [response-with-time (run-and-measure-timing 
                              (apply (:fn service-handler) service-args))
@@ -76,14 +76,12 @@
      (throw ie))
    (catch Exception e 
      (log-exception e (str "SEVAK ERROR! " (class e) " detected while running " service-name " with args: " service-args))
-     {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})
-   (finally
-    (ack-fn))))
+     {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
-(defn handle-sevak-request [service-handler sevak-name service-args return-q ack-fn]
+(defn handle-sevak-request [service-handler sevak-name service-args return-q]
   (let [response (merge 
                   {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
-                  (execute-sevak sevak-name service-handler service-args ack-fn))]
+                  (execute-sevak sevak-name service-handler service-args))]
     (when (and return-q (:return service-handler))
       (send-message-no-declare return-q response))))
 
@@ -96,12 +94,13 @@
             service-handler (@sevaks service-name)]
         (log-message "Received request for" service-name "with args:" service-args "and return-q:" return-q)
         (when (nil? service-handler)
-          (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
-        (handle-sevak-request service-handler service-name service-args return-q ack-fn))
+        (handle-sevak-request service-handler service-name service-args return-q))
       (catch Exception e
         (log-message "Error in sevak-request-handling-listener:" (class e))
-        (log-exception e)))))
+        (log-exception e))
+      (finally
+       (ack-fn)))))
 
 (defn start-processors [routing-key number-of-processors start-log-message]
   (let [processor  #(with-swarmiji-bindings 
