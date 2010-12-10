@@ -1,13 +1,18 @@
 (ns org.runa.swarmiji.mpi.transport)
+
 (use 'org.runa.swarmiji.config.system-config)
 (use 'org.runa.swarmiji.sevak.bindings)
+(use 'org.runa.swarmiji.utils.general-utils)
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
 (use 'org.rathore.amit.utils.rabbitmq)
 (use 'org.rathore.amit.medusa.core)
+(use 'clojure.contrib.except)
+(use 'alex-and-georges.debug-repl)
 
 (def rabbit-down-messages (atom {}))
 (def *guaranteed-sevaks*)
+(def BROADCASTS-QUEUE-NAME "BROADCASTS_GLOBAL")
 
 (defn send-message-no-declare [q-name q-message-object]
   (with-swarmiji-bindings
@@ -20,7 +25,12 @@
       (send-message q-name q-message-object))))
 
 (defn fanout-message-to-all [message-object]
-  (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE "" message-object))
+  (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE BROADCASTS-QUEUE-NAME message-object))
+
+(defmacro multicast-to-sevak-servers [sevak-var & args]
+  (let [{:keys [name ns] :as meta-inf} (meta (resolve sevak-var))]
+    (if-not meta-inf (throwf "Multicast-to-sevak-servers is unable to resolve %s" sevak-var))
+    `(fanout-message-to-all (sevak-queue-message-no-return ~(ns-qualified-name name ns) (list ~@args)))))
 
 (defn should-fallback [sevak-name]
   (some #{(keyword sevak-name)} *guaranteed-sevaks*))

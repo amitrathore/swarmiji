@@ -10,15 +10,7 @@
 (use 'org.rathore.amit.utils.config)
 (use 'org.rathore.amit.utils.rabbitmq)
 (use 'org.rathore.amit.medusa.core)
-(use 'clojure.contrib.except)
 (use 'alex-and-georges.debug-repl)
-
-(defn sevak-queue-message-no-return [sevak-service args]
-  {:sevak-service-name sevak-service
-   :sevak-service-args args})
-
-(defn sevak-queue-message-for-return [sevak-service args]
-  (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name sevak-service)))
 
 (defn register-callback [realtime? return-q-name custom-handler request-object]
   (init-medusa (medusa-client-thread-count))
@@ -34,8 +26,3 @@
      (let [request-object (sevak-queue-message-no-return sevak-service args)]
        (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
        nil)))
-
-(defmacro multicast-to-sevak-servers [sevak-var & args]
-  (let [{:keys [name ns] :as meta-inf} (meta (resolve sevak-var))]
-    (if-not meta-inf (throwf "Multicast-to-sevak-servers is unable to resolve %s" sevak-var))
-    `(fanout-message-to-all (sevak-queue-message-no-return ~(ns-qualified-name name ns) (list ~@args)))))

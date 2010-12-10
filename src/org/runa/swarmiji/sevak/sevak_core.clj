@@ -88,9 +88,11 @@
 (defn sevak-request-handling-listener [req-str ack-fn]
   (with-swarmiji-bindings
     (try
+      (reload-namespaces)
       (let [req (read-string req-str)
-            service-name (req :sevak-service-name) service-args (req :sevak-service-args) return-q (req :return-queue-name)
-            _  (reload-namespaces)
+            service-name (req :sevak-service-name) 
+            service-args (req :sevak-service-args) 
+            return-q (req :return-queue-name)
             service-handler (@sevaks service-name)]
         (log-message "Received request for" service-name "with args:" service-args "and return-q:" return-q)
         (when (nil? service-handler)
@@ -119,7 +121,7 @@
 (defn start-broadcast-processor []
   (future 
     (with-swarmiji-bindings
-      (let [broadcasts-q (random-queue-name "BROADCASTS_")]
+      (let [broadcasts-q (random-queue-name "BROADCASTS_LISTENER_")]
         (try
          (log-message "Listening for update broadcasts...")
          (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
