@@ -1,7 +1,6 @@
 (ns org.runa.swarmiji.utils.general-utils)
 
 (import '(java.util Random UUID))
-(use '[clojure.contrib.duck-streams :only (spit)])
 (import '(java.lang.management ManagementFactory))
 (use 'org.rathore.amit.utils.clojure)
 (use 'org.rathore.amit.utils.rabbitmq)
