@@ -118,7 +118,12 @@
      (try
       (loop [all-complete (all-complete? swarm-requests) elapsed-time 0]
         (if (> elapsed-time allowed-time)
-          (error-fn allowed-time)
+          (do
+            (doseq [r swarm-requests]
+              (when (r :distributed?)
+                (log-message "Sevak response timed-out on" (r :sevak-name)
+                             "for return-q" ((r :sevak-proxy) :queue))))
+            (error-fn allowed-time))
           (when-not all-complete
             (Thread/sleep 100)
             (recur (all-complete? swarm-requests) (+ elapsed-time 100)))))
