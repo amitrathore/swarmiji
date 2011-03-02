@@ -83,6 +83,8 @@
                   {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
                   (execute-sevak sevak-name service-handler service-args))]
     (when (and return-q (:return service-handler))
+      (log-message "Returning request for" sevak-name "with return-q:" return-q "elapsed time:"
+                   (:sevak-time response))
       (send-message-no-declare return-q response))))
 
 (defn sevak-request-handling-listener [req-str ack-fn]

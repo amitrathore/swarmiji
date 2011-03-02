@@ -97,7 +97,12 @@
   nil)
 
 (defn all-complete? [swarm-requests]
-  (every? #(% :complete?) swarm-requests))
+  (when (every? #(% :complete?) swarm-requests)
+    (doseq [r swarm-requests]
+      (when (r :distributed?)
+        (log-message "Received sevak response on" (r :sevak-name)
+                     "for return-q" (return-q (r :__inner_ref)) "with elapsed time" (r :total-time))))
+    true))
 
 (defn disconnect-all [swarm-requests]
   (doseq [req swarm-requests]
