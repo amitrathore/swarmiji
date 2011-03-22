@@ -39,7 +39,7 @@
           (register-sevak (ns-qualified-name ~sevak-name-keyword *ns*) (sevak-info ~sevak-name-keyword ~realtime? ~needs-response? ~function))
           (def ~name (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?)))))
   ([function]
-     (create-sevak-from-function function true true)))
+     `(create-sevak-from-function ~function true true)))
 
 (defmacro create-function-and-sevak [service-name realtime? needs-response? args expr]
   `(do 
