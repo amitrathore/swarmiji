@@ -10,6 +10,7 @@
 (use 'org.rathore.amit.utils.logger)
 (use 'org.rathore.amit.utils.clojure)
 (use 'alex-and-georges.debug-repl)
+(use 'org.rathore.amit.medusa.core)
 
 (def sevaks (ref {}))
 (def namespaces-to-reload (atom []))
@@ -61,9 +62,10 @@
   (reset! namespaces-to-reload namespaces))
 
 (defn reload-namespaces []
-  (log-message "RELOADING:" @namespaces-to-reload)
-  (doseq [n @namespaces-to-reload]
-    (require n :reload)))
+  (when (should-reload-namespaces?)
+    (log-message "RELOADING:" @namespaces-to-reload)
+    (doseq [n @namespaces-to-reload]
+      (require n :reload))))
 
 (defn execute-sevak [service-name service-handler service-args]
   (try
@@ -79,13 +81,14 @@
      {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
 (defn handle-sevak-request [service-handler sevak-name service-args return-q]
-  (let [response (merge 
-                  {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
-                  (execute-sevak sevak-name service-handler service-args))]
-    (when (and return-q (:return service-handler))
-      (log-message "Returning request for" sevak-name "with return-q:" return-q "elapsed time:"
-                   (:sevak-time response))
-      (send-message-no-declare return-q response))))
+  (with-swarmiji-bindings
+    (let [response (merge 
+                    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
+                    (execute-sevak sevak-name service-handler service-args))]
+      (when (and return-q (:return service-handler))
+        (log-message "Returning request for" sevak-name "with return-q:" return-q "elapsed time:"
+                     (:sevak-time response))
+        (send-message-no-declare return-q response)))))
 
 (defn sevak-request-handling-listener [req-str ack-fn]
   (with-swarmiji-bindings
@@ -99,26 +102,24 @@
         (log-message "Received request for" service-name "with args:" service-args "and return-q:" return-q)
         (when (nil? service-handler)
           (throw (Exception. (str "No handler found for: " service-name))))
-        (handle-sevak-request service-handler service-name service-args return-q))
+        (medusa-future-thunk return-q #(handle-sevak-request service-handler service-name service-args return-q))
+        (log-message "Medusa stats:" (medusa-stats)))
       (catch Exception e
         (log-message "Error in sevak-request-handling-listener:" (class e))
         (log-exception e))
       (finally
        (ack-fn)))))
 
-(defn start-processors [routing-key number-of-processors start-log-message]
-  (let [processor  #(with-swarmiji-bindings 
-                     (try
-                      (log-message "Thread #[" % "]"  start-log-message)
-                      (with-prefetch-count (rabbitmq-prefetch-count)
-                        (start-queue-message-handler routing-key routing-key sevak-request-handling-listener))
-                      (log-message "Done with sevak requests!")
-                      (catch Exception e
-                        (log-message "Error in sevak-servicing future!")
-                        (log-exception e))))]
-    (dotimes [n number-of-processors]
-      (.start (Thread. #(processor n))))))
-
+(defn start-processor [routing-key start-log-message]
+  (future
+   (with-swarmiji-bindings 
+     (try
+      (with-prefetch-count (rabbitmq-prefetch-count)
+        (start-queue-message-handler routing-key routing-key sevak-request-handling-listener))
+      (log-message "Done with sevak requests!")
+      (catch Exception e
+        (log-message "Error in sevak-servicing future!")
+        (log-exception e))))))
 
 (defn start-broadcast-processor []
   (future 
@@ -141,8 +142,10 @@
   (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
   (log-message "Will always reload these namespaces:" @namespaces-to-reload)
   (init-rabbit)
+  (init-medusa (medusa-server-thread-count))
+  (log-message "Medusa started with" (max-pool-size) "threads")
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (start-broadcast-processor)
-  (start-processors (queue-sevak-q-name true) (medusa-server-thread-count) "Starting to serve realtime sevak requests..." )
-  (start-processors (queue-sevak-q-name false) (medusa-server-thread-count) "Starting to serve non-realtime sevak requests..." )
+  (start-processor (queue-sevak-q-name true) "Starting to serve realtime sevak requests..." )
+  (start-processor (queue-sevak-q-name false) "Starting to serve non-realtime sevak requests..." )
   (log-message "Sevak Server Started!"))

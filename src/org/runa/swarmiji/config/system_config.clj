@@ -69,6 +69,9 @@
 (defn medusa-client-thread-count []
   ((operation-config) :medusa-client-thread-count))
 
+(defn should-reload-namespaces? []
+  ((operation-config) :reload-namespaces))
+
 (defn config-for-rathore-utils [process-type-id]
   {:log-to-console (log-to-console?) 
    :logs-dir ((operation-config) :logsdir) 
