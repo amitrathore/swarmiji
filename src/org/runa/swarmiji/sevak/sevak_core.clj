@@ -80,15 +80,18 @@
      (log-exception e (str "SEVAK ERROR! " (class e) " detected while running " service-name " with args: " service-args))
      {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
-(defn handle-sevak-request [service-handler sevak-name service-args return-q]
+(defn handle-sevak-request [service-handler sevak-name service-args return-q ack-fn]
   (with-swarmiji-bindings
-    (let [response (merge 
-                    {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
-                    (execute-sevak sevak-name service-handler service-args))]
-      (when (and return-q (:return service-handler))
-        (log-message "Returning request for" sevak-name "with return-q:" return-q "elapsed time:"
-                     (:sevak-time response))
-        (send-message-no-declare return-q response)))))
+    (try
+     (let [response (merge 
+                     {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
+                     (execute-sevak sevak-name service-handler service-args))]
+       (when (and return-q (:return service-handler))
+         (log-message "Returning request for" sevak-name "with return-q:" return-q "elapsed time:"
+                      (:sevak-time response))
+         (send-message-no-declare return-q response)))
+     (finally
+      (ack-fn)))))
 
 (defn sevak-request-handling-listener [req-str ack-fn]
   (with-swarmiji-bindings
@@ -101,14 +104,13 @@
             service-handler (@sevaks service-name)]
         (log-message "Received request for" service-name "with args:" service-args "and return-q:" return-q)
         (when (nil? service-handler)
+          (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
-        (medusa-future-thunk return-q #(handle-sevak-request service-handler service-name service-args return-q))
+        (medusa-future-thunk return-q #(handle-sevak-request service-handler service-name service-args return-q ack-fn))
         (log-message "Medusa stats:" (medusa-stats)))
       (catch Exception e
         (log-message "Error in sevak-request-handling-listener:" (class e))
-        (log-exception e))
-      (finally
-       (ack-fn)))))
+        (log-exception e)))))
 
 (defn start-processor [routing-key start-log-message]
   (future
