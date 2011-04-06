@@ -107,7 +107,7 @@
           (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
         (medusa-future-thunk return-q #(handle-sevak-request service-handler service-name service-args return-q ack-fn))
-        (log-message "Medusa stats:" (medusa-stats)))
+        (log-message "Server medusa stats:" (medusa-stats)))
       (catch Exception e
         (log-message "Error in sevak-request-handling-listener:" (class e))
         (log-exception e)))))

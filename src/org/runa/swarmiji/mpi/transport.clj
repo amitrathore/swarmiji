@@ -49,6 +49,7 @@
             (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
             (on-response (delivery-from chan consumer)))]
     (medusa-future-thunk return-q-name f)
+    (log-message "Client medusa stats:" (medusa-stats))
     {:channel chan :queue return-q-name :consumer consumer}))
 
 (defn add-to-rabbit-down-queue [realtime? return-queue-name custom-handler request-object]
