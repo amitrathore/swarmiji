@@ -18,7 +18,7 @@
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
-(def non-real-time-thread-pool (java.util.concurrent.Executors/fixedThreadPool 32))
+(def non-real-time-thread-pool (java.util.concurrent.Executors/newFixedThreadPool 32))
 
 (defn register-sevak [sevak-name function-info]
   (dosync 
