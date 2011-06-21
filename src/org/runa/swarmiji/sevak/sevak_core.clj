@@ -18,6 +18,8 @@
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
+(def non-real-time-thread-pool (java.util.concurrent.Executors/fixedThreadPool 32))
+
 (defn register-sevak [sevak-name function-info]
   (dosync 
    (alter sevaks assoc sevak-name function-info)))
@@ -93,7 +95,7 @@
      (finally
       (ack-fn)))))
 
-(defn sevak-request-handling-listener [req-str ack-fn]
+(defn sevak-request-handling-listener [req-str ack-fn real-time?]
   (with-swarmiji-bindings
     (try
       (reload-namespaces)
@@ -106,18 +108,22 @@
         (when (nil? service-handler)
           (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
-        (medusa-future-thunk return-q #(handle-sevak-request service-handler service-name service-args return-q ack-fn))
+        (if real-time?
+	  (medusa-future-thunk return-q
+	    #(handle-sevak-request service-handler service-name service-args return-q ack-fn))
+	  (.submit non-real-time-thread-pool
+	    #(handle-sevak-request service-handler service-name service-args return-q ack-fn)))
         (log-message "Server medusa stats:" (medusa-stats)))
       (catch Exception e
         (log-message "Error in sevak-request-handling-listener:" (class e))
         (log-exception e)))))
 
-(defn start-processor [routing-key start-log-message]
+(defn start-processor [routing-key real-time? start-log-message]
   (future
    (with-swarmiji-bindings 
      (try
       (with-prefetch-count (rabbitmq-prefetch-count)
-        (start-queue-message-handler routing-key routing-key sevak-request-handling-listener))
+        (start-queue-message-handler routing-key routing-key sevak-request-handling-listener real-time?))
       (log-message "Done with sevak requests!")
       (catch Exception e
         (log-message "Error in sevak-servicing future!")
@@ -148,6 +154,6 @@
   (log-message "Medusa started with" (max-pool-size) "threads")
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (start-broadcast-processor)
-  (start-processor (queue-sevak-q-name true) "Starting to serve realtime sevak requests..." )
-  (start-processor (queue-sevak-q-name false) "Starting to serve non-realtime sevak requests..." )
+  (start-processor (queue-sevak-q-name true) true "Starting to serve realtime sevak requests..." )
+  (start-processor (queue-sevak-q-name false) false "Starting to serve non-realtime sevak requests..." )
   (log-message "Sevak Server Started!"))
