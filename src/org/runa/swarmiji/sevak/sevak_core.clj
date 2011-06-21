@@ -123,7 +123,7 @@
    (with-swarmiji-bindings 
      (try
       (with-prefetch-count (rabbitmq-prefetch-count)
-        (start-queue-message-handler routing-key routing-key sevak-request-handling-listener real-time?))
+        (start-queue-message-handler routing-key routing-key #(sevak-request-handling-listener %1 %2 real-time?)))
       (log-message "Done with sevak requests!")
       (catch Exception e
         (log-message "Error in sevak-servicing future!")
@@ -136,7 +136,7 @@
         (try
          (log-message "Listening for update broadcasts...")
          (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
-         (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) sevak-request-handling-listener)
+         (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) #(sevak-request-handling-listener %1 %2 false))
          (log-message "Done with broadcasts!")    
          (catch Exception e         
            (log-message "Error in update broadcasts future!")
