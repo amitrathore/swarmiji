@@ -18,7 +18,7 @@
 
 (defn random-queue-name 
   ([]
-     (random-queue-name ""))
+     (random-queue-name (str (System/currentTimeMillis) "_")))
   ([prefix]
      (str prefix (random-uuid))))
 
