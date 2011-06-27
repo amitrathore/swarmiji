@@ -125,7 +125,7 @@
                              "for return-q" ((r :sevak-proxy) :queue))))
             (error-fn allowed-time))
           (when-not all-complete
-            (Thread/sleep 100)
+            (Thread/sleep 5)
             (recur (all-complete? swarm-requests) (+ elapsed-time 100)))))
       (finally
        (disconnect-all swarm-requests)))))
