@@ -126,7 +126,7 @@
             (error-fn allowed-time))
           (when-not all-complete
             (Thread/sleep 5)
-            (recur (all-complete? swarm-requests) (+ elapsed-time 100)))))
+            (recur (all-complete? swarm-requests) (+ elapsed-time 5)))))
       (finally
        (disconnect-all swarm-requests)))))
 
