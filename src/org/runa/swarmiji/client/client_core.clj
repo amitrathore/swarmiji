@@ -115,20 +115,22 @@
   ([swarm-requests allowed-time]
      (wait-until-completion swarm-requests allowed-time throw-exception))
   ([swarm-requests allowed-time error-fn]
-     (try
-      (loop [all-complete (all-complete? swarm-requests) elapsed-time 0]
-        (if (> elapsed-time allowed-time)
-          (do
-            (doseq [r swarm-requests]
-              (when (r :distributed?)
-                (log-message "Sevak response timed-out on" (r :sevak-name)
-                             "for return-q" ((r :sevak-proxy) :queue))))
-            (error-fn allowed-time))
-          (when-not all-complete
-            (Thread/sleep 5)
-            (recur (all-complete? swarm-requests) (+ elapsed-time 5)))))
-      (finally
-       (disconnect-all swarm-requests)))))
+     (let [start (System/currentTimeMillis)
+	   elapsed-time #(- (System/currentTimeMillis) start)]
+       (try
+	 (loop [all-complete (all-complete? swarm-requests)]
+	   (if (> (elapsed-time) allowed-time)
+	     (do
+	       (doseq [r swarm-requests]
+		 (when (r :distributed?)
+		   (log-message "Sevak response timed-out on" (r :sevak-name)
+		     "for return-q" ((r :sevak-proxy) :queue))))
+	       (error-fn allowed-time))
+	     (when-not all-complete
+	       (Thread/sleep 5)
+	       (recur (all-complete? swarm-requests)))))
+	 (finally
+	   (disconnect-all swarm-requests))))))
 
 (defn wait-until-completion-no-exception
   [swarm-requests allowed-time]
