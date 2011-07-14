@@ -165,6 +165,7 @@
       (cond
        (= accessor :sevak-name) sevak-service-function
        (= accessor :args) args
+       (= accessor :latch) (CountDownLatch. 0)
        (= accessor :distributed?) false
        (= accessor :disconnect) nil
        (= accessor :complete?) true
