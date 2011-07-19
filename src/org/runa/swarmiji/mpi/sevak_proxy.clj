@@ -13,7 +13,6 @@
 (use 'alex-and-georges.debug-repl)
 
 (defn register-callback [realtime? return-q-name custom-handler request-object]
-  (init-medusa (medusa-client-thread-count))
   (register-callback-or-fallback realtime? return-q-name custom-handler request-object))
 
 (defn new-proxy 
