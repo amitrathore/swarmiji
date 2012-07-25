@@ -1,6 +1,5 @@
-(ns org.runa.swarmiji.config.system-config)
-
-(use 'org.runa.swarmiji.utils.general-utils)
+(ns org.runa.swarmiji.config.system-config
+  (:use org.runa.swarmiji.utils.general-utils))
 
 (def *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
 (def swarmiji-home (or (.get (System/getenv) "SWARMIJI_HOME") (str (System/getProperty "user.home") "/workspace/swarmiji")))
@@ -12,7 +11,8 @@
 (defn queue-name-prefixed-for [stem env-var-name]
   (str stem (current-swarmiji-ns-for env-var-name) "_" *swarmiji-env* "_"))
 
-(load-file (str swarmiji-home "/config/config.clj"))
+(defn read-config []
+  (read-string (str swarmiji-home "/config/config.clj")))
 
 (defn environment-specific-config-from [configs]
   (if *swarmiji-env*
@@ -20,10 +20,10 @@
     (throw (Exception. "SWARMIJI_ENV is not set"))))
 
 (defn operation-config []
-  (environment-specific-config-from operation-configs))
+  (:operation-configs (read-config)))
 
 (defn swarmiji-mysql-config []
-  (environment-specific-config-from swarmiji-mysql-configs))
+  (:swarmiji-mysql-configs (read-config)))
 
 (defn swarmiji-user []
   ((operation-config) :swarmiji-username))

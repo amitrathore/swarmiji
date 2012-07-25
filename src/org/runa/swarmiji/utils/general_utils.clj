@@ -1,9 +1,10 @@
-(ns org.runa.swarmiji.utils.general-utils)
+(ns org.runa.swarmiji.utils.general-utils
+  (:import [java.util Random UUID])
+  (:import [java.lang.management ManagementFactory])
+  (:use org.rathore.amit.utils.clojure)
+  (:use org.rathore.amit.utils.rabbitmq))
 
-(import '(java.util Random UUID))
-(import '(java.lang.management ManagementFactory))
-(use 'org.rathore.amit.utils.clojure)
-(use 'org.rathore.amit.utils.rabbitmq)
+(def *PREFETCH-COUNT* 10)
 
 (defn random-uuid []
   (str (UUID/randomUUID)))
