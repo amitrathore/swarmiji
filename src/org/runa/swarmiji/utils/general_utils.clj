@@ -4,8 +4,6 @@
   (:use org.rathore.amit.utils.clojure)
   (:use org.rathore.amit.utils.rabbitmq))
 
-(def *PREFETCH-COUNT* 10)
-
 (defn random-uuid []
   (str (UUID/randomUUID)))
 
