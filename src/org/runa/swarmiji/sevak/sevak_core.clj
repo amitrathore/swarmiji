@@ -127,3 +127,31 @@
         (log-message "Error in sevak-servicing future!")
         (log-exception e))))))
 
+(defn start-broadcast-processor []
+  (future 
+    (with-swarmiji-bindings
+      (let [broadcasts-q (random-queue-name "BROADCASTS_LISTENER_")]
+        (try
+         (log-message "Listening for update broadcasts...")
+         (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
+         (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) #(sevak-request-handling-listener %1 %2 false))
+         (log-message "Done with broadcasts!")    
+         (catch Exception e         
+           (log-message "Error in update broadcasts future!")
+           (log-exception e)))))))
+
+(defn boot-sevak-server []
+  (log-message "Starting sevaks in" *swarmiji-env* "mode")
+  (log-message "System config:" (operation-config))
+  (log-message "Medusa client threads:" (medusa-client-thread-count))
+  (log-message "RabbitMQ prefetch-count:" (rabbitmq-prefetch-count))
+  (log-message "Sevaks are offering the following" (count @sevaks) "services:" (keys @sevaks))
+  (log-message "Will always reload these namespaces:" @namespaces-to-reload)
+  (init-rabbit)
+  (init-medusa (medusa-server-thread-count))
+  (log-message "Medusa started with" (max-pool-size) "threads")
+  ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
+  (start-broadcast-processor)
+  (start-processor (queue-sevak-q-name true) true "Starting to serve realtime sevak requests..." )
+  (start-processor (queue-sevak-q-name false) false "Starting to serve non-realtime sevak requests..." )
+  (log-message "Sevak Server Started!"))
