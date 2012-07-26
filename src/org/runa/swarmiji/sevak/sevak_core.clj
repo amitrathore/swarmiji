@@ -149,7 +149,7 @@
   (log-message "Will always reload these namespaces:" @namespaces-to-reload)
   (init-rabbit)
   (init-medusa (medusa-server-thread-count))
-  (log-message "Medusa started with" (max-pool-size) "threads")
+  ;; (log-message "Medusa started with" (max-pool-size) "threads")
   ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (start-broadcast-processor)
   (start-processor (queue-sevak-q-name true) true "Starting to serve realtime sevak requests..." )

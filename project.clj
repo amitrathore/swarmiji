@@ -8,6 +8,7 @@
                  [mysql/mysql-connector-java   "5.1.6"]
                  [rabbitmq-client              "1.7.0"]
                  [org.clojars.sethtrain/postal "0.2.0"]
+                 [clj-utils                    "1.0.0"]
                  [org.clojars.runa/medusa      "0.1.6" :exclusions [org.clojars.runa/clj-utils]]
                  [org.clojars.macourtney/clj-record "1.0.1"]
                  [org.clojars.amit/swarmiji-java "0.2.0"]]

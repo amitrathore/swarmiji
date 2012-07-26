@@ -22,7 +22,7 @@
 (defn send-message-no-declare [q-name q-message-object]
   (with-swarmiji-bindings
     (with-exception-logging 
-      (send-message-on-queue q-name q-message-object))))
+      (send-message-if-queue q-name q-message-object))))
 
 (defn fanout-message-to-all [message-object]
   (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE BROADCASTS-QUEUE-NAME message-object))
