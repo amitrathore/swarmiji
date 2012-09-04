@@ -4,6 +4,11 @@
 (def *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
 (def swarmiji-home (or (.get (System/getenv) "SWARMIJI_HOME") (str (System/getProperty "user.home") "/workspace/swarmiji")))
 
+(def *swarmiji-conf* "config/swarmiji.clj")
+
+(defn set-config [config-file]
+  (def *swarmiji-conf* config-file))
+
 (defn current-swarmiji-ns-for [env-var-name]
   (or (System/getenv env-var-name)
       (throw (Exception. (str env-var-name " is not set")))))
@@ -12,7 +17,7 @@
   (str stem (current-swarmiji-ns-for env-var-name) "_" *swarmiji-env* "_"))
 
 (defn read-config []
-  (read-string (str swarmiji-home "/config/config.clj")))
+  (read-string (slurp *swarmiji-conf*)))
 
 (defn environment-specific-config-from [configs]
   (if *swarmiji-env*
