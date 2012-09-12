@@ -1,4 +1,4 @@
-(defproject swarmiji "0.3.7"
+(defproject swarmiji "0.3.8"
   :description "A distributed computing framework to help write and run Clojure code in parallel, across cores and processors"
   :url "http://github.com/runa-dev/swarmiji"
   :dependencies [[org.clojure/clojure "1.2.1"]
@@ -6,9 +6,9 @@
                  [org.danlarkin/clojure-json   "1.1"]
                  [org.clojars.kjw/commons-io   "1.4"]
                  [mysql/mysql-connector-java   "5.1.6"]
-                 [org.clojars.kjw/rabbitmq-client "1.7.1"]
+                 [com.rabbitmq/amqp-client     "2.5.0"]
                  [org.clojars.sethtrain/postal "0.2.0"]
-                 [clj-utils                    "1.0.0"]
+                 [clj-utils                    "1.1.0"]
                  [medusa                       "0.1.7"]
                  [org.clojars.macourtney/clj-record "1.0.1"]
                  [org.clojars.amit/swarmiji-java "0.2.0"]]

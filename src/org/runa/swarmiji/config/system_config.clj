@@ -9,12 +9,12 @@
 (defn set-config [config-map]
   (def *swarmiji-conf* config-map))
 
-(defn current-swarmiji-ns-for [env-var-name]
-  (or (System/getenv env-var-name)
-      (throw (Exception. (str env-var-name " is not set")))))
+;; (defn current-swarmiji-ns-for [env-var-name]
+;;   (or (System/getenv env-var-name)
+;;       (throw (Exception. (str env-var-name " is not set")))))
 
-(defn queue-name-prefixed-for [stem env-var-name]
-  (str stem (current-swarmiji-ns-for env-var-name) "_" *swarmiji-env* "_"))
+;; (defn queue-name-prefixed-for [stem env-var-name]
+;;   (str stem (current-swarmiji-ns-for env-var-name) "_" *swarmiji-env* "_"))
 
 (defn read-config []
   *swarmiji-conf*)

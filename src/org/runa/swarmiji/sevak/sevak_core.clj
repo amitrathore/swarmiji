@@ -132,7 +132,8 @@
     (with-swarmiji-bindings
       (let [broadcasts-q (random-queue-name "BROADCASTS_LISTENER_")]
         (try
-         (log-message "Listening for update broadcasts...")
+          (log-message "Listening for update broadcasts...")
+          (log-message (sevak-fanout-exchange-name))
          ;; (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
          (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) #(sevak-request-handling-listener %1 %2 false))
          (log-message "Done with broadcasts!")    
@@ -150,7 +151,7 @@
   (init-rabbit)
   (init-medusa (medusa-server-thread-count))
   ;; (log-message "Medusa started with" (max-pool-size) "threads")
-  ;(send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
+  (send-message-on-queue (queue-diagnostics-q-name) {:message_type START-UP-REPORT :sevak_server_pid (process-pid) :sevak_name SEVAK-SERVER})
   (start-broadcast-processor)
   (start-processor (queue-sevak-q-name true) true "Starting to serve realtime sevak requests..." )
   (start-processor (queue-sevak-q-name false) false "Starting to serve non-realtime sevak requests..." )
