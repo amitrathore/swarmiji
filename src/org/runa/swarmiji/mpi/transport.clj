@@ -41,14 +41,19 @@
         on-response (fn [msg]
                       (with-swarmiji-bindings
                         (try
+                          (println "calling custom-handler")
+                          (println "msg" msg)
+                          (println "custom-handler" custom-handler)
                           (custom-handler msg)
                           (finally
 			    (.queueDelete chan return-q-name)
 			    (.close chan)))))
         f (fn []
+            (println "sending message on queue. queue - message" (queue-sevak-q-name realtime?) request-object)
             (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
             (on-response (delivery-from chan consumer)))]
     (f)
+    (println {:channel chan :queue return-q-name :consumer consumer})
     {:channel chan :queue return-q-name :consumer consumer}))
 
 (defn add-to-rabbit-down-queue [realtime? return-queue-name custom-handler request-object]
@@ -56,8 +61,10 @@
 
 (defn register-callback-or-fallback [realtime? return-q-name custom-handler request-object]
   (try
+    (println "calling  ... ")
    (send-and-register-callback realtime? return-q-name custom-handler request-object)
    (catch java.net.ConnectException ce
+     (println "falling  ... ")
      (if (should-fallback (:sevak-service-name request-object))
        (add-to-rabbit-down-queue realtime? return-q-name custom-handler request-object)))))
 

@@ -22,6 +22,7 @@
      (str prefix (random-uuid))))
 
 (defn return-queue-name [sevak-name]
+  (println "calling return-queue-name")
   (str (System/currentTimeMillis) "_" sevak-name "_" (random-uuid)))
 
 (defn sevak-queue-message-for-return [sevak-service args]

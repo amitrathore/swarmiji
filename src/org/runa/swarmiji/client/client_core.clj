@@ -60,6 +60,7 @@
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
 (defn on-swarm [realtime? sevak-service & args]
+  (println "on-swarm")
   (let [sevak-start (ref (System/currentTimeMillis))
 	total-sevak-time (ref nil)
 	latch (CountDownLatch. 1)
@@ -72,8 +73,8 @@
 	on-swarm-response (fn [response]
 			    (let [response (unserialized-response response)]
 			      (dosync
-				(ref-set sevak-data response)
-				(dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start))))
+                               (ref-set sevak-data response)
+                               (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start))))
 			      (if (and (swarmiji-diagnostics-mode?) (success?))
 				(send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))
 			      (.countDown latch)))
