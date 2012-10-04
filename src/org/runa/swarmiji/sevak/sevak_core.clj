@@ -21,6 +21,7 @@
 
 (defn register-sevak [sevak-name function-info]
   (println "registering sevak:" sevak-name)
+    (println "registering sevak, funciton-info:" function-info)
   (dosync 
    (alter sevaks assoc sevak-name function-info)))
 
@@ -36,12 +37,14 @@
 
 (defmacro create-sevak-from-function 
   ([function realtime? needs-response?]
+     (println "service-name" function)
      (let [{:keys [ns name]} (meta (resolve function))
            sevak-name-keyword (keyword name)]
-       (println "creating sevak-from-function")
+       (println "creating sevak-from-function" sevak-name-keyword)
        `(do
           (register-sevak (ns-qualified-name ~sevak-name-keyword *ns*) (sevak-info ~sevak-name-keyword ~realtime? ~needs-response? ~function))
-          (def ~name (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?)))))
+          (def ~name (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?))
+          (println "~name" ~name))))
   ([function]
      `(create-sevak-from-function ~function true true)))
 
