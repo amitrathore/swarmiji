@@ -1,4 +1,5 @@
 (ns org.runa.swarmiji.client.client-core
+  (:gen-class)
   (:use
     org.runa.swarmiji.mpi.sevak-proxy
     org.runa.swarmiji.mpi.transport
