@@ -24,32 +24,20 @@
   (dosync 
    (alter sevaks assoc sevak-name function-info)))
 
-(defmacro sevak-runner [realtime? sevak-name needs-response]
-  (let [defining-ns *ns*]
-    `(fn [& ~'sevak-args]
-       (println "sevak-runner")
-       (if-not (swarmiji-distributed-mode?)
-         (apply on-local (@sevaks (ns-qualified-name ~sevak-name ~defining-ns)) ~'sevak-args)
-         (if ~needs-response
-           (apply on-swarm ~realtime? (ns-qualified-name ~sevak-name ~defining-ns)  ~'sevak-args)
-           (apply on-swarm-no-response ~realtime? (ns-qualified-name ~sevak-name ~defining-ns) ~'sevak-args))))))
-
-(defmacro create-sevak-from-function 
-  ([function realtime? needs-response?]
-     (println "CSFF: service-name" function)
-     (let [{:keys [ns name]} (meta (resolve function))
-           sevak-name-keyword (keyword name)]
-       (println "CSFF sevak-name-keyword" sevak-name-keyword)
-       `(do
-          (register-sevak (ns-qualified-name ~sevak-name-keyword *ns*) (sevak-info ~sevak-name-keyword ~realtime? ~needs-response? ~function))
-          (def ~name (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?)))))
-  ([function]
-     `(create-sevak-from-function ~function true true)))
-
 (defmacro create-function-and-sevak [service-name realtime? needs-response? args expr]
-  `(do 
-     (def ~service-name (fn ~args (do ~@expr)))
-     (create-sevak-from-function ~service-name ~realtime? ~needs-response?)))
+  (let [defining-ns *ns*]
+    `(do
+       (defn ~service-name
+         ([~@args]
+          (do (println :actual) ~@expr)) ; actual fn
+         ([~'sevak & ~'sevak-args]
+            (when (= :sevak ~'sevak)
+              (println :sevak-runner)
+            ;  (apply on-swarm ~realtime? (ns-qualified-name ~sevak-name ~defining-ns) ~'sevak-args))
+            )))
+       (println "service-name: " '~service-name)
+       (println "resolving:" (meta (resolve '~service-name)))
+       (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) *ns*) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
 
 (defmacro defsevak [service-name args & expr]
   `(create-function-and-sevak ~service-name true true ~args ~expr))
