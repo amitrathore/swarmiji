@@ -24,17 +24,21 @@
   (dosync 
    (alter sevaks assoc sevak-name function-info)))
 
+;; implement the actual fn and client fn as mulit-methods
 (defmacro create-function-and-sevak [service-name realtime? needs-response? args expr]
   (let [defining-ns *ns*]
     `(do
        (defn ~service-name
-         ([~@args]
-          (do (println :actual) ~@expr)) ; actual fn
-         ([~'sevak & ~'sevak-args]
+         ([~@args]  ;; this is the function that the client executes
+            (println :sevak-runner)
+            (println "ns" (str (ns-name *ns*)))
+            (println "Service-name" '~service-name)
+            (apply on-swarm ~realtime? (str (ns-name *ns*) "/" '~service-name)  [~@args]))
+         ([~@args ~'sevak]
+            ;; this is the function that the sevak executes. Executed as (function args :sevak)
             (when (= :sevak ~'sevak)
-              (println :sevak-runner)
-            ;  (apply on-swarm ~realtime? (ns-qualified-name ~sevak-name ~defining-ns) ~'sevak-args))
-            )))
+              (do (println :actual)
+                  ~@expr))))
        (println "service-name: " '~service-name)
        (println "resolving:" (meta (resolve '~service-name)))
        (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) *ns*) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
