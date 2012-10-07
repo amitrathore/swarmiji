@@ -34,7 +34,11 @@
             (println :sevak-runner)
             (println "ns" (str (ns-name *ns*)))
             (println "Service-name" '~service-name)
-            (apply on-swarm ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args]))
+            (if-not (swarmiji-distributed-mode?)
+              (apply on-local (@sevaks (str (ns-name ~defining-ns) "/" '~service-name)) [~@args :sevak])
+              (if ~needs-response
+                (apply on-swarm ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args])
+                (apply on-swarm-no-response ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args]))))
          ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
             (when (= :sevak ~'sevak)
               (do (println :actual) ~@expr))))
