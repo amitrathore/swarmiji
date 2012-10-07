@@ -29,19 +29,19 @@
   (let [defining-ns *ns*]
     `(do
        (defn ~service-name
-         ([~@args]  ;; this is the function that the client executes
+         ([~@args]
+            ;; this is the function that the client executes
             (println :sevak-runner)
             (println "ns" (str (ns-name *ns*)))
             (println "Service-name" '~service-name)
-            (apply on-swarm ~realtime? (str (ns-name *ns*) "/" '~service-name)  [~@args]))
-         ([~@args ~'sevak]
-            ;; this is the function that the sevak executes. Executed as (function args :sevak)
+            (apply on-swarm ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args]))
+         ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
             (when (= :sevak ~'sevak)
-              (do (println :actual)
-                  ~@expr))))
+              (do (println :actual) ~@expr))))
        (println "service-name: " '~service-name)
+       (println "defining-ns:" ~defining-ns)
        (println "resolving:" (meta (resolve '~service-name)))
-       (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) *ns*) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
+       (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) ~defining-ns) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
 
 (defmacro defsevak [service-name args & expr]
   `(create-function-and-sevak ~service-name true true ~args ~expr))
@@ -59,7 +59,7 @@
   (try
     (println "execute-sevak: [service-name service-handler service-args]" [service-name service-handler service-args])
     (let [response-with-time (run-and-measure-timing 
-                              (apply (:fn service-handler) service-args))
+                              (apply (:fn service-handler) (concat service-args '(:sevak))))
           value (response-with-time :response)
           time-elapsed (response-with-time :time-taken)]
       {:response value :status :success :sevak-time time-elapsed})
