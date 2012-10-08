@@ -22,7 +22,6 @@
 (def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
 
 (defn attribute-from-response [sevak-data attrib-name]
-  (println "attribute-from-response: " sevak-data attrib-name)
   (if (= swarmiji-sevak-init-value sevak-data)
     (throw (Exception. "Sevak not complete!")))
   (if (not (= :success (keyword (sevak-data :status))))
@@ -30,14 +29,12 @@
   (sevak-data attrib-name))
 
 (defn response-value-from [sevak-data]
-  (println "response-value-from :" sevak-data)
   (attribute-from-response sevak-data :response))
 
 (defn time-on-server [sevak-data]
   (attribute-from-response sevak-data :sevak-time))
 
 (defn return-q [sevak-data]
-  (println "return-q :" sevak-data)
   (attribute-from-response sevak-data :return-q-name))
 
 (defn sevak-server-pid [sevak-data]
@@ -64,7 +61,6 @@
       {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
 
 (defn on-swarm [realtime? sevak-service & args]
-  (println "on-swarm")
   (let [sevak-start (ref (System/currentTimeMillis))
 	total-sevak-time (ref nil)
 	latch (CountDownLatch. 1)
@@ -156,7 +152,6 @@
      ~@expr))
 
 (defn retry-sevaks [retry-timeout sevaks sevak-fn]
-  (println "retry-sevaks")
   (let [incomplete-sevaks (filter #(not (% :complete?)) sevaks)
         new-sevaks (map #(apply sevak-fn (% :args)) incomplete-sevaks)]
     (from-swarm retry-timeout new-sevaks)))

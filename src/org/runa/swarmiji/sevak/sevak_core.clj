@@ -19,8 +19,6 @@
 (def non-real-time-thread-pool (java.util.concurrent.Executors/newFixedThreadPool 32))
 
 (defn register-sevak [sevak-name function-info]
-  (println "register-sevak, sevak-name" sevak-name)
-  (println "registering sevak, funciton-info:" function-info)
   (dosync 
    (alter sevaks assoc sevak-name function-info)))
 
@@ -31,9 +29,6 @@
        (defn ~service-name
          ([~@args]
             ;; this is the function that the client executes
-            (println :sevak-runner)
-            (println "ns" (str (ns-name *ns*)))
-            (println "Service-name" '~service-name)
             (if-not (swarmiji-distributed-mode?)
               (apply on-local (@sevaks (str (ns-name ~defining-ns) "/" '~service-name)) [~@args :sevak])
               (if ~needs-response?
@@ -42,9 +37,7 @@
          ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
             (when (= :sevak ~'sevak)
               (do (println :actual) ~@expr))))
-       (println "service-name: " '~service-name)
-       (println "defining-ns:" ~defining-ns)
-       (println "resolving:" (meta (resolve '~service-name)))
+       (println "Defining service-name: " '~service-name)
        (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) ~defining-ns) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
 
 (defmacro defsevak [service-name args & expr]
@@ -76,7 +69,6 @@
 (defn handle-sevak-request [service-handler sevak-name service-args return-q ack-fn]
   (with-swarmiji-bindings
     (try
-      (println "handle-sevak-request, ack-fn: " ack-fn)
       (let [response (merge 
                       {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
                       (execute-sevak sevak-name service-handler service-args))]
@@ -98,28 +90,33 @@
             return-q (req :return-queue-name)
             service-handler (@sevaks service-name)]
 
-
-        (println "SRHL: ack-fn: " ack-fn)
-        (println "SRHL: req-str:" req-str)
-        (println "SRHL: service-name:" service-name)
-        (log-message "SRHL: sevaks: " @sevaks)
-        (log-message "SRHL: service handler: " service-handler)
-        (comment
-          "Received request for swarm.foo/ping with args: (5000) and return-q: 1349425554274_swarm.foo/ping_fd2ec133-95e4-4535-b9fa-5dbbf28b2812")
-          
-        (log-message "SRHL: Received request for" service-name "with args:" service-args "and return-q:" return-q)
         (when (nil? service-handler)
           (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
         (if real-time?
-	  (do (log-message "SRHL: real-time?" real-time?)
-              (medusa-future-thunk return-q
-                                   #(handle-sevak-request service-handler service-name service-args return-q ack-fn)))
+	  (do 
+            (medusa-future-thunk return-q
+                                 #(handle-sevak-request service-handler service-name service-args return-q ack-fn)))
 	  (.submit non-real-time-thread-pool
                    #(handle-sevak-request service-handler service-name service-args return-q ack-fn))))
       (catch Exception e
         (log-message "SRHL: Error in sevak-request-handling-listener:" (class e))
         (log-exception e)))))
+
+
+(defn start-broadcast-processor []
+  (future 
+    (with-swarmiji-bindings
+      (let [broadcasts-q (random-queue-name "BROADCASTS_LISTENER_")]
+        (try
+          (log-message "Listening for update broadcasts...")
+          (log-message (sevak-fanout-exchange-name))
+         ;; (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
+         (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) #(sevak-request-handling-listener %1 %2 false))
+         (log-message "Done with broadcasts!")    
+         (catch Exception e         
+           (log-message "Error in update broadcasts future!")
+           (log-exception e)))))))
 
 (defn start-processor [routing-key real-time? start-log-message]
   (future
