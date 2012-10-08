@@ -1,4 +1,4 @@
-(defproject swarmiji "0.4.0"
+(defproject swarmiji "0.3.8"
   :description "A distributed computing framework to help write and run Clojure code in parallel, across cores and processors"
   :url "http://github.com/runa-dev/swarmiji"
   :dependencies [[org.clojure/clojure "1.2.1"]

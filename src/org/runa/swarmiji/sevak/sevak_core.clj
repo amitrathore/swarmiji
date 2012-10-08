@@ -23,23 +23,29 @@
   (dosync 
    (alter sevaks assoc sevak-name function-info)))
 
-;; TODO: generate multi-methods instead
-(defmacro create-function-and-sevak [service-name realtime? needs-response? args expr]
+(defmacro sevak-runner [realtime? sevak-name needs-response]
   (let [defining-ns *ns*]
-    `(do
-       (defn ~service-name
-         ([~@args]
-            ;; function executed by client
-            (if-not (swarmiji-distributed-mode?)
-              (apply on-local (@sevaks (str (ns-name ~defining-ns) "/" '~service-name)) [~@args :sevak])
-              (if ~needs-response?
-                (apply on-swarm ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args])
-                (apply on-swarm-no-response ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args])))))
-         ([~@args ~'sevak]
-            ;; function executed by sevak/server. Executed as (function args :sevak)
-            (when (= :sevak ~'sevak)
-              ~@expr))
-         (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) ~defining-ns) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
+    `(fn [& ~'sevak-args] 
+       (if-not (swarmiji-distributed-mode?)
+         (apply on-local (@sevaks (ns-qualified-name ~sevak-name ~defining-ns)) ~'sevak-args)
+         (if ~needs-response
+           (apply on-swarm ~realtime? (ns-qualified-name ~sevak-name ~defining-ns)  ~'sevak-args)
+           (apply on-swarm-no-response ~realtime? (ns-qualified-name ~sevak-name ~defining-ns) ~'sevak-args))))))
+
+(defmacro create-sevak-from-function 
+  ([function realtime? needs-response?]
+     (let [{:keys [ns name]} (meta (resolve function))
+           sevak-name-keyword (keyword name)]
+       `(do
+          (register-sevak (ns-qualified-name ~sevak-name-keyword *ns*) (sevak-info ~sevak-name-keyword ~realtime? ~needs-response? ~function))
+          (def ~name (sevak-runner ~realtime? ~sevak-name-keyword ~needs-response?)))))
+  ([function]
+     `(create-sevak-from-function ~function true true)))
+
+(defmacro create-function-and-sevak [service-name realtime? needs-response? args expr]
+  `(do 
+     (def ~service-name (fn ~args (do ~@expr)))
+     (create-sevak-from-function ~service-name ~realtime? ~needs-response?)))
 
 (defmacro defsevak [service-name args & expr]
   `(create-function-and-sevak ~service-name true true ~args ~expr))
