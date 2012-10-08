@@ -36,8 +36,8 @@
                 (apply on-swarm-no-response ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args]))))
          ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
             (when (= :sevak ~'sevak)
-              (do (println :actual) ~@expr))))
-       (println "Defining service-name: " '~service-name)
+              (do ~@expr))))
+       (println "defining sevak job: " '~service-name)
        (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) ~defining-ns) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
 
 (defmacro defsevak [service-name args & expr]

@@ -157,7 +157,6 @@
     (from-swarm retry-timeout new-sevaks)))
 
 (defn on-local [sevak-service-function & args]
-  (println "on-local :" sevak-service-function)
   (let [response-with-time (ref {})
         result (simulate-serialized
                 (run-and-measure-timing 
