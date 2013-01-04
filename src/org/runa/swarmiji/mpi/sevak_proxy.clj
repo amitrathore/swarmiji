@@ -8,8 +8,7 @@
   (:use org.rathore.amit.utils.clojure)
   (:use org.rathore.amit.utils.config)
   (:use org.rathore.amit.utils.rabbitmq)
-  (:use org.rathore.amit.medusa.core)
-  (:use alex-and-georges.debug-repl))
+  (:use org.rathore.amit.medusa.core))
 
 
 (defn register-callback [realtime? return-q-name custom-handler request-object]

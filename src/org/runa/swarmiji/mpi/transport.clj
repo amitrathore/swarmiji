@@ -6,12 +6,10 @@
   (:use org.runa.swarmiji.utils.general-utils)
   (:use org.rathore.amit.utils.logger)
   (:use org.rathore.amit.utils.clojure)
-  (:use org.rathore.amit.medusa.core)
-  (:use clojure.contrib.except)
-  (:use alex-and-georges.debug-repl))
+  (:use org.rathore.amit.medusa.core))
 
 (def rabbit-down-messages (atom {}))
-(def *guaranteed-sevaks*)
+(def ^:dynamic *guaranteed-sevaks*)
 (def BROADCASTS-QUEUE-NAME "BROADCASTS_GLOBAL")
 
 (defn send-message-on-queue [q-name q-message-object]
@@ -29,7 +27,7 @@
 
 (defmacro multicast-to-sevak-servers [sevak-var & args]
   (let [{:keys [name ns] :as meta-inf} (meta (resolve sevak-var))]
-    (if-not meta-inf (throwf "Multicast-to-sevak-servers is unable to resolve %s" sevak-var))
+    (if-not meta-inf (throw (Exception. (format "Multicast-to-sevak-servers is unable to resolve %s" sevak-var))))
     `(fanout-message-to-all (sevak-queue-message-no-return ~(ns-qualified-name name ns) (list ~@args)))))
 
 (defn should-fallback [sevak-name]
