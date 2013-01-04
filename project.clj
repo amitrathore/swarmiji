@@ -14,9 +14,10 @@
                  [clj-record                     "1.1.4"]
                  [org.clojars.amit/swarmiji-java "0.2.0"]]
 
-  :dev-dependencies [[swank-clojure            "1.2.1"]]
+  :dev-dependencies [[slamhound                "1.3.1"]
+                     [swank-clojure            "1.2.1"]]
 
-  :repositories {"releases"     "s3p://runa-maven/releases/"}
+  :repositories {"releases" "s3p://runa-maven/releases/"}
 
   :plugins [[lein-swank "1.4.4"]
             [s3-wagon-private "1.1.1"]])

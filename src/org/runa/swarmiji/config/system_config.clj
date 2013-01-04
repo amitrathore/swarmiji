@@ -1,5 +1,4 @@
-(ns org.runa.swarmiji.config.system-config
-  (:use org.runa.swarmiji.utils.general-utils))
+(ns org.runa.swarmiji.config.system-config)
 
 (def ^{:dynamic true} *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
 (def swarmiji-home (or (.get (System/getenv) "SWARMIJI_HOME") (str (System/getProperty "user.home") "/workspace/swarmiji")))

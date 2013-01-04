@@ -1,4 +1,4 @@
-(ns org.runa.swarmiji.monitor.control_message
+(ns org.runa.swarmiji.monitor.control-message
   (:require clj-record.boot)
   (:use [org.runa.swarmiji.config.system-config]))
 

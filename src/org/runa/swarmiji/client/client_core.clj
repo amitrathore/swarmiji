@@ -1,17 +1,18 @@
 (ns org.runa.swarmiji.client.client-core
-  (:use
-    org.runa.swarmiji.mpi.sevak-proxy
-    org.runa.swarmiji.mpi.transport
-    org.runa.swarmiji.sevak.bindings
-    org.runa.swarmiji.config.system-config
-    org.runa.swarmiji.utils.general-utils
-    org.rathore.amit.utils.config
-    org.rathore.amit.utils.logger
-    org.rathore.amit.utils.clojure)
-  (:import
-    (java.io StringWriter)
-    (org.runa.swarmiji.exception SevakErrors)
-    (java.util.concurrent TimeoutException TimeUnit CountDownLatch)))
+  (:require [org.rathore.amit.utils.clojure :refer [run-and-measure-timing]]
+            [org.rathore.amit.utils.logger :refer [exception-name
+                                                   log-exception
+                                                   log-message
+                                                   stacktrace]]
+            [org.runa.swarmiji.config.system-config :refer [queue-diagnostics-q-name
+                                                            swarmiji-diagnostics-mode?]]
+            [org.runa.swarmiji.mpi.sevak-proxy :refer [new-proxy]]
+            [org.runa.swarmiji.mpi.transport :refer [send-message-on-queue]]
+            [org.runa.swarmiji.sevak.bindings :refer [with-swarmiji-bindings]]
+            [org.runa.swarmiji.utils.general-utils :refer [simulate-serialized]])
+  (:import (java.util.concurrent CountDownLatch TimeUnit
+                                 TimeoutException)
+           (org.runa.swarmiji.exception SevakErrors)))
 
 
 (def WORK-REPORT "WORK_REPORT")
