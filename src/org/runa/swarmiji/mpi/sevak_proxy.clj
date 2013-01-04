@@ -1,15 +1,10 @@
 (ns org.runa.swarmiji.mpi.sevak-proxy
-  (:import (com.rabbitmq.client Channel Connection ConnectionFactory QueueingConsumer))
-  (:use org.runa.swarmiji.mpi.transport)
-  (:use org.runa.swarmiji.config.system-config)
-  (:use org.runa.swarmiji.utils.general-utils)
-  (:use org.runa.swarmiji.sevak.bindings)
-  (:use org.rathore.amit.utils.logger)
-  (:use org.rathore.amit.utils.clojure)
-  (:use org.rathore.amit.utils.config)
-  (:use org.rathore.amit.utils.rabbitmq)
-  (:use org.rathore.amit.medusa.core)
-  (:use alex-and-georges.debug-repl))
+  (:require [org.rathore.amit.utils.logger :refer [log-message]]
+            [org.runa.swarmiji.config.system-config :refer [queue-sevak-q-name]]
+            [org.runa.swarmiji.mpi.transport :refer [register-callback-or-fallback
+                                                     send-message-on-queue]]
+            [org.runa.swarmiji.utils.general-utils :refer [sevak-queue-message-for-return
+                                                           sevak-queue-message-no-return]]))
 
 
 (defn register-callback [realtime? return-q-name custom-handler request-object]

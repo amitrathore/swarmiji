@@ -8,7 +8,6 @@
   (:use org.rathore.amit.utils.config)
   (:use org.rathore.amit.utils.logger)
   (:use org.rathore.amit.utils.clojure)
-  (:use alex-and-georges.debug-repl)
   (:use org.rathore.amit.medusa.core))
 
 (def sevaks (ref {}))

@@ -1,13 +1,12 @@
-(ns org.runa.swarmiji.config.system-config
-  (:use org.runa.swarmiji.utils.general-utils))
+(ns org.runa.swarmiji.config.system-config)
 
-(def *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
+(def ^{:dynamic true} *swarmiji-env* (or (.get (System/getenv) "SWARMIJI_ENV") "test"))
 (def swarmiji-home (or (.get (System/getenv) "SWARMIJI_HOME") (str (System/getProperty "user.home") "/workspace/swarmiji")))
 
-(def *swarmiji-conf* {})
+(def ^:dynamic *swarmiji-conf* {})
 
 (defn set-config [config-map]
-  (def *swarmiji-conf* config-map))
+  (def ^:dynamic *swarmiji-conf* config-map))
 
 ;; (defn current-swarmiji-ns-for [env-var-name]
 ;;   (or (System/getenv env-var-name)
