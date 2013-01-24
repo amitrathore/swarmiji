@@ -42,7 +42,7 @@
                           (custom-handler msg)
                           (finally
 			    (.queueDelete chan return-q-name)
-			    (.close chan)))))
+			    (close-channel chan)))))
         f (fn []
             (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
             (on-response (delivery-from chan consumer)))]
