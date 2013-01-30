@@ -81,5 +81,9 @@
 
 (defn init-rabbit []
   (log-message "Swarmiji: RabbitMQ host is" (queue-host))
-  (init-rabbitmq-connection (queue-host) (queue-username) (queue-password))
+  (init-rabbitmq-connection (queue-host)
+                            (queue-username)
+                            (queue-password)
+                            (rabbitmq-max-pool-size)
+                            (rabbitmq-max-idle-size))
   (start-retry-rabbit 10000))

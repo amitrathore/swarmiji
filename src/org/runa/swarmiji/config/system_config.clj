@@ -67,6 +67,12 @@
 (defn rabbitmq-prefetch-count []
   ((operation-config) :rabbit-prefetch-count))
 
+(defn rabbitmq-max-pool-size []
+  ((operation-config) :rabbit-max-pool-size))
+
+(defn rabbitmq-max-idle-size []
+  ((operation-config) :rabbit-max-idle-size))
+
 (defn medusa-server-thread-count []
   ((operation-config) :medusa-server-thread-count))
 
