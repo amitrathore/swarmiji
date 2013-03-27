@@ -181,7 +181,7 @@
        :default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
     
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
-  (println "send-work-report:" sevak-name)
+  (log-message "send-work-report:" sevak-name)
   (let [report {:message_type WORK-REPORT
 		:sevak_name sevak-name
 		:sevak_args (str args)

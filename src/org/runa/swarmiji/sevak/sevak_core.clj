@@ -36,7 +36,7 @@
          ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
             (when (= :sevak ~'sevak)
               (do ~@expr))))
-       (println "defining sevak job: " '~service-name)
+       (log-message "defining sevak job: " '~service-name)
        (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) ~defining-ns) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
 
 (defmacro defsevak [service-name args & expr]
@@ -53,7 +53,7 @@
 
 (defn execute-sevak [service-name service-handler service-args]
   (try
-    (println "execute-sevak: [service-name service-handler service-args]" [service-name service-handler service-args])
+    (log-message "execute-sevak: [service-name service-handler service-args]" [service-name service-handler service-args])
     (let [response-with-time (run-and-measure-timing 
                               (apply (:fn service-handler) (concat service-args '(:sevak))))
           value (response-with-time :response)
@@ -72,9 +72,9 @@
                       {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
                       (execute-sevak sevak-name service-handler service-args))]
         (when (and return-q (:return service-handler))
-          (println "handle-sevak-request: Returning request for" sevak-name "with return-q:" return-q "elapsed time:"
+          (log-message "handle-sevak-request: Returning request for" sevak-name "with return-q:" return-q "elapsed time:"
                        (:sevak-time response))
-          (println "handle-sevak-request: " response)
+          (log-message "handle-sevak-request: " response)
           (send-message-no-declare return-q response)))
       (finally
        (ack-fn)))))
@@ -82,7 +82,7 @@
 (defn sevak-request-handling-listener [req-str ack-fn real-time?]
   (with-swarmiji-bindings
     (try
-      (println "sevak-request-handling-listener")
+      (log-message "sevak-request-handling-listener")
       (let [req (read-string req-str)
             service-name (req :sevak-service-name) 
             service-args (req :sevak-service-args) 

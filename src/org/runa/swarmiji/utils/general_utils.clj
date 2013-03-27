@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.utils.general-utils
-  (:require [org.rathore.amit.utils.rabbitmq :refer [*PREFETCH-COUNT*]])
+  (:require [org.rathore.amit.utils.rabbitmq :refer [*PREFETCH-COUNT*]]
+            [org.rathore.amit.utils.logger :refer [log-message]])
   (:import (java.lang.management ManagementFactory)
            (java.util UUID)))
 
@@ -21,7 +22,7 @@
      (str prefix (random-uuid))))
 
 (defn return-queue-name [sevak-name]
-  (println "calling return-queue-name")
+  (log-message "calling return-queue-name")
   (str (System/currentTimeMillis) "_" sevak-name "_" (random-uuid)))
 
 (defn sevak-queue-message-for-return [sevak-service args]
