@@ -24,5 +24,7 @@
   (let [s1 (inc-atom 3)
         s2 (inc-atom 5)]
     (is (= @test-atom 8))
-    (retry-sevaks 10 inc-atom [s1 s2 (incomplete-sevak s1) (incomplete-sevak s2)])
+    (retry-sevaks 10 inc-atom [s1 s2
+                               (incomplete-sevak s1)
+                               (incomplete-sevak s2)])
     (is (= @test-atom 16))))
