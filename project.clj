@@ -1,5 +1,8 @@
 (defproject org.clojars.runa/swarmiji "0.4.8"
   :description "A distributed computing framework to help write and run Clojure code in parallel, across cores and processors"
+  :license  {:name "Eclipse Public License - v 1.0"
+             :url "http://www.eclipse.org/legal/epl-v10.html"
+             :distribution :repo}
   :url "http://github.com/runa-dev/swarmiji"
   :dependencies [[org.clojure/clojure            "1.5.1"]
                  [mysql/mysql-connector-java     "5.1.6"]
