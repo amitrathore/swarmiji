@@ -87,4 +87,4 @@
 (defn config-for-rathore-utils [process-type-id]
   {:log-to-console (log-to-console?)
    :logs-dir ((operation-config) :logsdir)
-    :log-filename-prefix (str process-type-id "_" *swarmiji-env*)})
+   :log-filename-prefix (str process-type-id "_" *swarmiji-env*)})

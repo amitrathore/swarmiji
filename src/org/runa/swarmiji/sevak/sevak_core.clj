@@ -77,7 +77,7 @@
           (log-message "handle-sevak-request: " response)
           (send-message-no-declare return-q response)))
       (finally
-       (ack-fn)))))
+        (ack-fn)))))
 
 (defn sevak-request-handling-listener [req-str ack-fn real-time?]
   (with-swarmiji-bindings
@@ -110,23 +110,23 @@
         (try
           (log-message "Listening for update broadcasts...")
           (log-message (sevak-fanout-exchange-name))
-         ;; (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
-         (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) #(sevak-request-handling-listener %1 %2 false))
-         (log-message "Done with broadcasts!")    
-         (catch Exception e         
-           (log-message "Error in update broadcasts future!")
-           (log-exception e)))))))
+          ;; (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
+          (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) #(sevak-request-handling-listener %1 %2 false))
+          (log-message "Done with broadcasts!")    
+          (catch Exception e         
+            (log-message "Error in update broadcasts future!")
+            (log-exception e)))))))
 
 (defn start-processor [routing-key real-time? start-log-message]
   (future
-   (with-swarmiji-bindings 
-     (try
-       (with-prefetch-count (rabbitmq-prefetch-count)
-         (start-queue-message-handler routing-key routing-key (fn [req-str ack-fn] (sevak-request-handling-listener req-str ack-fn real-time?))))
-       (log-message "start-processor: Done with sevak requests!")
-       (catch Exception e
-         (log-message "start-processor: Error in sevak-servicing future!")
-         (log-exception e))))))
+    (with-swarmiji-bindings 
+      (try
+        (with-prefetch-count (rabbitmq-prefetch-count)
+          (start-queue-message-handler routing-key routing-key (fn [req-str ack-fn] (sevak-request-handling-listener req-str ack-fn real-time?))))
+        (log-message "start-processor: Done with sevak requests!")
+        (catch Exception e
+          (log-message "start-processor: Error in sevak-servicing future!")
+          (log-exception e))))))
 
 
 (defn boot-sevak-server []

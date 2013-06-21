@@ -16,10 +16,10 @@
 	_ (log-message "control-message:" control-message)
 	now (timestamp-for-sql (System/currentTimeMillis))
         with-timestamps (merge {:created_at now :updated_at now} control-message)]
-  (control-message/insert with-timestamps)))
+    (control-message/insert with-timestamps)))
 
 (defn start []
   (binding-for-swarmiji [*clj-utils-config* (config-for-rathore-utils "recorder")]
-    (log-message "Swarmiji: Starting Control-Message-Recorder...")
-    (log-message "Listening on:" (queue-diagnostics-q-name))
-    (start-queue-message-handler (queue-diagnostics-q-name) persist-message)))
+                        (log-message "Swarmiji: Starting Control-Message-Recorder...")
+                        (log-message "Listening on:" (queue-diagnostics-q-name))
+                        (start-queue-message-handler (queue-diagnostics-q-name) persist-message)))

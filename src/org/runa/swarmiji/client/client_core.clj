@@ -1,18 +1,18 @@
 (ns org.runa.swarmiji.client.client-core
   (:gen-class)
   (:use
-    org.runa.swarmiji.mpi.sevak-proxy
-    org.runa.swarmiji.mpi.transport
-    org.runa.swarmiji.sevak.bindings
-    org.runa.swarmiji.config.system-config
-    org.runa.swarmiji.utils.general-utils
-    org.rathore.amit.utils.config
-    org.rathore.amit.utils.logger
-    org.rathore.amit.utils.clojure)
+   org.runa.swarmiji.mpi.sevak-proxy
+   org.runa.swarmiji.mpi.transport
+   org.runa.swarmiji.sevak.bindings
+   org.runa.swarmiji.config.system-config
+   org.runa.swarmiji.utils.general-utils
+   org.rathore.amit.utils.config
+   org.rathore.amit.utils.logger
+   org.rathore.amit.utils.clojure)
   (:import
-    (java.io StringWriter)
-    (org.runa.swarmiji.exception SevakErrors)
-    (java.util.concurrent TimeoutException TimeUnit CountDownLatch)))
+   (java.io StringWriter)
+   (org.runa.swarmiji.exception SevakErrors)
+   (java.util.concurrent TimeoutException TimeUnit CountDownLatch)))
 
 
 (def WORK-REPORT "WORK_REPORT")
@@ -47,10 +47,10 @@
   (if sevak-proxy 
     (let [{:keys [channel queue]} sevak-proxy]
       (try
-       (with-swarmiji-bindings
-	 (.queueDelete channel queue)
-	 (catch Exception e))))))
-         ;no-op, this sevak-proxy should be aborted, thats it
+        (with-swarmiji-bindings
+          (.queueDelete channel queue)
+          (catch Exception e))))))
+                                        ;no-op, this sevak-proxy should be aborted, thats it
 
 (defn unserialized-response [[response-obj-string ack-fn]]
   (try
@@ -112,7 +112,7 @@
   (doseq [r swarm-requests]
     (when (r :distributed?)
       (log-message "Sevak response timed-out on" (r :sevak-name)
-	"for return-q" ((r :sevak-proxy) :queue)))))
+                   "for return-q" ((r :sevak-proxy) :queue)))))
 
 (defn throw-exception [allowed-time]
   (throw (RuntimeException. (str "Swarmiji reports: This operation has taken more than " allowed-time " milliseconds."))))
@@ -122,20 +122,20 @@
      (wait-until-completion swarm-requests allowed-time throw-exception))
   ([swarm-requests allowed-time error-fn]
      (let [start (System/currentTimeMillis)
-	   remaining-time #(- allowed-time (- (System/currentTimeMillis) start))
-	   latches (map :latch swarm-requests)]
+           remaining-time #(- allowed-time (- (System/currentTimeMillis) start))
+           latches (map :latch swarm-requests)]
        (try
-	 (doseq [r swarm-requests]
-	   (let [latch ^CountDownLatch (r :latch)]
-	     (.await latch (remaining-time) TimeUnit/MILLISECONDS)
-	     (when (r :distributed?)
-	       (log-message "Received sevak response on" (r :sevak-name)
-		 "for return-q" (return-q (r :__inner_ref)) "with elapsed time" (r :total-time)))))
-	 (catch TimeoutException e
-	   (log-timeouts swarm-requests)
-	   (error-fn allowed-time))
-	 (finally
-	   (disconnect-all swarm-requests))))))
+         (doseq [r swarm-requests]
+           (let [latch ^CountDownLatch (r :latch)]
+             (.await latch (remaining-time) TimeUnit/MILLISECONDS)
+             (when (r :distributed?)
+               (log-message "Received sevak response on" (r :sevak-name)
+                            "for return-q" (return-q (r :__inner_ref)) "with elapsed time" (r :total-time)))))
+         (catch TimeoutException _
+           (log-timeouts swarm-requests)
+           (error-fn allowed-time))
+         (finally
+           (disconnect-all swarm-requests))))))
 
 (defn wait-until-completion-no-exception
   [swarm-requests allowed-time]
@@ -179,7 +179,7 @@
        (= accessor :_inner_ref) @response-with-time
        (= accessor :value) (@response-with-time :response)
        :default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
-    
+
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
   (log-message "send-work-report:" sevak-name)
   (let [report {:message_type WORK-REPORT

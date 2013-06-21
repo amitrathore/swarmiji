@@ -54,14 +54,14 @@
 
 (defn register-callback-or-fallback [realtime? return-q-name custom-handler request-object]
   (try
-   (send-and-register-callback realtime? return-q-name custom-handler request-object)
-   (catch java.net.ConnectException ce
-     (if (should-fallback (:sevak-service-name request-object))
-       (add-to-rabbit-down-queue realtime? return-q-name custom-handler request-object)))))
+    (send-and-register-callback realtime? return-q-name custom-handler request-object)
+    (catch java.net.ConnectException ce
+      (if (should-fallback (:sevak-service-name request-object))
+        (add-to-rabbit-down-queue realtime? return-q-name custom-handler request-object)))))
 
 (defn retry-message [timestamp [realtime? return-queue-name custom-handler request-object]]
-   (with-swarmiji-bindings
-     (try
+  (with-swarmiji-bindings
+    (try
       (send-and-register-callback realtime? return-queue-name custom-handler request-object)
       (swap! rabbit-down-messages dissoc timestamp)
       (catch java.net.ConnectException ce
