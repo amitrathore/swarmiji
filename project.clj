@@ -8,12 +8,15 @@
                  [mysql/mysql-connector-java     "5.1.6"]
                  [com.rabbitmq/amqp-client       "2.5.0"]
                  [org.clojars.runa/clj-utils     "1.2.8"]
-                 [org.clojars.runa/runa-rabbitmq "1.0.2"]
                  [org.clojars.runa/medusa        "0.1.11"]
                  [clj-record                     "1.1.4"]
-                 [org.clojars.amit/swarmiji-java "0.2.0"]]
+                 [org.clojars.amit/swarmiji-java "0.2.0"]
+                 [com.rabbitmq/amqp-client       "2.5.0"]
+                 [org.clojars.runa/clj-kryo      "1.3.0"]
+                 [commons-pool/commons-pool      "1.4"]]
   :profiles {:dev {:dependencies
                    [[slamhound                "1.3.1"]
                     [swank-clojure            "1.4.0"]]}}
   :plugins [[lein-swank "1.4.4"]
             [s3-wagon-private "1.1.1"]])
+

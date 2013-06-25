@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.utils.general-utils
-  (:require [runa-rabbitmq.rabbitmq :refer [*PREFETCH-COUNT*]]
+  (:require [org.runa.swarmiji.rabbitmq.rabbitmq :refer [*PREFETCH-COUNT*]]
             [org.rathore.amit.utils.logger :refer [log-message]])
   (:import (java.lang.management ManagementFactory)
            (java.util UUID)))
@@ -7,13 +7,12 @@
 (defn random-uuid []
   (str (UUID/randomUUID)))
 
-(defn ns-qualified-name 
-  ([sevak-name-keyword the-name-space]
-     (str (ns-name the-name-space) "/" (name sevak-name-keyword))))
+(defn ns-qualified-name [sevak-name-keyword the-name-space]
+  (str (ns-name the-name-space) "/" (name sevak-name-keyword)))
 
 (defn sevak-queue-message-no-return [sevak-service args]
   {:sevak-service-name sevak-service
-   :sevak-service-args args})
+   :sevak-service-args (vec args)})
 
 (defn random-queue-name 
   ([]
@@ -27,9 +26,6 @@
 
 (defn sevak-queue-message-for-return [sevak-service args]
   (assoc (sevak-queue-message-no-return sevak-service args) :return-queue-name (return-queue-name sevak-service)))
-
-(defn sevak-info [sevak-name realtime? needs-response? function]
-  {:name sevak-name :return needs-response? :realtime realtime? :fn function})
 
 (defn process-pid []
   (let [m-name (.getName (ManagementFactory/getRuntimeMXBean))]

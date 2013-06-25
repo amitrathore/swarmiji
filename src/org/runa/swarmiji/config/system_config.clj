@@ -30,10 +30,10 @@
   (:swarmiji-mysql-configs (read-config)))
 
 (defn swarmiji-user []
-  ((operation-config) :swarmiji-username))
+  (:swarmiji-username (operation-config)))
 
 (defn queue-host []
-  ((operation-config) :host))
+  (:host (operation-config)))
 
 (defn queue-port []
   ((operation-config) :port))

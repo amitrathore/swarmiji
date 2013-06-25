@@ -1,6 +1,6 @@
 (ns org.runa.swarmiji.sevak.sevak-core
   (:use org.runa.swarmiji.mpi.transport)
-  (:use runa-rabbitmq.rabbitmq)
+  (:use org.runa.swarmiji.rabbitmq.rabbitmq)
   (:use org.runa.swarmiji.client.client-core)
   (:use org.runa.swarmiji.config.system-config)
   (:use org.runa.swarmiji.utils.general-utils)
@@ -24,20 +24,23 @@
 ;; implement the actual fn and client fn as mulit-methods
 (defmacro create-function-and-sevak [service-name realtime? needs-response? args expr]
   (let [defining-ns *ns*]
-    `(do
-       (defn ~service-name
-         ([~@args]
-            ;; this is the function that the client executes
-            (if-not (swarmiji-distributed-mode?)
-              (apply on-local (@sevaks (str (ns-name ~defining-ns) "/" '~service-name)) [~@args :sevak])
-              (if ~needs-response?
-                (apply on-swarm ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args])
-                (apply on-swarm-no-response ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args]))))
-         ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
-            (when (= :sevak ~'sevak)
-              (do ~@expr))))
-       (log-message "defining sevak job: " '~service-name)
-       (register-sevak (ns-qualified-name (keyword (:name (meta (resolve '~service-name)))) ~defining-ns) (sevak-info (keyword (:name (meta (resolve '~service-name)))) ~realtime? ~needs-response? ~service-name)))))
+    `(let [service-var# (defn ~(vary-meta service-name assoc ::sevak true)
+                          ([~@args]
+                             ;; this is the function that the client executes
+                             (if-not (swarmiji-distributed-mode?)
+                               (apply on-local (@sevaks (str (ns-name ~defining-ns) "/" '~service-name)) [~@args :sevak])
+                               (if ~needs-response?
+                                 (apply on-swarm ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args])
+                                 (apply on-swarm-no-response ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args]))))
+                          ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
+                             (when (= :sevak ~'sevak)
+                               (do ~@expr))))]
+       (log-message "defining sevak job: " ~service-name)
+       (register-sevak (ns-qualified-name (keyword (:name (meta service-var#))) ~defining-ns)
+                       {:name (keyword (:name (meta service-var#)))
+                        :return ~needs-response?
+                        :realtime ~realtime?
+                        :fn ~service-name}))))
 
 (defmacro defsevak [service-name args & expr]
   `(create-function-and-sevak ~service-name true true ~args ~expr))
@@ -119,7 +122,10 @@
     (with-swarmiji-bindings 
       (try
         (with-prefetch-count (rabbitmq-prefetch-count)
-          (start-queue-message-handler routing-key routing-key (fn [req-str ack-fn] (sevak-request-handling-listener req-str ack-fn real-time?))))
+          (start-queue-message-handler routing-key
+                                       routing-key
+                                       (fn [message-obj ack-fn]
+                                         (sevak-request-handling-listener message-obj ack-fn real-time?))))
         (log-message "start-processor: Done with sevak requests!")
         (catch Exception e
           (log-message "start-processor: Error in sevak-servicing future!")
