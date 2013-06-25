@@ -1,3 +1,4 @@
+target/
 *~
 *#*
 .classpath
@@ -11,3 +12,4 @@ lib/*
 classes/
 classes/*
 swarmiji.jar
+/.lein-failures
