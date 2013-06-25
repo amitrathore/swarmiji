@@ -5,7 +5,9 @@
                                                             invalidate-connection
                                                             return-connection-to-pool]]
             [clj-kryo.core :as kryo])
-  (:import (com.rabbitmq.client QueueingConsumer)))
+  (:import (com.rabbitmq.client Connection)
+           (com.rabbitmq.client Channel)
+           (com.rabbitmq.client QueueingConsumer)))
 
 (def DEFAULT-EXCHANGE-NAME "default-exchange")
 (def DEFAULT-EXCHANGE-TYPE "direct")
@@ -33,10 +35,10 @@
          (return-connection-to-pool *connection*)))))
 
 (defn create-channel-guaranteed []
-  (let [c (or *connection* (get-connection-from-pool))]
+  (let [^Connection c (or *connection* (get-connection-from-pool))]
     ;; is outside try, so rabbit-down-exception bubbles up
     (try 
-      (let [ch (.createChannel c)]
+      (let [^Channel ch (.createChannel c)]
         (.basicQos ch *PREFETCH-COUNT*)
         ch)
       (catch Exception e
@@ -45,17 +47,17 @@
         (wait-for-seconds (rand-int 2))
         #(create-channel-guaranteed)))))
 
-(defn create-channel []
+(defn ^Channel create-channel []
   (trampoline create-channel-guaranteed))
 
-(defn close-channel [chan]
-  (let [conn (.getConnection chan)]
+(defn close-channel [^Channel chan]
+  (let [^Connection conn (.getConnection chan)]
     (.close chan)
     (return-connection-to-pool conn)))
 
 (defn delete-queue [q-name]
   (with-connection
-    (with-open [chan (create-channel)]
+    (with-open [^Channel chan (create-channel)]
       (.queueDelete chan q-name))))
 
 (defn send-message
@@ -76,12 +78,12 @@
        (with-open [channel (create-channel)]
          (.basicPublish channel exchange-name routing-key nil (kryo/serialize message-object))))))
 
-(defn delivery-from [channel consumer]
+(defn delivery-from [^Channel channel ^QueueingConsumer consumer]
   (let [delivery (.nextDelivery consumer)]
     [(kryo/deserialize (.getBody delivery))
      #(.basicAck channel (.. delivery getEnvelope getDeliveryTag) false)]))
 
-(defn consumer-for [channel exchange-name exchange-type queue-name routing-key]
+(defn consumer-for [^Channel channel exchange-name exchange-type queue-name routing-key]
   (let [consumer (QueueingConsumer. channel)]
     (.exchangeDeclare channel exchange-name exchange-type)
     (.queueDeclare channel queue-name false false false nil)

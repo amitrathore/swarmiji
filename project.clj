@@ -14,6 +14,7 @@
                  [com.rabbitmq/amqp-client       "2.5.0"]
                  [org.clojars.runa/clj-kryo      "1.3.0"]
                  [commons-pool/commons-pool      "1.4"]]
+  :warn-on-reflection true
   :profiles {:dev {:dependencies
                    [[slamhound                "1.3.1"]
                     [swank-clojure            "1.4.0"]]}}

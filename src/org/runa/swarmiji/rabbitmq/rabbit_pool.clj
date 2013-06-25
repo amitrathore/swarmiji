@@ -18,7 +18,7 @@
      (.setPassword password)
      (.setHost host))))
 
-(defn connection-valid? [c]
+(defn connection-valid? [^AMQConnection c]
   (try
    (.ensureIsOpen c)
    true
@@ -46,7 +46,7 @@
                  (.setTestWhileIdle true))))
 
 (defn pool-status []
-  [(.getNumActive @pool) (.getNumIdle @pool) @max-pool-size])
+  [(.getNumActive ^GenericObjectPool @pool) (.getNumIdle ^GenericObjectPool @pool) @max-pool-size])
 
 (defn get-connection-from-pool []
   (.borrowObject ^GenericObjectPool @pool))
@@ -55,4 +55,4 @@
   (.returnObject ^GenericObjectPool @pool c))
 
 (defn invalidate-connection [c]
-  (.invalidateObject @pool c))
+  (.invalidateObject ^GenericObjectPool @pool c))

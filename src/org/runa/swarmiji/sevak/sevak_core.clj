@@ -8,14 +8,16 @@
   (:use org.rathore.amit.utils.config)
   (:use org.rathore.amit.utils.logger)
   (:use org.rathore.amit.utils.clojure)
-  (:use org.rathore.amit.medusa.core))
+  (:use org.rathore.amit.medusa.core)
+  (:import (java.util.concurrent Executors
+                                 ExecutorService)))
 
 (def sevaks (ref {}))
 
 (def START-UP-REPORT "START_UP_REPORT")
 (def SEVAK-SERVER "SEVAK_SERVER")
 
-(def non-real-time-thread-pool (java.util.concurrent.Executors/newFixedThreadPool 32))
+(def ^ExecutorService non-real-time-thread-pool (Executors/newFixedThreadPool 32))
 
 (defn register-sevak [sevak-name function-info]
   (dosync 
@@ -96,8 +98,9 @@
         (if real-time?
           (medusa-future-thunk return-q
                                #(handle-sevak-request service-handler service-name service-args return-q ack-fn))
-	      (.submit non-real-time-thread-pool
-                   #(handle-sevak-request service-handler service-name service-args return-q ack-fn))))
+          (.submit non-real-time-thread-pool
+                   (reify Runnable  ;; couldn't get rid of reflection warning with merely: ^Runnable :'(
+                     (run [_] (handle-sevak-request service-handler service-name service-args return-q ack-fn))))))
       (catch Exception e
         (log-message "SRHL: Error in sevak-request-handling-listener:" (class e))
         (log-exception e)))))
