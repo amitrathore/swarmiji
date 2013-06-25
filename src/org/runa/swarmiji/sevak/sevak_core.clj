@@ -1,6 +1,6 @@
 (ns org.runa.swarmiji.sevak.sevak-core
   (:use org.runa.swarmiji.mpi.transport)
-  (:use org.rathore.amit.utils.rabbitmq)
+  (:use runa-rabbitmq.rabbitmq)
   (:use org.runa.swarmiji.client.client-core)
   (:use org.runa.swarmiji.config.system-config)
   (:use org.runa.swarmiji.utils.general-utils)

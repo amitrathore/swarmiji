@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.utils.general-utils
-  (:require [org.rathore.amit.utils.rabbitmq :refer [*PREFETCH-COUNT*]]
+  (:require [runa-rabbitmq.rabbitmq :refer [*PREFETCH-COUNT*]]
             [org.rathore.amit.utils.logger :refer [log-message]])
   (:import (java.lang.management ManagementFactory)
            (java.util UUID)))

@@ -1,7 +1,7 @@
 (ns org.runa.swarmiji.mpi.transport
   (:gen-class)
   (:use org.runa.swarmiji.config.system-config)
-  (:use org.rathore.amit.utils.rabbitmq)
+  (:use runa-rabbitmq.rabbitmq)
   (:use org.runa.swarmiji.sevak.bindings)
   (:use org.runa.swarmiji.utils.general-utils)
   (:use org.rathore.amit.utils.logger)

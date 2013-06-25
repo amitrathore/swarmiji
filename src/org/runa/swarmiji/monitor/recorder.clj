@@ -2,7 +2,7 @@
   (:require [org.runa.swarmiji.monitor.control-message :as control-message]
             [org.rathore.amit.utils.config :refer [*clj-utils-config*]]
             [org.rathore.amit.utils.logger :refer [log-message]]
-            [org.rathore.amit.utils.rabbitmq :refer [start-queue-message-handler]]
+            [runa-rabbitmq.rabbitmq :refer [start-queue-message-handler]]
             [org.runa.swarmiji.config.system-config :refer [config-for-rathore-utils
                                                             queue-diagnostics-q-name]]
             [org.runa.swarmiji.sevak.bindings :refer [binding-for-swarmiji]])
