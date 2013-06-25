@@ -35,9 +35,6 @@
   (let [m-name (.getName (ManagementFactory/getRuntimeMXBean))]
     (first (.split m-name "@"))))
 
-(defn simulate-serialized [hash-object]
-  (read-string (str hash-object)))
-
 (defmacro with-prefetch-count [prefetch-count & body]
   `(binding [*PREFETCH-COUNT* ~prefetch-count]
      (do ~@body)))

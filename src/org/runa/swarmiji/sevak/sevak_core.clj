@@ -79,24 +79,21 @@
       (finally
         (ack-fn)))))
 
-(defn sevak-request-handling-listener [req-str ack-fn real-time?]
+(defn sevak-request-handling-listener [message-obj ack-fn real-time?]
   (with-swarmiji-bindings
     (try
       (log-message "sevak-request-handling-listener")
-      (let [req (read-string req-str)
-            service-name (req :sevak-service-name) 
-            service-args (req :sevak-service-args) 
-            return-q (req :return-queue-name)
+      (let [service-name (message-obj :sevak-service-name)
+            service-args (message-obj :sevak-service-args)
+            return-q (message-obj :return-queue-name)
             service-handler (@sevaks service-name)]
-
         (when (nil? service-handler)
           (ack-fn)
           (throw (Exception. (str "No handler found for: " service-name))))
         (if real-time?
-	  (do 
-            (medusa-future-thunk return-q
-                                 #(handle-sevak-request service-handler service-name service-args return-q ack-fn)))
-	  (.submit non-real-time-thread-pool
+          (medusa-future-thunk return-q
+                               #(handle-sevak-request service-handler service-name service-args return-q ack-fn))
+	      (.submit non-real-time-thread-pool
                    #(handle-sevak-request service-handler service-name service-args return-q ack-fn))))
       (catch Exception e
         (log-message "SRHL: Error in sevak-request-handling-listener:" (class e))
