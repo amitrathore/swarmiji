@@ -44,8 +44,7 @@
 
 (deftest test-happy-path
   (testing "Can setup, and execute a simple sevak, in both distributed and non-distributed modes"
-    (doseq [distributed-mode? [true
-                               false]]
+    (doseq [distributed-mode? [true false]]
       (with-fresh-sevaks
         (init distributed-mode?)
 
@@ -53,5 +52,21 @@
           (inc n))
 
         (is (= 6 ((increment 5) :value))
+            (str "DISTRIBUTED MODE?::" distributed-mode?)))))
+
+  (testing "Can setup, and execute a simple (asynchronous) seva, in both distributed and non-distributed modes"
+    (doseq [distributed-mode? [true false]]
+      (with-fresh-sevaks
+        (init distributed-mode?)
+
+        (def number (atom 5))
+        
+        (core/defseva increment []
+          (swap! number inc))
+
+        (increment)
+        (Thread/sleep 100)
+        
+        (is (= 6 @number)
             (str "DISTRIBUTED MODE?::" distributed-mode?))))))
 
