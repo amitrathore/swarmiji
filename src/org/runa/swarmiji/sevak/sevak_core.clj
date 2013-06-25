@@ -36,10 +36,11 @@
                                  (apply on-swarm-no-response ~realtime? (str (ns-name ~defining-ns) "/" '~service-name)  [~@args]))))
                           ([~@args ~'sevak] ;; this is the function that the sevak executes. Executed as (function args :sevak)
                              (when (= :sevak ~'sevak)
-                               (do ~@expr))))]
-       (log-message "defining sevak job: " ~service-name)
-       (register-sevak (ns-qualified-name (keyword (:name (meta service-var#))) ~defining-ns)
-                       {:name (keyword (:name (meta service-var#)))
+                               ~@expr)))
+           sevak-name# (keyword (:name (meta service-var#)))]
+       (log-message "defining sevak job: " '~service-name)
+       (register-sevak (ns-qualified-name sevak-name# ~defining-ns)
+                       {:name sevak-name#
                         :return ~needs-response?
                         :realtime ~realtime?
                         :fn ~service-name}))))
@@ -99,7 +100,7 @@
           (medusa-future-thunk return-q
                                #(handle-sevak-request service-handler service-name service-args return-q ack-fn))
           (.submit non-real-time-thread-pool
-                   (reify Runnable  ;; couldn't get rid of reflection warning with merely: ^Runnable :'(
+                   (reify Runnable  ;; couldn't get rid of reflection warning with merely: ^Runnable #(...)
                      (run [_] (handle-sevak-request service-handler service-name service-args return-q ack-fn))))))
       (catch Exception e
         (log-message "SRHL: Error in sevak-request-handling-listener:" (class e))
