@@ -44,29 +44,35 @@
 
 (deftest test-happy-path
   (testing "Can setup, and execute a simple sevak, in both distributed and non-distributed modes"
-    (doseq [distributed-mode? [true false]]
+    (doseq [distributed-mode? [true false]
+            sevak-maker-fn [#(core/defsevak increment [n]
+                               (inc n))
+                            #(core/defsevak-nr increment [n]
+                               (inc n))]]
       (with-fresh-sevaks
         (init distributed-mode?)
 
-        (core/defsevak increment [n]
-          (inc n))
+        (sevak-maker-fn)
 
         (is (= 6 ((increment 5) :value))
             (str "DISTRIBUTED MODE?::" distributed-mode?)))))
 
   (testing "Can setup, and execute a simple (asynchronous) seva, in both distributed and non-distributed modes"
-    (doseq [distributed-mode? [true false]]
+    (def number (atom 5))
+    
+    (doseq [distributed-mode? [true false]
+            seva-maker-fn [#(core/defseva increment []
+                              (swap! number inc))
+                           #(core/defseva-nr increment []
+                              (swap! number inc))]]
       (with-fresh-sevaks
         (init distributed-mode?)
 
-        (def number (atom 5))
-        
-        (core/defseva increment []
-          (swap! number inc))
-
+        (seva-maker-fn)
         (increment)
         (Thread/sleep 100)
         
         (is (= 6 @number)
-            (str "DISTRIBUTED MODE?::" distributed-mode?))))))
+            (str "DISTRIBUTED MODE?::" distributed-mode?))
+        (reset! number 5)))))
 
