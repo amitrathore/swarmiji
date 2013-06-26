@@ -3,8 +3,7 @@
             [org.runa.swarmiji.rabbitmq.rabbit-pool :refer [get-connection-from-pool
                                                             init-pool
                                                             invalidate-connection
-                                                            return-connection-to-pool]]
-            [clj-kryo.core :as kryo])
+                                                            return-connection-to-pool]])
   (:import (com.rabbitmq.client Connection)
            (com.rabbitmq.client Channel)
            (com.rabbitmq.client QueueingConsumer)))
@@ -14,6 +13,12 @@
 (def FANOUT-EXCHANGE-TYPE "fanout")
 
 (def ^:dynamic *PREFETCH-COUNT* 1)
+
+(defn- serialize [x]
+  (.getBytes (str x) "UTF-8"))
+
+(defn- deserialize [^"[Ljava.lang.Byte;" message-body]
+  (read-string (String. message-body "UTF-8")))
 
 (defn init-rabbitmq-connection
   ([q-host q-username q-password]
@@ -68,7 +73,7 @@
        (with-open [channel (create-channel)]
          (.exchangeDeclare channel exchange-name exchange-type)
          (.queueDeclare channel routing-key false false false nil)
-         (.basicPublish channel exchange-name routing-key nil (kryo/serialize message-object))))))
+         (.basicPublish channel exchange-name routing-key nil (serialize message-object))))))
 
 (defn send-message-if-queue
   ([routing-key message-object]
@@ -76,11 +81,11 @@
   ([exchange-name exchange-type routing-key message-object]
      (with-connection
        (with-open [channel (create-channel)]
-         (.basicPublish channel exchange-name routing-key nil (kryo/serialize message-object))))))
+         (.basicPublish channel exchange-name routing-key nil (serialize message-object))))))
 
 (defn delivery-from [^Channel channel ^QueueingConsumer consumer]
   (let [delivery (.nextDelivery consumer)]
-    [(kryo/deserialize (.getBody delivery))
+    [(deserialize (.getBody delivery))
      #(.basicAck channel (.. delivery getEnvelope getDeliveryTag) false)]))
 
 (defn consumer-for [^Channel channel exchange-name exchange-type queue-name routing-key]
