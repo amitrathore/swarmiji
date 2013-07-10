@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.rabbitmq.rabbitmq
-  (:require [org.rathore.amit.utils.logger :refer [log-exception log-message]]
+  (:require [kits.structured-logging :as log]
             [org.runa.swarmiji.rabbitmq.rabbit-pool :refer [get-connection-from-pool
                                                             init-pool
                                                             invalidate-connection
@@ -27,7 +27,8 @@
      (init-pool q-host q-username q-password max-pool max-idle)))
 
 (defn- wait-for-seconds [n]
-  (log-message "message-seq: waiting" n "seconds to reconnect to RabbitMQ...")
+  (log/info {:message "message-seq: waiting to reconnect to RabbitMQ"
+             :seconds n})
   (Thread/sleep (* 1000 n)))
 
 (def ^:dynamic *connection* nil)
@@ -47,7 +48,8 @@
         (.basicQos ch *PREFETCH-COUNT*)
         ch)
       (catch Exception e
-        (log-message "create-channel, error:" (class e) " creating channel, retrying...")
+        (log/error {:message "error creating channel, retrying"})
+        (log/exception e)
         (invalidate-connection c)
         (wait-for-seconds (rand-int 2))
         #(create-channel-guaranteed)))))
@@ -121,16 +123,16 @@
      (reset! consumer-atom new-consumer)
      #(guaranteed-delivery-from exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))
    (catch Exception e
-     (log-message "recover-from-delivery: got error" (class e) "Retrying...")
-     (log-exception e)
+     (log/error {:message "recover-from-delivery: retrying"})
+     (log/exception e)
      #(recover-from-delivery exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
 
 (defn guaranteed-delivery-from [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]
   (try
    (delivery-from @channel-atom @consumer-atom)
    (catch Exception e
-     (log-message "guaranteed-delivery-from: got-error" (class e) "Recovering...")
-     (log-exception e)
+     (log/error "guaranteed-delivery-from: recovering")
+     (log/exception e)
      #(recover-from-delivery exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
 
 (defn- lazy-message-seq [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]

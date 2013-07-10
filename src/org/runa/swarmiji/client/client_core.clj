@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.client.client-core
   (:gen-class)
+  (:require [kits.structured-logging :as log])
   (:use
    org.runa.swarmiji.mpi.sevak-proxy
    org.runa.swarmiji.mpi.transport
@@ -7,7 +8,6 @@
    org.runa.swarmiji.config.system-config
    org.runa.swarmiji.utils.general-utils
    org.rathore.amit.utils.config
-   org.rathore.amit.utils.logger
    org.rathore.amit.utils.clojure)
   (:import
    (java.io StringWriter)
@@ -101,10 +101,11 @@
     (req :disconnect)))
 
 (defn log-timeouts [swarm-requests]
-  (doseq [r swarm-requests]
-    (when (r :distributed?)
-      (log-message "Sevak response timed-out on" (r :sevak-name)
-                   "for return-q" ((r :sevak-proxy) :queue)))))
+  (doseq [r swarm-requests
+          :when (r :distributed?)]
+    (log/error {:message "Sevak response timed-out"
+                :sevak-name (r :sevak-name)
+                :return-queue ((r :sevak-proxy) :queue)})))
 
 (defn throw-exception [allowed-time]
   (throw (RuntimeException. (str "Swarmiji reports: This operation has taken more than " allowed-time " milliseconds."))))
@@ -121,8 +122,10 @@
            (let [latch ^CountDownLatch (r :latch)]
              (.await latch (remaining-time) TimeUnit/MILLISECONDS)
              (when (r :distributed?)
-               (log-message "Received sevak response on" (r :sevak-name)
-                            "for return-q" (return-q (r :__inner_ref)) "with elapsed time" (r :total-time)))))
+               (log/info {:message "Received sevak response"
+                          :sevak-name (r :sevak-name)
+                          :return-queue (return-q (r :__inner_ref))
+                          :elapsed-time (r :total-time)}))))
          (catch TimeoutException _
            (log-timeouts swarm-requests)
            (error-fn allowed-time))
@@ -172,12 +175,13 @@
        :default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
 
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
-  (log-message "send-work-report:" sevak-name)
-  (let [report {:message_type WORK-REPORT
-                :sevak_name sevak-name
-                :sevak_args (str args)
-                :sevak_time sevak-time
-                :messaging_time messaging-time
-                :return_q_name return-q
-                :sevak_server_pid sevak-server-pid}]
-    (send-message-on-queue (queue-diagnostics-q-name) report)))
+  (log/info {:message "send-work-report"
+             :sevak-name sevak-name})
+  (send-message-on-queue (queue-diagnostics-q-name)
+                         {:message_type WORK-REPORT
+                          :sevak_name sevak-name
+                          :sevak_args (str args)
+                          :sevak_time sevak-time
+                          :messaging_time messaging-time
+                          :return_q_name return-q
+                          :sevak_server_pid sevak-server-pid}))
