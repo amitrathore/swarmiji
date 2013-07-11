@@ -1,4 +1,4 @@
-(defproject org.clojars.runa/swarmiji "0.5.6"
+(defproject org.clojars.runa/swarmiji "0.5.7"
   :description "A distributed computing framework to help write and run Clojure code in parallel, across cores and processors"
   :license  {:name "Eclipse Public License - v 1.0"
              :url "http://www.eclipse.org/legal/epl-v10.html"
@@ -13,7 +13,7 @@
                  [org.clojars.amit/swarmiji-java "0.2.0"]
                  [com.rabbitmq/amqp-client       "2.5.0"]
                  [commons-pool/commons-pool      "1.4"]
-                 [org.clojars.runa/kits          "1.11.7"]]
+                 [org.clojars.runa/kits          "1.11.8"]]
   :warn-on-reflection true
   :profiles {:dev {:dependencies
                    [[slamhound                "1.3.1"]
