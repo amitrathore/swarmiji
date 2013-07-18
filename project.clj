@@ -13,7 +13,7 @@
                  [org.clojars.amit/swarmiji-java "0.2.0"]
                  [com.rabbitmq/amqp-client       "2.5.0"]
                  [commons-pool/commons-pool      "1.4"]
-                 [org.clojars.runa/kits          "1.11.8"]]
+                 [org.clojars.runa/kits          "1.11.9"]]
   :warn-on-reflection true
   :profiles {:dev {:dependencies
                    [[slamhound                "1.3.1"]
