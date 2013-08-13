@@ -11,25 +11,25 @@
             org.runa.swarmiji.utils.general-utils))
 
 
-(defn swarmiji-config [distributed-mode?]
-  {:operation-configs {:swarmiji-username "furtive"
-                       :host "abaranosky-Hercules2-runastack"
-                       :port 61613
-                       :q-username "guest"
-                       :q-password "guest"
-                       :sevak-request-queue-prefix "RUNA_SWARMIJI_TRANSPORT_frylock_development_"
-                       :sevak-diagnostics-queue-prefix "RUNA_SWARMIJI_DIAGNOSTICS_frylock_"
-                       :sevak-fanout-exchange-prefix "RUNA_SWARMIJI_FANOUT_EXCHANGE_development_"
-                       :distributed-mode distributed-mode?
-                       :diagnostics-mode false
-                       :logsdir "/var/log/swarm/furtive/"
-                       :log-to-console true
-                       :rabbit-prefetch-count 3
-                       :rabbit-max-pool-size 72
-                       :rabbit-max-idle-size 72
-                       :medusa-server-thread-count 72
-                       :medusa-client-thread-count 72
-                       :reload-namespaces false}})
+(defn- swarmiji-config [distributed-mode?]
+  {:operation-configs {:diagnostics-mode false,
+                       :distributed-mode true,
+                       :host "127.0.0.1",
+                       :log-to-console true,
+                       :logsdir "/var/log/swarm/furtive/",
+                       :medusa-client-thread-count 72,
+                       :medusa-server-thread-count 72,
+                       :port 61613,
+                       :q-password "guest",
+                       :q-username "guest",
+                       :rabbit-max-idle-size 72,
+                       :rabbit-max-pool-size 72,
+                       :rabbit-prefetch-count 3,
+                       :reload-namespaces false,
+                       :sevak-diagnostics-queue-prefix "RUNA_SWARMIJI_DIAGNOSTICS_frylock_",
+                       :sevak-fanout-exchange-prefix "RUNA_SWARMIJI_FANOUT_EXCHANGE_development_",
+                       :sevak-request-queue-prefix "RUNA_SWARMIJI_TRANSPORT_frylock_development_",
+                       :swarmiji-username "furtive"}})
 
 (defn- init [distributed-mode?]
   (config/set-config (swarmiji-config distributed-mode?))
@@ -43,7 +43,8 @@
        (dosync (ref-set core/sevaks {})))))
 
 (deftest test-happy-path
-  (testing "Can setup, and execute a simple sevak, in both distributed and non-distributed modes"
+  (testing "Can setup and execute a simple sevak
+            in both distributed and non-distributed modes"
     (doseq [distributed-mode? [true false]
             sevak-maker-fn [#(core/defsevak increment [n]
                                (inc n))
@@ -57,7 +58,8 @@
         (is (= 6 ((increment 5) :value))
             (str "DISTRIBUTED MODE?::" distributed-mode?)))))
 
-  (testing "Can setup, and execute a simple (asynchronous) seva, in both distributed and non-distributed modes"
+  (testing "Can setup and execute a simple (asynchronous) seva
+            in both distributed and non-distributed modes"
     (def number (atom 5))
     
     (doseq [distributed-mode? [true false]
