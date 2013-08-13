@@ -8,33 +8,28 @@
 (def pool (atom nil))
 (def max-pool-size (atom 10))
 
-(declare connection-valid?)
-
-(defn new-rabbit-connection [host username password]
-  (.newConnection
-   (doto (ConnectionFactory.)
-     (.setVirtualHost "/")
-     (.setUsername username)
-     (.setPassword password)
-     (.setHost host))))
-
-(defn connection-valid? [^AMQConnection c]
+(defn- connection-valid? [^AMQConnection c]
   (try
-   (.ensureIsOpen c)
-   true
-   (catch AlreadyClosedException ace
-     false)))
+    (.ensureIsOpen c)
+    true
+    (catch AlreadyClosedException _
+      false)))
 
-(defn connection-factory [host username password]
-  (proxy [BasePoolableObjectFactory] []
-    (makeObject []
-      (new-rabbit-connection host username password))
-    (validateObject [c]
-      (connection-valid? c))
-    (destroyObject [c]
-      (try
-       (.close ^AMQConnection c)
-       (catch Exception e)))))
+(defn- connection-factory [host username password]
+  (let [^ConnectionFactory factory (doto (ConnectionFactory.)
+                                     (.setVirtualHost "/")
+                                     (.setUsername username)
+                                     (.setPassword password)
+                                     (.setHost host))]
+    (proxy [BasePoolableObjectFactory] []
+      (makeObject []
+        (.newConnection factory))
+      (validateObject [c]
+        (connection-valid? c))
+      (destroyObject [c]
+        (try
+          (.close ^AMQConnection c)
+          (catch Exception e))))))
 
 (defn init-pool [host username password max-pool max-idle]
   (reset! max-pool-size max-pool)
@@ -46,7 +41,9 @@
                  (.setTestWhileIdle true))))
 
 (defn pool-status []
-  [(.getNumActive ^GenericObjectPool @pool) (.getNumIdle ^GenericObjectPool @pool) @max-pool-size])
+  [(.getNumActive ^GenericObjectPool @pool)
+   (.getNumIdle ^GenericObjectPool @pool)
+   @max-pool-size])
 
 (defn get-connection-from-pool []
   (.borrowObject ^GenericObjectPool @pool))
