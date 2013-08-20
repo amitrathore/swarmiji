@@ -125,8 +125,13 @@
         (try
           (log/info {:message "Listening for update broadcasts..."
                      :sevak-fanout-exchange-name (sevak-fanout-exchange-name)})
-          ;; (.addShutdownHook (Runtime/getRuntime) (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
-          (start-queue-message-handler (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE broadcasts-q (random-queue-name) #(sevak-request-handling-listener %1 %2 false))
+          (.addShutdownHook (Runtime/getRuntime)
+                            (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
+          (start-queue-message-handler (sevak-fanout-exchange-name)
+                                       FANOUT-EXCHANGE-TYPE
+                                       broadcasts-q
+                                       (random-queue-name)
+                                       #(sevak-request-handling-listener %1 %2 false))
           (log/info {:message "Done with broadcasts!"})    
           (catch Exception e         
             (log/error {:message "Error in update broadcasts future!"})
