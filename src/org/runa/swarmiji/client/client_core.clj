@@ -15,11 +15,11 @@
    (java.util.concurrent TimeoutException TimeUnit CountDownLatch)))
 
 
-(def WORK-REPORT "WORK_REPORT")
+(def ^:const WORK-REPORT "WORK_REPORT")
 
 (declare send-work-report)
 
-(def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
+(def ^:const swarmiji-sevak-init-value :__swarmiji-sevak-init__)
 
 (defn attribute-from-response [sevak-data attrib-name]
   (if (= swarmiji-sevak-init-value sevak-data)

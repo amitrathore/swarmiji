@@ -10,7 +10,7 @@
 
 (def rabbit-down-messages (atom {}))
 (def ^:dynamic *guaranteed-sevaks*)
-(def BROADCASTS-QUEUE-NAME "BROADCASTS_GLOBAL")
+(def ^:const BROADCASTS-QUEUE-NAME "BROADCASTS_GLOBAL")
 
 (defn send-message-on-queue [q-name q-message-object]
   (with-swarmiji-bindings

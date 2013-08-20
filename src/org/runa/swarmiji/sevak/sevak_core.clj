@@ -14,8 +14,8 @@
 
 (def sevaks (ref {}))
 
-(def START-UP-REPORT "START_UP_REPORT")
-(def SEVAK-SERVER "SEVAK_SERVER")
+(def ^:const START-UP-REPORT "START_UP_REPORT")
+(def ^:const SEVAK-SERVER "SEVAK_SERVER")
 
 (def ^ExecutorService non-real-time-thread-pool (Executors/newFixedThreadPool 32))
 

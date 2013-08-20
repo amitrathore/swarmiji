@@ -8,9 +8,9 @@
            (com.rabbitmq.client Channel)
            (com.rabbitmq.client QueueingConsumer)))
 
-(def DEFAULT-EXCHANGE-NAME "default-exchange")
-(def DEFAULT-EXCHANGE-TYPE "direct")
-(def FANOUT-EXCHANGE-TYPE "fanout")
+(def ^:const DEFAULT-EXCHANGE-NAME "default-exchange")
+(def ^:const DEFAULT-EXCHANGE-TYPE "direct")
+(def ^:const FANOUT-EXCHANGE-TYPE "fanout")
 
 (def ^:dynamic *PREFETCH-COUNT* 1)
 
