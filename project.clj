@@ -10,6 +10,7 @@
                  [org.clojars.runa/clj-utils     "1.2.8"]
                  [org.clojars.runa/medusa        "0.1.11"]
                  [clj-record                     "1.1.4"]
+                 [com.taoensso/nippy             "2.1.0"] 
                  [org.clojars.amit/swarmiji-java "0.2.0"]
                  [com.rabbitmq/amqp-client       "2.5.0"]
                  [commons-pool/commons-pool      "1.4"]

@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.rabbitmq.rabbitmq
   (:require [kits.structured-logging :as log]
+            [taoensso.nippy :as nippy]
             [org.runa.swarmiji.rabbitmq.rabbit-pool :refer [get-connection-from-pool
                                                             init-pool
                                                             invalidate-connection
@@ -15,10 +16,10 @@
 (def ^:dynamic *PREFETCH-COUNT* 1)
 
 (defn- serialize [x]
-  (.getBytes (str x) "UTF-8"))
+  (nippy/freeze x))
 
 (defn- deserialize [^"[Ljava.lang.Byte;" message-body]
-  (read-string (String. message-body "UTF-8")))
+  (nippy/thaw message-body))
 
 (defn init-rabbitmq-connection
   ([q-host q-username q-password]
