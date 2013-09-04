@@ -17,14 +17,14 @@
     (try
       (send-message q-name q-message-object)
       (catch Exception e
-        (log/exception e)))))
+        #_(log/exception e)))))
 
 (defn send-message-no-declare [q-name q-message-object]
   (with-swarmiji-bindings
     (try
       (send-message-if-queue q-name q-message-object)
       (catch Exception e
-        (log/exception e)))))
+        #_(log/exception e)))))
 
 (defn fanout-message-to-all [message-object]
   (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE BROADCASTS-QUEUE-NAME message-object))
@@ -69,11 +69,11 @@
       (send-and-register-callback realtime? return-queue-name custom-handler request-object)
       (swap! rabbit-down-messages dissoc timestamp)
       (catch java.net.ConnectException ce
-        (log/error {:message "RabbitMQ still down, will retry"
+        #_(log/error {:message "RabbitMQ still down, will retry"
                     :rabbit-down-messages (count @rabbit-down-messages)})) ;;ignore, will try again later
       (catch Exception e
-        (log/error {:message "Trouble in swarmiji auto-retry!"})
-        (log/exception e)))))
+        #_(log/error {:message "Trouble in swarmiji auto-retry!"})
+        #_(log/exception e)))))
 
 (defn retry-periodically [sleep-millis]
   (Thread/sleep sleep-millis)
@@ -86,7 +86,7 @@
     (retry-periodically sleep-millis)))
 
 (defn init-rabbit []
-  (log/info {:message "Init Rabbit"
+  #_(log/info {:message "Init Rabbit"
              :host (queue-host)})
   (init-rabbitmq-connection (queue-host)
                             (queue-username)

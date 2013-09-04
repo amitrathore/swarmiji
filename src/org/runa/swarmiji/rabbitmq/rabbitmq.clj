@@ -28,7 +28,7 @@
      (init-pool q-host q-username q-password max-pool max-idle)))
 
 (defn- wait-for-seconds [n]
-  (log/info {:message "message-seq: waiting to reconnect to RabbitMQ"
+  #_(log/info {:message "message-seq: waiting to reconnect to RabbitMQ"
              :seconds n})
   (Thread/sleep (* 1000 n)))
 
@@ -49,8 +49,8 @@
         (.basicQos ch *PREFETCH-COUNT*)
         ch)
       (catch Exception e
-        (log/error {:message "error creating channel, retrying"})
-        (log/exception e)
+        #_(log/error {:message "error creating channel, retrying"})
+        #_(log/exception e)
         (invalidate-connection c)
         (wait-for-seconds (rand-int 2))
         #(create-channel-guaranteed)))))
@@ -124,16 +124,16 @@
      (reset! consumer-atom new-consumer)
      #(guaranteed-delivery-from exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))
    (catch Exception e
-     (log/error {:message "recover-from-delivery: retrying"})
-     (log/exception e)
+     #_(log/error {:message "recover-from-delivery: retrying"})
+     #_(log/exception e)
      #(recover-from-delivery exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
 
 (defn guaranteed-delivery-from [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]
   (try
    (delivery-from @channel-atom @consumer-atom)
    (catch Exception e
-     (log/error "guaranteed-delivery-from: recovering")
-     (log/exception e)
+     #_(log/error "guaranteed-delivery-from: recovering")
+     #_(log/exception e)
      #(recover-from-delivery exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
 
 (defn- lazy-message-seq [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]

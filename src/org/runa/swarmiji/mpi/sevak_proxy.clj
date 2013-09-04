@@ -15,7 +15,7 @@
      (let [request-object (sevak-queue-message-for-return sevak-service args)
       	   return-q-name (request-object :return-queue-name)
            proxy-object (register-callback realtime? return-q-name callback-function request-object)]
-       (log/info {:message "Sending request"
+       #_(log/info {:message "Sending request"
                   :sevak-service sevak-service
                   :return-queue return-q-name})
        proxy-object))

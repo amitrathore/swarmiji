@@ -18,6 +18,6 @@
 
 (defn start []
   (binding-for-swarmiji [*clj-utils-config* (config-for-rathore-utils "recorder")]
-                        (log/info {:message "Swarmiji: Starting Control-Message-Recorder"
+                        #_(log/info {:message "Swarmiji: Starting Control-Message-Recorder"
                                    :listening-on (queue-diagnostics-q-name)})
                         (start-queue-message-handler (queue-diagnostics-q-name) persist-message)))

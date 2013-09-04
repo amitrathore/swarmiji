@@ -103,7 +103,7 @@
 (defn log-timeouts [swarm-requests]
   (doseq [r swarm-requests
           :when (r :distributed?)]
-    (log/error {:message "Sevak response timed-out"
+    #_(log/error {:message "Sevak response timed-out"
                 :sevak-name (r :sevak-name)
                 :return-queue ((r :sevak-proxy) :queue)})))
 
@@ -122,7 +122,7 @@
            (let [latch ^CountDownLatch (r :latch)]
              (.await latch (remaining-time) TimeUnit/MILLISECONDS)
              (when (r :distributed?)
-               (log/info {:message "Received sevak response"
+               #_(log/info {:message "Received sevak response"
                           :sevak-name (r :sevak-name)
                           :return-queue (return-q (r :__inner_ref))
                           :elapsed-time (r :total-time)}))))
@@ -175,7 +175,7 @@
        :default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
 
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
-  (log/info {:message "send-work-report"
+  #_(log/info {:message "send-work-report"
              :sevak-name sevak-name})
   (send-message-on-queue (queue-diagnostics-q-name)
                          {:message_type WORK-REPORT
