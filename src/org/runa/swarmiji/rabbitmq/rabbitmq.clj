@@ -1,14 +1,14 @@
 (ns org.runa.swarmiji.rabbitmq.rabbitmq
   (:require [kits.structured-logging :as log]
             [taoensso.nippy :as nippy]
-            [org.runa.swarmiji.rabbitmq.connection :as conn])
+            [org.runa.swarmiji.rabbitmq.channel :as channel]
+            [org.runa.swarmiji.rabbitmq.connection :as conn]
+            [org.runa.swarmiji.utils.general-utils :as utils])
   (:import (com.rabbitmq.client Channel QueueingConsumer)))
 
 (def ^:const DEFAULT-EXCHANGE-NAME "default-exchange")
 (def ^:const DEFAULT-EXCHANGE-TYPE "direct")
 (def ^:const FANOUT-EXCHANGE-TYPE "fanout")
-
-(def ^:dynamic *PREFETCH-COUNT* 1)
 
 (defn- serialize [x]
   (nippy/freeze x))
@@ -16,43 +16,12 @@
 (defn- deserialize [^"[Ljava.lang.Byte;" message-body]
   (nippy/thaw message-body))
 
-(defn- wait-for-seconds [n]
-  #_(log/info {:message "message-seq: waiting to reconnect to RabbitMQ"
-             :seconds n})
-  (Thread/sleep (* 1000 n)))
-
-(defn create-channel-guaranteed []
-  (let [c (conn/ensure-thread-local-connection)]
-    ;; is outside try, so rabbit-down-exception bubbles up
-    (try 
-      (let [^Channel ch (.createChannel c)]
-        (.basicQos ch *PREFETCH-COUNT*)
-        ch)
-      (catch Exception e
-        #_(log/error {:message "error creating channel, retrying"})
-        #_(log/exception e)
-        (conn/close c)
-        (conn/clear-thread-local-conn)
-        (wait-for-seconds (rand-int 2))
-        #(create-channel-guaranteed)))))
-
-(defn ^Channel create-channel []
-  (trampoline create-channel-guaranteed))
-
-(defn close-channel [^Channel chan]
-  (.close chan))
-
-(defn delete-queue [q-name]
-  (conn/ensure-thread-local-connection)
-  (with-open [^Channel chan (create-channel)]
-    (.queueDelete chan q-name)))
-
 (defn send-message
   ([routing-key message-object]
      (send-message DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key message-object))
   ([exchange-name exchange-type routing-key message-object]
      (conn/ensure-thread-local-connection)
-     (with-open [channel (create-channel)]
+     (with-open [channel (channel/create-channel)]
        (.exchangeDeclare channel exchange-name exchange-type)
        (.queueDeclare channel routing-key false false false nil)
        (.basicPublish channel exchange-name routing-key nil (serialize message-object)))))
@@ -62,7 +31,7 @@
      (send-message-if-queue DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key message-object))
   ([exchange-name exchange-type routing-key message-object]
      (conn/ensure-thread-local-connection)
-     (with-open [channel (create-channel)]
+     (with-open [channel (channel/create-channel)]
        (.basicPublish channel exchange-name routing-key nil (serialize message-object)))))
 
 (defn delivery-from [^Channel channel ^QueueingConsumer consumer]
@@ -88,7 +57,7 @@
      (next-message-from exchange-name exchange-type (random-queue) routing-key))
   ([exchange-name exchange-type queue-name routing-key]
      (conn/ensure-thread-local-connection)
-     (with-open [channel (create-channel)]
+     (with-open [channel (channel/create-channel)]
        (let [consumer (consumer-for channel exchange-name exchange-type queue-name routing-key)]
          (delivery-from channel consumer)))))
 
@@ -96,8 +65,8 @@
 
 (defn recover-from-delivery [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]
   (try 
-   (wait-for-seconds (rand-int 7))
-   (let [new-channel (create-channel)
+   (utils/wait-for-seconds (rand-int 7))
+   (let [new-channel (channel/create-channel)
          new-consumer (consumer-for new-channel exchange-name exchange-type queue-name routing-key)]
      (reset! channel-atom new-channel)
      (reset! consumer-atom new-consumer)
@@ -120,7 +89,7 @@
     (let [message (trampoline guaranteed-delivery-from exchange-name exchange-type queue-name routing-key channel-atom consumer-atom)]
       (cons message (lazy-message-seq exchange-name exchange-type queue-name routing-key channel-atom consumer-atom)))))
 
-(defn message-seq 
+(defn- message-seq 
   ([channel queue-name]
      (message-seq DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE channel queue-name queue-name))
   ([exchange-name exchange-type channel routing-key]
@@ -137,18 +106,18 @@
      (start-queue-message-handler DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key handler-fn))
   ([queue-name routing-key handler-fn]
      (conn/ensure-thread-local-connection)
-     (with-open [channel (create-channel)]
+     (with-open [channel (channel/create-channel)]
        (doseq [[m ack-fn] (message-seq DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE channel queue-name routing-key)]
          (handler-fn m ack-fn))))
   
   ([exchange-name exchange-type routing-key handler-fn]
      (conn/ensure-thread-local-connection)
-     (with-open [channel (create-channel)]
+     (with-open [channel (channel/create-channel)]
        (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel routing-key)]
          (handler-fn m ack-fn))))
   
   ([exchange-name exchange-type queue-name routing-key handler-fn]
      (conn/ensure-thread-local-connection)
-     (with-open [channel (create-channel)]
+     (with-open [channel (channel/create-channel)]
        (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel queue-name routing-key)]
          (handler-fn m ack-fn)))))

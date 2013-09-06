@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.sevak.sevak-core
-  (:require [kits.structured-logging :as log])
+  (:require [kits.structured-logging :as log]
+            [org.runa.swarmiji.rabbitmq.channel :as channel])
   (:use org.runa.swarmiji.mpi.transport)
   (:use org.runa.swarmiji.rabbitmq.rabbitmq)
   (:use org.runa.swarmiji.client.client-core)
@@ -126,7 +127,8 @@
           #_(log/info {:message "Listening for update broadcasts..."
                      :sevak-fanout-exchange-name (sevak-fanout-exchange-name)})
           (.addShutdownHook (Runtime/getRuntime)
-                            (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
+                            (Thread. #(with-swarmiji-bindings
+                                        (channel/delete-queue broadcasts-q))))
           (start-queue-message-handler (sevak-fanout-exchange-name)
                                        FANOUT-EXCHANGE-TYPE
                                        broadcasts-q
@@ -141,7 +143,7 @@
   (future
     (with-swarmiji-bindings 
       (try
-        (with-prefetch-count (rabbitmq-prefetch-count)
+        (channel/with-prefetch-count (rabbitmq-prefetch-count)
           (start-queue-message-handler routing-key
                                        routing-key
                                        (fn [message-obj ack-fn]

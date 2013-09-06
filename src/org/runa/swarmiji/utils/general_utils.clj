@@ -1,6 +1,5 @@
 (ns org.runa.swarmiji.utils.general-utils
-  (:require [kits.structured-logging :as log]
-            [org.runa.swarmiji.rabbitmq.rabbitmq :refer [*PREFETCH-COUNT*]])
+  (:require [kits.structured-logging :as log])
   (:import (java.lang.management ManagementFactory)
            (java.util UUID)))
 
@@ -31,6 +30,7 @@
   (let [m-name (.getName (ManagementFactory/getRuntimeMXBean))]
     (first (.split m-name "@"))))
 
-(defmacro with-prefetch-count [prefetch-count & body]
-  `(binding [*PREFETCH-COUNT* ~prefetch-count]
-     (do ~@body)))
+(defn wait-for-seconds [n]
+  #_(log/info {:message "waiting to reconnect to RabbitMQ"
+               :seconds n})
+  (Thread/sleep (* 1000 n)))

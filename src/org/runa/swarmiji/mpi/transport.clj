@@ -1,7 +1,8 @@
 (ns org.runa.swarmiji.mpi.transport
   (:gen-class)
-  (:require [kits.structured-logging :as log])
-  (:require [org.runa.swarmiji.rabbitmq.connection :as conn])
+  (:require [kits.structured-logging :as log]
+            [org.runa.swarmiji.rabbitmq.connection :as conn]
+            [org.runa.swarmiji.rabbitmq.channel :as channel])
   (:use org.runa.swarmiji.config.system-config)
   (:use org.runa.swarmiji.rabbitmq.rabbitmq)
   (:use org.runa.swarmiji.sevak.bindings)
@@ -39,7 +40,7 @@
   (some #{(keyword sevak-name)} *guaranteed-sevaks*))
 
 (defn send-and-register-callback [realtime? return-q-name custom-handler request-object]
-  (let [chan (create-channel)
+  (let [chan (channel/create-channel)
         consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
                       (with-swarmiji-bindings
@@ -47,7 +48,7 @@
                           (custom-handler msg)
                           (finally
 			    (.queueDelete chan return-q-name)
-			    (close-channel chan)))))
+			    (channel/close-channel chan)))))
         f (fn []
             (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
             (on-response (delivery-from chan consumer)))]
