@@ -130,7 +130,7 @@
                             (Thread. #(with-swarmiji-bindings
                                         (channel/delete-queue broadcasts-q))))
           (start-queue-message-handler (sevak-fanout-exchange-name)
-                                       FANOUT-EXCHANGE-TYPE
+                                       channel/FANOUT-EXCHANGE-TYPE
                                        broadcasts-q
                                        (random-queue-name)
                                        #(sevak-request-handling-listener %1 %2 false))

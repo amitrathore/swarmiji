@@ -17,19 +17,19 @@
 (defn send-message-on-queue [q-name q-message-object]
   (with-swarmiji-bindings
     (try
-      (send-message q-name q-message-object)
+      (channel/send-message channel/DEFAULT-EXCHANGE-NAME channel/DEFAULT-EXCHANGE-TYPE q-name q-message-object)
       (catch Exception e
         #_(log/exception e)))))
 
 (defn send-message-no-declare [q-name q-message-object]
   (with-swarmiji-bindings
     (try
-      (send-message-if-queue q-name q-message-object)
+      (channel/send-message-if-queue q-name q-message-object)
       (catch Exception e
         #_(log/exception e)))))
 
 (defn fanout-message-to-all [message-object]
-  (send-message (sevak-fanout-exchange-name) FANOUT-EXCHANGE-TYPE BROADCASTS-QUEUE-NAME message-object))
+  (channel/send-message (sevak-fanout-exchange-name) channel/FANOUT-EXCHANGE-TYPE BROADCASTS-QUEUE-NAME message-object))
 
 (defmacro multicast-to-sevak-servers [sevak-var & args]
   (let [{:keys [name ns] :as meta-inf} (meta (resolve sevak-var))]
@@ -41,7 +41,7 @@
 
 (defn send-and-register-callback [realtime? return-q-name custom-handler request-object]
   (let [chan (channel/create-channel)
-        consumer (consumer-for chan DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
+        consumer (channel/consumer-for chan channel/DEFAULT-EXCHANGE-NAME channel/DEFAULT-EXCHANGE-TYPE return-q-name return-q-name)
         on-response (fn [msg]
                       (with-swarmiji-bindings
                         (try
@@ -51,12 +51,15 @@
 			    (channel/close-channel chan)))))
         f (fn []
             (send-message-on-queue (queue-sevak-q-name realtime?) request-object)
-            (on-response (delivery-from chan consumer)))]
+            (on-response (channel/delivery-from chan consumer)))]
     (f)
     {:channel chan :queue return-q-name :consumer consumer}))
 
 (defn add-to-rabbit-down-queue [realtime? return-queue-name custom-handler request-object]
-  (swap! rabbit-down-messages assoc (System/currentTimeMillis) [realtime? return-queue-name custom-handler request-object]))
+  (swap! rabbit-down-messages
+         assoc
+         (System/currentTimeMillis)
+         [realtime? return-queue-name custom-handler request-object]))
 
 (defn register-callback-or-fallback [realtime? return-q-name custom-handler request-object]
   (try
