@@ -31,7 +31,7 @@
       (catch Exception e
         #_(log/error {:message "error creating channel, retrying"})
         #_(log/exception e)
-        (conn/close-connection c)
+        (conn/close c)
         (conn/clear-thread-local-conn)
         (wait-for-seconds (rand-int 2))
         #(create-channel-guaranteed)))))
