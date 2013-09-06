@@ -10,15 +10,12 @@
 (defn clear-thread-local-conn []
   (.set connection-local nil))
 
-(defn- new-connection-factory [host username password]
-  (doto (ConnectionFactory.)
-    (.setVirtualHost "/")
-    (.setUsername username)
-    (.setPassword password)
-    (.setHost host)))
-
 (defn init-connection-factory [host username password]
-  (reset! connection-factory (new-connection-factory host username password)))
+  (reset! connection-factory (doto (ConnectionFactory.)
+                               (.setVirtualHost "/")
+                               (.setUsername username)
+                               (.setPassword password)
+                               (.setHost host))))
 
 (defn ^Connection new-connection []
   (.newConnection ^ConnectionFactory @connection-factory))
