@@ -2,7 +2,7 @@
   (:require [kits.structured-logging :as log]
             [org.runa.swarmiji.rabbitmq.channel :as channel])
   (:use org.runa.swarmiji.mpi.transport)
-  (:use org.runa.swarmiji.rabbitmq.rabbitmq)
+  (:use org.runa.swarmiji.rabbitmq.message-handler)
   (:use org.runa.swarmiji.client.client-core)
   (:use org.runa.swarmiji.config.system-config)
   (:use org.runa.swarmiji.utils.general-utils)

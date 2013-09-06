@@ -4,7 +4,7 @@
             [org.runa.swarmiji.rabbitmq.connection :as conn]
             [org.runa.swarmiji.rabbitmq.channel :as channel])
   (:use org.runa.swarmiji.config.system-config)
-  (:use org.runa.swarmiji.rabbitmq.rabbitmq)
+  (:use org.runa.swarmiji.rabbitmq.message-handler)
   (:use org.runa.swarmiji.sevak.bindings)
   (:use org.runa.swarmiji.utils.general-utils)
   (:use org.rathore.amit.utils.clojure)

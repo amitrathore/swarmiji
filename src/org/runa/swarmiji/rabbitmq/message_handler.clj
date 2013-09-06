@@ -1,4 +1,4 @@
-(ns org.runa.swarmiji.rabbitmq.rabbitmq
+(ns org.runa.swarmiji.rabbitmq.message-handler
   (:require [kits.structured-logging :as log]
             [org.runa.swarmiji.rabbitmq.channel :as channel]
             [org.runa.swarmiji.utils.general-utils :as utils])
