@@ -32,22 +32,17 @@
              :seconds n})
   (Thread/sleep (* 1000 n)))
 
-(def ^ThreadLocal connection-local (ThreadLocal.))
-
-(defn ^Connection ensure-thread-local-connection []
-  (or
-   (.get connection-local)
-   (let [^Connection new-conn (get-connection-from-pool)] 
-     (.set connection-local new-conn)
-     new-conn)))
+(def ^:dynamic *connection* nil)
 
 (defmacro with-connection [& body]
-  `(do
-     (ensure-thread-local-connection)
-     ~@body))
+  `(binding [*connection* (get-connection-from-pool)]
+     (try
+       ~@body
+       (finally
+         (return-connection-to-pool *connection*)))))
 
 (defn create-channel-guaranteed []
-  (let [^Connection c (ensure-thread-local-connection)]
+  (let [^Connection c (or *connection* (get-connection-from-pool))]
     ;; is outside try, so rabbit-down-exception bubbles up
     (try 
       (let [^Channel ch (.createChannel c)]
