@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.rabbitmq.rabbit-pool
   (:import (com.rabbitmq.client AlreadyClosedException
+                                Connection
                                 ConnectionFactory)
            (com.rabbitmq.client.impl AMQConnection)
            (org.apache.commons.pool BasePoolableObjectFactory)
@@ -45,7 +46,7 @@
    (.getNumIdle ^GenericObjectPool @pool)
    @max-pool-size])
 
-(defn get-connection-from-pool []
+(defn ^Connection get-connection-from-pool []
   (.borrowObject ^GenericObjectPool @pool))
 
 (defn return-connection-to-pool [c]
