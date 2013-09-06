@@ -49,8 +49,5 @@
 (defn ^Connection get-connection-from-pool []
   (.borrowObject ^GenericObjectPool @pool))
 
-(defn return-connection-to-pool [c]
-  (.returnObject ^GenericObjectPool @pool c))
-
 (defn invalidate-connection [c]
   (.invalidateObject ^GenericObjectPool @pool c))

@@ -3,11 +3,10 @@
             [taoensso.nippy :as nippy]
             [org.runa.swarmiji.rabbitmq.rabbit-pool :refer [get-connection-from-pool
                                                             init-pool
-                                                            invalidate-connection
-                                                            return-connection-to-pool]])
-  (:import (com.rabbitmq.client Connection)
-           (com.rabbitmq.client Channel)
-           (com.rabbitmq.client QueueingConsumer)))
+                                                            invalidate-connection]])
+  (:import (com.rabbitmq.client Channel
+                                Connection
+                                QueueingConsumer)))
 
 (def ^:const DEFAULT-EXCHANGE-NAME "default-exchange")
 (def ^:const DEFAULT-EXCHANGE-TYPE "direct")
@@ -37,14 +36,9 @@
 (defn ^Connection ensure-thread-local-connection []
   (or
    (.get connection-local)
-   (let [^Connection new-conn (get-connection-from-pool)] 
+   (let [new-conn (get-connection-from-pool)] 
      (.set connection-local new-conn)
      new-conn)))
-
-(defmacro with-connection [& body]
-  `(do
-     (ensure-thread-local-connection)
-     ~@body))
 
 (defn create-channel-guaranteed []
   (let [^Connection c (ensure-thread-local-connection)]
@@ -57,6 +51,7 @@
         #_(log/error {:message "error creating channel, retrying"})
         #_(log/exception e)
         (invalidate-connection c)
+        (.set connection-local nil)
         (wait-for-seconds (rand-int 2))
         #(create-channel-guaranteed)))))
 
@@ -64,32 +59,30 @@
   (trampoline create-channel-guaranteed))
 
 (defn close-channel [^Channel chan]
-  (let [^Connection conn (.getConnection chan)]
-    (.close chan)
-    (return-connection-to-pool conn)))
+  (.close chan))
 
 (defn delete-queue [q-name]
-  (with-connection
-    (with-open [^Channel chan (create-channel)]
-      (.queueDelete chan q-name))))
+  (ensure-thread-local-connection)
+  (with-open [^Channel chan (create-channel)]
+    (.queueDelete chan q-name)))
 
 (defn send-message
   ([routing-key message-object]
      (send-message DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key message-object))
   ([exchange-name exchange-type routing-key message-object]
-     (with-connection
-       (with-open [channel (create-channel)]
-         (.exchangeDeclare channel exchange-name exchange-type)
-         (.queueDeclare channel routing-key false false false nil)
-         (.basicPublish channel exchange-name routing-key nil (serialize message-object))))))
+     (ensure-thread-local-connection)
+     (with-open [channel (create-channel)]
+       (.exchangeDeclare channel exchange-name exchange-type)
+       (.queueDeclare channel routing-key false false false nil)
+       (.basicPublish channel exchange-name routing-key nil (serialize message-object)))))
 
 (defn send-message-if-queue
   ([routing-key message-object]
      (send-message-if-queue DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key message-object))
   ([exchange-name exchange-type routing-key message-object]
-     (with-connection
-       (with-open [channel (create-channel)]
-         (.basicPublish channel exchange-name routing-key nil (serialize message-object))))))
+     (ensure-thread-local-connection)
+     (with-open [channel (create-channel)]
+       (.basicPublish channel exchange-name routing-key nil (serialize message-object)))))
 
 (defn delivery-from [^Channel channel ^QueueingConsumer consumer]
   (let [delivery (.nextDelivery consumer)]
@@ -113,10 +106,10 @@
   ([exchange-name exchange-type routing-key]
      (next-message-from exchange-name exchange-type (random-queue) routing-key))
   ([exchange-name exchange-type queue-name routing-key]
-     (with-connection
-       (with-open [channel (create-channel)]
-         (let [consumer (consumer-for channel exchange-name exchange-type queue-name routing-key)]
-           (delivery-from channel consumer))))))
+     (ensure-thread-local-connection)
+     (with-open [channel (create-channel)]
+       (let [consumer (consumer-for channel exchange-name exchange-type queue-name routing-key)]
+         (delivery-from channel consumer)))))
 
 (declare guaranteed-delivery-from)
 
@@ -156,21 +149,25 @@
            consumer-atom (atom (consumer-for channel exchange-name exchange-type queue-name routing-key))]
        (lazy-message-seq exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
 
+
+;; TODO: refactor out this duplication
 (defn start-queue-message-handler 
   ([routing-key handler-fn]
      (start-queue-message-handler DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key handler-fn))
   ([queue-name routing-key handler-fn]
-     (with-connection
-       (with-open [channel (create-channel)]
-         (doseq [[m ack-fn] (message-seq DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE channel queue-name routing-key)]
-           (handler-fn m ack-fn)))))
+     (ensure-thread-local-connection)
+     (with-open [channel (create-channel)]
+       (doseq [[m ack-fn] (message-seq DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE channel queue-name routing-key)]
+         (handler-fn m ack-fn))))
+  
   ([exchange-name exchange-type routing-key handler-fn]
-     (with-connection
-       (with-open [channel (create-channel)]
-         (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel routing-key)]
-           (handler-fn m ack-fn)))))
+     (ensure-thread-local-connection)
+     (with-open [channel (create-channel)]
+       (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel routing-key)]
+         (handler-fn m ack-fn))))
+  
   ([exchange-name exchange-type queue-name routing-key handler-fn]
-     (with-connection
-       (with-open [channel (create-channel)]
-         (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel queue-name routing-key)]
-           (handler-fn m ack-fn))))))
+     (ensure-thread-local-connection)
+     (with-open [channel (create-channel)]
+       (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel queue-name routing-key)]
+         (handler-fn m ack-fn)))))
