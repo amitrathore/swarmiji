@@ -14,7 +14,7 @@
 (defn- swarmiji-config [distributed-mode?]
   {:operation-configs {:diagnostics-mode false,
                        :distributed-mode true,
-                       :host "127.0.0.1",
+                       :host "localhost",
                        :log-to-console true,
                        :logsdir "/var/log/swarm/furtive/",
                        :medusa-client-thread-count 72,
