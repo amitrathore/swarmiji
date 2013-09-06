@@ -1,7 +1,6 @@
 (ns org.runa.swarmiji.rabbitmq.rabbitmq
   (:require [kits.structured-logging :as log]
             [org.runa.swarmiji.rabbitmq.channel :as channel]
-            [org.runa.swarmiji.rabbitmq.connection :as conn]
             [org.runa.swarmiji.utils.general-utils :as utils])
   (:import (com.rabbitmq.client Channel QueueingConsumer)))
 
@@ -50,7 +49,6 @@
   ([exchange-name exchange-type routing-key handler-fn]
      (start-queue-message-handler exchange-name exchange-type routing-key (random-queue) handler-fn))
   ([exchange-name exchange-type queue-name routing-key handler-fn]
-     (conn/ensure-thread-local-connection)
      (with-open [channel (channel/create-channel)]
        (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel queue-name routing-key)]
          (handler-fn m ack-fn)))))
