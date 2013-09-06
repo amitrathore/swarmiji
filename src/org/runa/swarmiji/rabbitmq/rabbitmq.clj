@@ -89,33 +89,18 @@
     (let [message (trampoline guaranteed-delivery-from exchange-name exchange-type queue-name routing-key channel-atom consumer-atom)]
       (cons message (lazy-message-seq exchange-name exchange-type queue-name routing-key channel-atom consumer-atom)))))
 
-(defn- message-seq 
-  ([channel queue-name]
-     (message-seq DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE channel queue-name queue-name))
-  ([exchange-name exchange-type channel routing-key]
-     (message-seq exchange-name exchange-type channel (random-queue) routing-key))
-  ([exchange-name exchange-type channel queue-name routing-key]
-     (let [channel-atom (atom channel) 
-           consumer-atom (atom (consumer-for channel exchange-name exchange-type queue-name routing-key))]
-       (lazy-message-seq exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
+(defn- message-seq [exchange-name exchange-type channel queue-name routing-key]
+  (let [channel-atom (atom channel) 
+        consumer-atom (atom (consumer-for channel exchange-name exchange-type queue-name routing-key))]
+    (lazy-message-seq exchange-name exchange-type queue-name routing-key channel-atom consumer-atom)))
 
-
-;; TODO: refactor out this duplication
 (defn start-queue-message-handler 
   ([routing-key handler-fn]
-     (start-queue-message-handler DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key handler-fn))
+     (start-queue-message-handler DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key (random-queue) handler-fn))
   ([queue-name routing-key handler-fn]
-     (conn/ensure-thread-local-connection)
-     (with-open [channel (channel/create-channel)]
-       (doseq [[m ack-fn] (message-seq DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE channel queue-name routing-key)]
-         (handler-fn m ack-fn))))
-  
+     (start-queue-message-handler DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key (random-queue) handler-fn))
   ([exchange-name exchange-type routing-key handler-fn]
-     (conn/ensure-thread-local-connection)
-     (with-open [channel (channel/create-channel)]
-       (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel routing-key)]
-         (handler-fn m ack-fn))))
-  
+     (start-queue-message-handler exchange-name exchange-type routing-key (random-queue) handler-fn))
   ([exchange-name exchange-type queue-name routing-key handler-fn]
      (conn/ensure-thread-local-connection)
      (with-open [channel (channel/create-channel)]
