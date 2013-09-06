@@ -22,8 +22,6 @@
                        :port 61613,
                        :q-password "guest",
                        :q-username "guest",
-                       :rabbit-max-idle-size 72,
-                       :rabbit-max-pool-size 72,
                        :rabbit-prefetch-count 3,
                        :reload-namespaces false,
                        :sevak-diagnostics-queue-prefix "RUNA_SWARMIJI_DIAGNOSTICS_frylock_",

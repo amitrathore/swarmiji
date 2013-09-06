@@ -1,12 +1,8 @@
 (ns org.runa.swarmiji.rabbitmq.rabbitmq
   (:require [kits.structured-logging :as log]
             [taoensso.nippy :as nippy]
-            [org.runa.swarmiji.rabbitmq.rabbit-pool :refer [get-connection-from-pool
-                                                            init-pool
-                                                            invalidate-connection]])
-  (:import (com.rabbitmq.client Channel
-                                Connection
-                                QueueingConsumer)))
+            [org.runa.swarmiji.rabbitmq.connection :as conn])
+  (:import (com.rabbitmq.client Channel QueueingConsumer)))
 
 (def ^:const DEFAULT-EXCHANGE-NAME "default-exchange")
 (def ^:const DEFAULT-EXCHANGE-TYPE "direct")
@@ -20,28 +16,13 @@
 (defn- deserialize [^"[Ljava.lang.Byte;" message-body]
   (nippy/thaw message-body))
 
-(defn init-rabbitmq-connection
-  ([q-host q-username q-password]
-     (init-rabbitmq-connection q-host q-username q-password 10 10))
-  ([q-host q-username q-password max-pool max-idle]
-     (init-pool q-host q-username q-password max-pool max-idle)))
-
 (defn- wait-for-seconds [n]
   #_(log/info {:message "message-seq: waiting to reconnect to RabbitMQ"
              :seconds n})
   (Thread/sleep (* 1000 n)))
 
-(def ^ThreadLocal connection-local (ThreadLocal.))
-
-(defn ^Connection ensure-thread-local-connection []
-  (or
-   (.get connection-local)
-   (let [new-conn (get-connection-from-pool)] 
-     (.set connection-local new-conn)
-     new-conn)))
-
 (defn create-channel-guaranteed []
-  (let [^Connection c (ensure-thread-local-connection)]
+  (let [c (conn/ensure-thread-local-connection)]
     ;; is outside try, so rabbit-down-exception bubbles up
     (try 
       (let [^Channel ch (.createChannel c)]
@@ -50,8 +31,8 @@
       (catch Exception e
         #_(log/error {:message "error creating channel, retrying"})
         #_(log/exception e)
-        (invalidate-connection c)
-        (.set connection-local nil)
+        (conn/close-connection c)
+        (conn/clear-thread-local-conn)
         (wait-for-seconds (rand-int 2))
         #(create-channel-guaranteed)))))
 
@@ -62,7 +43,7 @@
   (.close chan))
 
 (defn delete-queue [q-name]
-  (ensure-thread-local-connection)
+  (conn/ensure-thread-local-connection)
   (with-open [^Channel chan (create-channel)]
     (.queueDelete chan q-name)))
 
@@ -70,7 +51,7 @@
   ([routing-key message-object]
      (send-message DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key message-object))
   ([exchange-name exchange-type routing-key message-object]
-     (ensure-thread-local-connection)
+     (conn/ensure-thread-local-connection)
      (with-open [channel (create-channel)]
        (.exchangeDeclare channel exchange-name exchange-type)
        (.queueDeclare channel routing-key false false false nil)
@@ -80,7 +61,7 @@
   ([routing-key message-object]
      (send-message-if-queue DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key message-object))
   ([exchange-name exchange-type routing-key message-object]
-     (ensure-thread-local-connection)
+     (conn/ensure-thread-local-connection)
      (with-open [channel (create-channel)]
        (.basicPublish channel exchange-name routing-key nil (serialize message-object)))))
 
@@ -106,7 +87,7 @@
   ([exchange-name exchange-type routing-key]
      (next-message-from exchange-name exchange-type (random-queue) routing-key))
   ([exchange-name exchange-type queue-name routing-key]
-     (ensure-thread-local-connection)
+     (conn/ensure-thread-local-connection)
      (with-open [channel (create-channel)]
        (let [consumer (consumer-for channel exchange-name exchange-type queue-name routing-key)]
          (delivery-from channel consumer)))))
@@ -155,19 +136,19 @@
   ([routing-key handler-fn]
      (start-queue-message-handler DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE routing-key handler-fn))
   ([queue-name routing-key handler-fn]
-     (ensure-thread-local-connection)
+     (conn/ensure-thread-local-connection)
      (with-open [channel (create-channel)]
        (doseq [[m ack-fn] (message-seq DEFAULT-EXCHANGE-NAME DEFAULT-EXCHANGE-TYPE channel queue-name routing-key)]
          (handler-fn m ack-fn))))
   
   ([exchange-name exchange-type routing-key handler-fn]
-     (ensure-thread-local-connection)
+     (conn/ensure-thread-local-connection)
      (with-open [channel (create-channel)]
        (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel routing-key)]
          (handler-fn m ack-fn))))
   
   ([exchange-name exchange-type queue-name routing-key handler-fn]
-     (ensure-thread-local-connection)
+     (conn/ensure-thread-local-connection)
      (with-open [channel (create-channel)]
        (doseq [[m ack-fn] (message-seq exchange-name exchange-type channel queue-name routing-key)]
          (handler-fn m ack-fn)))))

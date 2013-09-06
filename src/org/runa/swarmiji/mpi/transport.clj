@@ -1,6 +1,7 @@
 (ns org.runa.swarmiji.mpi.transport
   (:gen-class)
   (:require [kits.structured-logging :as log])
+  (:require [org.runa.swarmiji.rabbitmq.connection :as conn])
   (:use org.runa.swarmiji.config.system-config)
   (:use org.runa.swarmiji.rabbitmq.rabbitmq)
   (:use org.runa.swarmiji.sevak.bindings)
@@ -87,10 +88,6 @@
 
 (defn init-rabbit []
   #_(log/info {:message "Init Rabbit"
-             :host (queue-host)})
-  (init-rabbitmq-connection (queue-host)
-                            (queue-username)
-                            (queue-password)
-                            (rabbitmq-max-pool-size)
-                            (rabbitmq-max-idle-size))
+               :host (queue-host)})
+  (conn/init-connection-factory (queue-host) (queue-username) (queue-password))
   (start-retry-rabbit 10000))

@@ -12,7 +12,6 @@
                  [clj-record                     "1.1.4"]
                  [com.taoensso/nippy             "2.1.0"]
                  [org.clojars.amit/swarmiji-java "0.2.0"]
-                 [commons-pool/commons-pool      "1.4"]
                  [org.clojars.runa/kits          "1.11.9"]]
   :warn-on-reflection true
   :profiles {:dev {:dependencies
