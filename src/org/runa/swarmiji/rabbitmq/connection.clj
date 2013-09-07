@@ -20,12 +20,14 @@
 (defn ^Connection new-connection []
   (.newConnection ^ConnectionFactory @connection-factory))
 
-(defn ^Connection ensure-thread-local-connection []
-  (or
-   (.get connection-local)
-   (let [new-conn (new-connection)] 
+(defn reset-thread-local-connection []
+  (let [new-conn (new-connection)] 
      (.set connection-local new-conn)
-     new-conn)))
+     new-conn))
+
+(defn ^Connection ensure-thread-local-connection []
+  (or (.get connection-local)
+      (reset-thread-local-connection)))
 
 (defn close [^Connection c]
   (.close c))

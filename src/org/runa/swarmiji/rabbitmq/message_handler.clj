@@ -1,6 +1,7 @@
 (ns org.runa.swarmiji.rabbitmq.message-handler
   (:require [kits.structured-logging :as log]
             [org.runa.swarmiji.rabbitmq.channel :as channel]
+            [org.runa.swarmiji.rabbitmq.connection :as conn]
             [org.runa.swarmiji.utils.general-utils :as utils])
   (:import (com.rabbitmq.client Channel QueueingConsumer)))
 
@@ -12,7 +13,8 @@
 
 (defn- recover-from-delivery [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]
   (try 
-   (utils/wait-for-seconds (rand-int 7))
+    (utils/wait-for-seconds (rand-int 7))
+    (conn/reset-thread-local-connection)
    (let [new-channel (channel/create-channel)
          new-consumer (channel/consumer-for new-channel exchange-name exchange-type queue-name routing-key)]
      (reset! channel-atom new-channel)
