@@ -1,4 +1,5 @@
 (ns org.runa.swarmiji.rabbitmq.connection
+  (:require [kits.structured-logging :as log])
   (:import (com.rabbitmq.client AlreadyClosedException
                                 Connection
                                 ConnectionFactory)))
@@ -30,9 +31,13 @@
       (reset-thread-local-connection)))
 
 (defn close [^Connection c]
-  (.close c))
+  (try
+    (.close c)
+    (catch Exception e
+      #_(log/exception e)
+      #_(log/error {:message "Ignoring problem when closing connection."}))))
 
-;; TODO: use this in rabbitmq.clj ...
+;; TODO: use this in SOMEWHERE ...
 (defn connection-valid? [^Connection c]
   (try
     (.ensureIsOpen c)
