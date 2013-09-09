@@ -16,7 +16,7 @@
      ~@body))
 
 (defn- create-channel-guaranteed []
-  (let [c (conn/ensure-thread-local-connection)]
+  (let [c (conn/get-or-create-thread-local-connection)]
     ;; is outside try, so rabbit-down-exception bubbles up
     (try 
       (let [^Channel ch (.createChannel c)]
@@ -47,14 +47,12 @@
   (nippy/thaw message-body))
 
 (defn send-message [exchange-name exchange-type routing-key message-object]
-  (conn/ensure-thread-local-connection)
   (with-open [channel (create-channel)]
     (.exchangeDeclare channel exchange-name exchange-type)
     (.queueDeclare channel routing-key false false false nil)
     (.basicPublish channel exchange-name routing-key nil (serialize message-object))))
 
 (defn send-message-if-queue [routing-key message-object]
-  (conn/ensure-thread-local-connection)
   (with-open [channel (create-channel)]
     (.basicPublish channel DEFAULT-EXCHANGE-NAME routing-key nil (serialize message-object))))
 

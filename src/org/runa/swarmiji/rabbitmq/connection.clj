@@ -25,7 +25,7 @@
      (.set connection-local new-conn)
      new-conn))
 
-(defn ^Connection ensure-thread-local-connection []
+(defn ^Connection get-or-create-thread-local-connection []
   (or (.get connection-local)
       (reset-thread-local-connection)))
 
