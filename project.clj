@@ -1,4 +1,4 @@
-(defproject org.clojars.runa/swarmiji "0.8.2-SNAPSHOT"
+(defproject org.clojars.runa/swarmiji "0.8.2-alpha1"
   :description "A distributed computing framework to help write and run Clojure code in parallel, across cores and processors"
   :license  {:name "Eclipse Public License - v 1.0"
              :url "http://www.eclipse.org/legal/epl-v10.html"
