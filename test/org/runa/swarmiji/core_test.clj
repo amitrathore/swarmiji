@@ -29,7 +29,15 @@
                        :sevak-diagnostics-queue-prefix "RUNA_SWARMIJI_DIAGNOSTICS_frylock_",
                        :sevak-fanout-exchange-prefix "RUNA_SWARMIJI_FANOUT_EXCHANGE_development_",
                        :sevak-request-queue-prefix "RUNA_SWARMIJI_TRANSPORT_frylock_development_",
-                       :swarmiji-username "furtive"}})
+                       :swarmiji-username "furtive"
+                       :syslog-config {:host "127.0.0.1"
+                                       :port 514
+                                       :retries 10
+                                       :max-msg-length (* 50 1024)
+                                       :split-break-suffix " ..."
+                                       :split-continue-prefix "... "
+                                       :so-timeout-ms 500}
+                       :syslog-local-name ""}})
 
 (defn- init [distributed-mode?]
   (config/set-config (swarmiji-config distributed-mode?))

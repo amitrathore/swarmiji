@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.sevak.sevak-core
-  (:require [kits.structured-logging :as log])
+  (:require [org.runa.swarmiji.log :as log]
+            [kits.structured-logging :as structured-logging])
   (:use org.runa.swarmiji.mpi.transport)
   (:use org.runa.swarmiji.rabbitmq.rabbitmq)
   (:use org.runa.swarmiji.client.client-core)
@@ -38,7 +39,7 @@
                              (when (= :sevak ~'sevak)
                                ~@expr)))
            sevak-name# (keyword (:name (meta service-var#)))]
-       #_(log/info {:message "defining sevak job: "
+       (log/info {:message "defining sevak job: "
                   :service-name '~service-name})
        (register-sevak (ns-qualified-name sevak-name# ~defining-ns)
                        {:name sevak-name#
@@ -60,7 +61,7 @@
 
 (defn execute-sevak [service-name service-handler service-args]
   (try
-    #_(log/info {:message "execute-sevak"
+    (log/info {:message "execute-sevak"
                :service-name service-name
                :service-handler service-handler
                :service-args service-args})
@@ -72,12 +73,12 @@
     (catch InterruptedException ie
       (throw ie))
     (catch Exception e
-      #_(log/error {:message "SEVAK ERROR"
+      (log/error {:message "SEVAK ERROR"
                   :service-name service-name
                   :args service-args})
-      #_(log/exception e)
+      (log/exception e)
       {:exception (-> e .getClass .getName)
-       :stacktrace (#'log/stacktrace e)
+       :stacktrace (#'structured-logging/stacktrace e)
        :status :error})))
 
 (defn handle-sevak-request [service-handler sevak-name service-args return-q ack-fn]
@@ -87,7 +88,7 @@
                       {:return-q-name return-q :sevak-name sevak-name :sevak-server-pid (process-pid)}
                       (execute-sevak sevak-name service-handler service-args))]
         (when (and return-q (:return service-handler))
-          #_(log/info {:message "handle-sevak-request: Returning request"
+          (log/info {:message "handle-sevak-request: Returning request"
                      :sevak-name sevak-name
                      :return-queue return-q
                      :elapsed-time (:sevak-time response)
@@ -99,7 +100,7 @@
 (defn sevak-request-handling-listener [message-obj ack-fn real-time?]
   (with-swarmiji-bindings
     (try
-      #_(log/info {:message "sevak-request-handling-listener"})
+      (log/info {:message "sevak-request-handling-listener"})
       (let [service-name (message-obj :sevak-service-name)
             service-args (message-obj :sevak-service-args)
             return-q (message-obj :return-queue-name)
@@ -114,8 +115,8 @@
                    (reify Runnable  ;; couldn't get rid of reflection warning with merely: ^Runnable #(...)
                      (run [_] (handle-sevak-request service-handler service-name service-args return-q ack-fn))))))
       (catch Exception e
-        #_(log/error {:message "SRHL: Error in sevak-request-handling-listener"})
-        #_(log/exception e)))))
+        (log/error {:message "SRHL: Error in sevak-request-handling-listener"})
+        (log/exception e)))))
 
 
 (defn start-broadcast-processor []
@@ -123,7 +124,7 @@
     (with-swarmiji-bindings
       (let [broadcasts-q (random-queue-name "BROADCASTS_LISTENER_")]
         (try
-          #_(log/info {:message "Listening for update broadcasts..."
+          (log/info {:message "Listening for update broadcasts..."
                      :sevak-fanout-exchange-name (sevak-fanout-exchange-name)})
           (.addShutdownHook (Runtime/getRuntime)
                             (Thread. #(with-swarmiji-bindings (delete-queue broadcasts-q))))
@@ -132,10 +133,10 @@
                                        broadcasts-q
                                        (random-queue-name)
                                        #(sevak-request-handling-listener %1 %2 false))
-          #_(log/info {:message "Done with broadcasts!"})    
+          (log/info {:message "Done with broadcasts!"})    
           (catch Exception e         
-            #_(log/error {:message "Error in update broadcasts future!"})
-            #_(log/exception e)))))))
+            (log/error {:message "Error in update broadcasts future!"})
+            (log/exception e)))))))
 
 (defn start-processor [routing-key real-time? start-log-message]
   (future
@@ -146,14 +147,14 @@
                                        routing-key
                                        (fn [message-obj ack-fn]
                                          (sevak-request-handling-listener message-obj ack-fn real-time?))))
-        #_(log/info {:message "start-processor: Done with sevak requests!"})
+        (log/info {:message "start-processor: Done with sevak requests!"})
         (catch Exception e
-          #_(log/error {:message "start-processor: Error in sevak-servicing future!"})
-          #_(log/exception e))))))
+          (log/error {:message "start-processor: Error in sevak-servicing future!"})
+          (log/exception e))))))
 
 
 (defn boot-sevak-server []
-  #_(log/info {:message "Starting sevaks in"
+  (log/info {:message "Starting sevaks in"
              :mode *swarmiji-env*
              :system-config (operation-config)
              :medusa-client-thread-count (medusa-client-thread-count)
@@ -163,4 +164,4 @@
   (init-medusa (medusa-server-thread-count))
   (start-processor (queue-sevak-q-name true) true "Starting to serve realtime sevak requests..." )
   (start-processor (queue-sevak-q-name false) false "Starting to serve non-realtime sevak requests..." )
-  #_(log/info {:message "Sevak Server Started!"}))
+  (log/info {:message "Sevak Server Started!"}))

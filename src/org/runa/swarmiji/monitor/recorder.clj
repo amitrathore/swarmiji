@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.monitor.recorder
-  (:require [kits.structured-logging :as log]
+  (:require [org.runa.swarmiji.log :as log]
             [org.runa.swarmiji.monitor.control-message :as control-message]
             [org.rathore.amit.utils.config :refer [*clj-utils-config*]]
             [org.runa.swarmiji.rabbitmq.rabbitmq :refer [start-queue-message-handler]]
@@ -18,6 +18,6 @@
 
 (defn start []
   (binding-for-swarmiji [*clj-utils-config* (config-for-rathore-utils "recorder")]
-                        #_(log/info {:message "Swarmiji: Starting Control-Message-Recorder"
+                        (log/info {:message "Swarmiji: Starting Control-Message-Recorder"
                                    :listening-on (queue-diagnostics-q-name)})
                         (start-queue-message-handler (queue-diagnostics-q-name) persist-message)))

@@ -88,3 +88,8 @@
   {:log-to-console (log-to-console?)
    :logs-dir ((operation-config) :logsdir)
    :log-filename-prefix (str process-type-id "_" *swarmiji-env*)})
+
+(defn syslog-config []
+  (:syslog-config (operation-config)))
+
+(defn syslog-local-name [])

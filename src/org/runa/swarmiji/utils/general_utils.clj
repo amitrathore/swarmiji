@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.utils.general-utils
-  (:require [kits.structured-logging :as log]
+  (:require [org.runa.swarmiji.log :as log]
             [org.runa.swarmiji.rabbitmq.rabbitmq :refer [*PREFETCH-COUNT*]])
   (:import (java.lang.management ManagementFactory)
            (java.util UUID)))
@@ -21,7 +21,7 @@
      (str prefix (random-uuid))))
 
 (defn return-queue-name [sevak-name]
-  #_(log/info {:message "calling return-queue-name"})
+  (log/info {:message "calling return-queue-name"})
   (str (System/currentTimeMillis) "_" sevak-name "_" (random-uuid)))
 
 (defn sevak-queue-message-for-return [sevak-service args]
