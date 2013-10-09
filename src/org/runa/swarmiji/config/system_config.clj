@@ -92,4 +92,5 @@
 (defn syslog-config []
   (:syslog-config (operation-config)))
 
-(defn syslog-local-name [])
+(defn syslog-local-name []
+  (:syslog-local-name (operation-config)))
