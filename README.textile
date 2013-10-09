@@ -215,7 +215,7 @@ h2. swarmiji
 
 Swarm. Swamiji. Ahahaha.
  
-Copyright 2009 Amit Rathore
+Copyright 2009 Amit Rathore. Distributed under the Eclipse Public License, the same as Clojure.
 
 h2. Acknowledgements
 

@@ -1,16 +1,21 @@
-(defproject swarmiji "0.3.4"
+(defproject org.clojars.runa/swarmiji "0.8.4"
   :description "A distributed computing framework to help write and run Clojure code in parallel, across cores and processors"
-  :url "http://github.com/amitrathore/swarmiji"
-  :dependencies [[org.clojure/clojure "1.1.0"]
-                 [org.clojure/clojure-contrib "1.1.0"]
-                 [org.danlarkin/clojure-json "1.1"]
-                 [org.clojars.kjw/commons-io "1.4"]
-                 [mysql/mysql-connector-java "5.1.6"]
-                 [rabbitmq-client "1.7.0"]
-                 [org.clojars.sethtrain/postal "0.2.0"]
-                 [org.clojars.runa/clj-utils "0.2.0"]
-                 [org.clojars.runa/medusa "0.1.6"]
-                 [org.clojars.macourtney/clj-record "1.0.1"]
-                 [org.clojars.amit/swarmiji-java "0.2.0"]]
-  :dev-dependencies [[swank-clojure "1.2.1"]])
+  :license  {:name "Eclipse Public License - v 1.0"
+             :url "http://www.eclipse.org/legal/epl-v10.html"
+             :distribution :repo}
+  :url "http://github.com/runa-dev/swarmiji"
+  :dependencies [[org.clojure/clojure            "1.5.1"]
+                 [mysql/mysql-connector-java     "5.1.6"]
+                 [com.rabbitmq/amqp-client       "3.1.0"]
+                 [org.clojars.runa/medusa        "0.1.11"]
+                 [clj-record                     "1.1.4"]
+                 [com.taoensso/nippy             "2.1.0"]
+                 [org.clojars.amit/swarmiji-java "0.2.0"]
+                 [org.clojars.runa/kits          "1.13.4"]]
+  :warn-on-reflection true
+  :profiles {:dev {:dependencies
+                   [[slamhound                "1.3.1"]
+                    [swank-clojure            "1.4.0"]]}}
+  :plugins [[lein-swank "1.4.4"]
+            [s3-wagon-private "1.1.1"]])
 

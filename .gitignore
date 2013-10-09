@@ -1,3 +1,4 @@
+target/
 *~
 *#*
 .classpath
@@ -11,3 +12,8 @@ lib/*
 classes/
 classes/*
 swarmiji.jar
+/.lein-failures
+.lein*
+.idea
+/checkouts
+*.iml

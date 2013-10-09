@@ -1,23 +1,25 @@
-(ns org.runa.swarmiji.sevak.bindings)
+(ns org.runa.swarmiji.sevak.bindings
+  (:require [org.rathore.amit.utils.clojure :refer :all]))
 
-(use 'org.rathore.amit.utils.clojure)
 
-(def swarmiji-bindings (ref {}))
+(declare swarmiji-bindings)
 
-(defmacro with-swarmiji-bindings [& exprs]
+(def swarmiji-bindings {})
+
+(defmacro with-swarmiji-bindings [& body]
   `(do
-     (push-thread-bindings @swarmiji-bindings)
+     (push-thread-bindings swarmiji-bindings)
      (try
-       ~@exprs
-      (finally
-       (pop-thread-bindings)))))
+       ~@body
+       (finally
+         (pop-thread-bindings)))))
 
 (defmacro register-bindings [bindings]
-  `(dosync (ref-set swarmiji-bindings (hash-map ~@(var-ize bindings)))))
+  `(alter-var-root #'swarmiji-bindings (constantly (hash-map ~@(var-ize bindings)))))
 
-(defmacro binding-for-swarmiji [bindings & expr]
+(defmacro binding-for-swarmiji [bindings & body]
   `(do
      (register-bindings ~bindings)
      (binding [~@bindings]
-       ~@expr)))
+       ~@body)))
 

@@ -1,24 +1,25 @@
 (ns org.runa.swarmiji.client.client-core
+  (:gen-class)
+  (:require [org.runa.swarmiji.log :as log])
   (:use
-    org.runa.swarmiji.mpi.sevak-proxy
-    org.runa.swarmiji.mpi.transport
-    org.runa.swarmiji.sevak.bindings
-    org.runa.swarmiji.config.system-config
-    org.runa.swarmiji.utils.general-utils
-    org.rathore.amit.utils.config
-    org.rathore.amit.utils.logger
-    org.rathore.amit.utils.clojure)
+   org.runa.swarmiji.mpi.sevak-proxy
+   org.runa.swarmiji.mpi.transport
+   org.runa.swarmiji.sevak.bindings
+   org.runa.swarmiji.config.system-config
+   org.runa.swarmiji.utils.general-utils
+   org.rathore.amit.utils.config
+   org.rathore.amit.utils.clojure)
   (:import
-    (java.io StringWriter)
-    (org.runa.swarmiji.exception SevakErrors)
-    (java.util.concurrent TimeoutException TimeUnit CountDownLatch)))
+   (java.io StringWriter)
+   (org.runa.swarmiji.exception SevakErrors)
+   (java.util.concurrent TimeoutException TimeUnit CountDownLatch)))
 
 
-(def WORK-REPORT "WORK_REPORT")
+(def ^:const WORK-REPORT "WORK_REPORT")
 
 (declare send-work-report)
 
-(def swarmiji-sevak-init-value :__swarmiji-sevak-init__)
+(def ^:const swarmiji-sevak-init-value :__swarmiji-sevak-init__)
 
 (defn attribute-from-response [sevak-data attrib-name]
   (if (= swarmiji-sevak-init-value sevak-data)
@@ -46,57 +47,52 @@
   (if sevak-proxy 
     (let [{:keys [channel queue]} sevak-proxy]
       (try
-       (with-swarmiji-bindings
-	 (.queueDelete channel queue)
-	 (catch Exception e))))))
-         ;no-op, this sevak-proxy should be aborted, thats it
-
-(defn unserialized-response [[response-obj-string ack-fn]]
-  (try
-    (ack-fn)
-    (read-string response-obj-string)
-    (catch Exception e 
-      (log-exception e (str "Read failed on " response-obj-string))
-      {:exception (exception-name e) :stacktrace (stacktrace e) :status :error})))
+        (with-swarmiji-bindings
+          (.queueDelete channel queue)
+          (catch Exception e
+            (log/error {:message "Exception while deleting Swarmiji queue."
+                        :fn "client-core/disconnect-proxy"})
+            (log/exception e)))))))
+                                        ;no-op, this sevak-proxy should be aborted, thats it
 
 (defn on-swarm [realtime? sevak-service & args]
   (let [sevak-start (ref (System/currentTimeMillis))
-	total-sevak-time (ref nil)
-	latch (CountDownLatch. 1)
-	sevak-data (ref swarmiji-sevak-init-value)
-	complete? (fn [] (not (= swarmiji-sevak-init-value @sevak-data)))
-	success? (fn [] (= (:status @sevak-data) :success))
-	sevak-name (fn [] (sevak-name-from @sevak-data))
-	sevak-time (fn [] (time-on-server @sevak-data))
-	messaging-time (fn [] (- @total-sevak-time (sevak-time)))
-	on-swarm-response (fn [response]
-			    (let [response (unserialized-response response)]
-			      (dosync
-				(ref-set sevak-data response)
-				(dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start))))
-			      (if (and (swarmiji-diagnostics-mode?) (success?))
-				(send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))
-			      (.countDown latch)))
-	on-swarm-proxy-client (new-proxy realtime? sevak-service args on-swarm-response)]
+        total-sevak-time (ref nil)
+        latch (CountDownLatch. 1)
+        sevak-data (ref swarmiji-sevak-init-value)
+        complete? (fn [] (not (= swarmiji-sevak-init-value @sevak-data)))
+        success? (fn [] (= (:status @sevak-data) :success))
+        sevak-name (fn [] (sevak-name-from @sevak-data))
+        sevak-time (fn [] (time-on-server @sevak-data))
+        messaging-time (fn [] (- @total-sevak-time (sevak-time)))
+        on-swarm-response (fn [[response-obj ack-fn]]
+                            (ack-fn)
+                            (dosync
+                              (ref-set sevak-data response-obj)
+                              (dosync (ref-set total-sevak-time (- (System/currentTimeMillis) @sevak-start))))
+                            (when (and (swarmiji-diagnostics-mode?) (success?))
+                              (send-work-report (sevak-name) args (sevak-time) (messaging-time) (return-q @sevak-data) (sevak-server-pid @sevak-data)))
+                            (.countDown latch))
+        on-swarm-proxy-client (new-proxy realtime? sevak-service args on-swarm-response)]
     (fn [accessor]
       (condp = accessor
-	:sevak-name sevak-service
-	:args args
-	:distributed? true
-	:sevak-type :sevak-with-return
-	:latch latch
-	:disconnect (disconnect-proxy on-swarm-proxy-client)
-	:complete? (complete?)
-	:value (response-value-from @sevak-data)
-	:status (@sevak-data :status)
-	:sevak-time (sevak-time)
-	:total-time @total-sevak-time
-	:messaging-time (messaging-time)
-	:exception (@sevak-data :exception)
-	:stacktrace (@sevak-data :stacktrace)
-	:__inner_ref @sevak-data
+        :sevak-name sevak-service
+        :args args
+        :distributed? true
+        :sevak-type :sevak-with-return
+        :latch latch
+        :disconnect (disconnect-proxy on-swarm-proxy-client)
+        :complete? (complete?)
+        :value (response-value-from @sevak-data)
+        :status (@sevak-data :status)
+        :sevak-time (sevak-time)
+        :total-time @total-sevak-time
+        :messaging-time (messaging-time)
+        :exception (@sevak-data :exception)
+        :stacktrace (@sevak-data :stacktrace)
+        :__inner_ref @sevak-data
         :sevak-proxy on-swarm-proxy-client
-	:default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
+        :default (throw (Exception. (str "On-swarm proxy error - unknown message:" accessor)))))))
 
 
 (defn on-swarm-no-response [realtime? sevak-service & args]
@@ -108,10 +104,11 @@
     (req :disconnect)))
 
 (defn log-timeouts [swarm-requests]
-  (doseq [r swarm-requests]
-    (when (r :distributed?)
-      (log-message "Sevak response timed-out on" (r :sevak-name)
-	"for return-q" ((r :sevak-proxy) :queue)))))
+  (doseq [r swarm-requests
+          :when (r :distributed?)]
+    (log/error {:message "Sevak response timed-out"
+                :sevak-name (r :sevak-name)
+                :return-queue ((r :sevak-proxy) :queue)})))
 
 (defn throw-exception [allowed-time]
   (throw (RuntimeException. (str "Swarmiji reports: This operation has taken more than " allowed-time " milliseconds."))))
@@ -121,20 +118,22 @@
      (wait-until-completion swarm-requests allowed-time throw-exception))
   ([swarm-requests allowed-time error-fn]
      (let [start (System/currentTimeMillis)
-	   remaining-time #(- allowed-time (- (System/currentTimeMillis) start))
-	   latches (map :latch swarm-requests)]
+           remaining-time #(- allowed-time (- (System/currentTimeMillis) start))
+           latches (map :latch swarm-requests)]
        (try
-	 (doseq [r swarm-requests]
-	   (let [latch ^CountDownLatch (r :latch)]
-	     (.await latch (remaining-time) TimeUnit/MILLISECONDS)
-	     (when (r :distributed?)
-	       (log-message "Received sevak response on" (r :sevak-name)
-		 "for return-q" (return-q (r :__inner_ref)) "with elapsed time" (r :total-time)))))
-	 (catch TimeoutException e
-	   (log-timeouts swarm-requests)
-	   (error-fn allowed-time))
-	 (finally
-	   (disconnect-all swarm-requests))))))
+         (doseq [r swarm-requests]
+           (let [latch ^CountDownLatch (r :latch)]
+             (.await latch (remaining-time) TimeUnit/MILLISECONDS)
+             (when (r :distributed?)
+               (log/info {:message "Received sevak response"
+                          :sevak-name (r :sevak-name)
+                          :return-queue (return-q (r :__inner_ref))
+                          :elapsed-time (r :total-time)}))))
+         (catch TimeoutException _
+           (log-timeouts swarm-requests)
+           (error-fn allowed-time))
+         (finally
+           (disconnect-all swarm-requests))))))
 
 (defn wait-until-completion-no-exception
   [swarm-requests allowed-time]
@@ -157,9 +156,8 @@
 
 (defn on-local [sevak-service-function & args]
   (let [response-with-time (ref {})
-        result (simulate-serialized
-                (run-and-measure-timing 
-                 (apply (:fn sevak-service-function) args)))]
+        result (run-and-measure-timing
+                 (apply (:fn sevak-service-function) args))]
     (dosync (ref-set response-with-time result))
     (fn [accessor]
       (cond
@@ -178,13 +176,15 @@
        (= accessor :_inner_ref) @response-with-time
        (= accessor :value) (@response-with-time :response)
        :default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
-    
+
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
-  (let [report {:message_type WORK-REPORT
-		:sevak_name sevak-name
-		:sevak_args (str args)
-		:sevak_time sevak-time
-		:messaging_time messaging-time
-		:return_q_name return-q
-		:sevak_server_pid sevak-server-pid}]
-    (send-message-on-queue (queue-diagnostics-q-name) report)))
+  (log/info {:message "send-work-report"
+             :sevak-name sevak-name})
+  (send-message-on-queue (queue-diagnostics-q-name)
+                         {:message_type WORK-REPORT
+                          :sevak_name sevak-name
+                          :sevak_args (str args)
+                          :sevak_time sevak-time
+                          :messaging_time messaging-time
+                          :return_q_name return-q
+                          :sevak_server_pid sevak-server-pid}))
