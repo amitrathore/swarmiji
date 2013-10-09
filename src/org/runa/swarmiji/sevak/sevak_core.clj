@@ -39,7 +39,9 @@
                              (when (= :sevak ~'sevak)
                                ~@expr)))
            sevak-name# (keyword (:name (meta service-var#)))]
-       (log/info {:message "defining sevak job: "
+       ;; println here because the config has not yet been initialized
+       ;; as this is called during load time
+       (println {:message "defining sevak job: "
                   :service-name '~service-name})
        (register-sevak (ns-qualified-name sevak-name# ~defining-ns)
                        {:name sevak-name#
