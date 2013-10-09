@@ -1,6 +1,6 @@
 (ns org.runa.swarmiji.mpi.transport
   (:gen-class)
-  (:require [kits.structured-logging :as log]
+  (:require [org.runa.swarmiji.log :as log]
             [org.runa.swarmiji.rabbitmq.connection :as conn]
             [org.runa.swarmiji.rabbitmq.channel :as channel])
   (:use org.runa.swarmiji.config.system-config)
@@ -19,14 +19,14 @@
     (try
       (channel/send-message channel/DEFAULT-EXCHANGE-NAME channel/DEFAULT-EXCHANGE-TYPE q-name q-message-object)
       (catch Exception e
-        #_(log/exception e)))))
+        (log/exception e)))))
 
 (defn send-message-no-declare [q-name q-message-object]
   (with-swarmiji-bindings
     (try
       (channel/send-message-if-queue q-name q-message-object)
       (catch Exception e
-        #_(log/exception e)))))
+        (log/exception e)))))
 
 (defn fanout-message-to-all [message-object]
   (channel/send-message (sevak-fanout-exchange-name) channel/FANOUT-EXCHANGE-TYPE BROADCASTS-QUEUE-NAME message-object))
@@ -74,11 +74,11 @@
       (send-and-register-callback realtime? return-queue-name custom-handler request-object)
       (swap! rabbit-down-messages dissoc timestamp)
       (catch java.net.ConnectException ce
-        #_(log/error {:message "RabbitMQ still down, will retry"
+        (log/error {:message "RabbitMQ still down, will retry"
                     :rabbit-down-messages (count @rabbit-down-messages)})) ;;ignore, will try again later
       (catch Exception e
-        #_(log/error {:message "Trouble in swarmiji auto-retry!"})
-        #_(log/exception e)))))
+        (log/error {:message "Trouble in swarmiji auto-retry!"})
+        (log/exception e)))))
 
 (defn retry-periodically [sleep-millis]
   (Thread/sleep sleep-millis)
@@ -91,7 +91,7 @@
     (retry-periodically sleep-millis)))
 
 (defn init-rabbit []
-  #_(log/info {:message "Init Rabbit"
-               :host (queue-host)})
+  (log/info {:message "Init Rabbit"
+             :host (queue-host)})
   (conn/init-connection-factory (queue-host) (queue-username) (queue-password))
   (start-retry-rabbit 10000))

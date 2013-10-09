@@ -1,6 +1,6 @@
 (ns org.runa.swarmiji.client.client-core
   (:gen-class)
-  (:require [kits.structured-logging :as log])
+  (:require [org.runa.swarmiji.log :as log])
   (:use
    org.runa.swarmiji.mpi.sevak-proxy
    org.runa.swarmiji.mpi.transport
@@ -103,7 +103,7 @@
 (defn log-timeouts [swarm-requests]
   (doseq [r swarm-requests
           :when (r :distributed?)]
-    #_(log/error {:message "Sevak response timed-out"
+    (log/error {:message "Sevak response timed-out"
                 :sevak-name (r :sevak-name)
                 :return-queue ((r :sevak-proxy) :queue)})))
 
@@ -122,7 +122,7 @@
            (let [latch ^CountDownLatch (r :latch)]
              (.await latch (remaining-time) TimeUnit/MILLISECONDS)
              (when (r :distributed?)
-               #_(log/info {:message "Received sevak response"
+               (log/info {:message "Received sevak response"
                           :sevak-name (r :sevak-name)
                           :return-queue (return-q (r :__inner_ref))
                           :elapsed-time (r :total-time)}))))
@@ -175,7 +175,7 @@
        :default (throw (Exception. (str "On-local proxy error - unknown message:" accessor)))))))
 
 (defn send-work-report [sevak-name args sevak-time messaging-time return-q sevak-server-pid]
-  #_(log/info {:message "send-work-report"
+  (log/info {:message "send-work-report"
              :sevak-name sevak-name})
   (send-message-on-queue (queue-diagnostics-q-name)
                          {:message_type WORK-REPORT

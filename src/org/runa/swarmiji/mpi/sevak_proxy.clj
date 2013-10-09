@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.mpi.sevak-proxy
-  (:require [kits.structured-logging :as log]
+  (:require [org.runa.swarmiji.log :as log]
             [org.runa.swarmiji.config.system-config :refer [queue-sevak-q-name]]
             [org.runa.swarmiji.mpi.transport :refer [register-callback-or-fallback
                                                      send-message-on-queue]]
@@ -15,7 +15,7 @@
      (let [request-object (sevak-queue-message-for-return sevak-service args)
       	   return-q-name (request-object :return-queue-name)
            proxy-object (register-callback realtime? return-q-name callback-function request-object)]
-       #_(log/info {:message "Sending request"
+       (log/info {:message "Sending request"
                   :sevak-service sevak-service
                   :return-queue return-q-name})
        proxy-object))

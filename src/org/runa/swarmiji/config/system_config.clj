@@ -36,30 +36,30 @@
   (:host (operation-config)))
 
 (defn queue-port []
-  ((operation-config) :port))
+  (:port (operation-config)))
 
 (defn queue-username []
-  ((operation-config) :q-username))
+  (:q-username (operation-config)))
 
 (defn queue-password []
-  ((operation-config) :q-password))
+  (:q-password (operation-config)))
 
 (defn queue-sevak-q-name [realtime?]
   (if realtime?
-    (str ((operation-config) :sevak-request-queue-prefix) "realtime_" (swarmiji-user))
-    (str ((operation-config) :sevak-request-queue-prefix) "non_realtime_" (swarmiji-user))))
+    (str (:sevak-request-queue-prefix (operation-config)) "realtime_" (swarmiji-user))
+    (str (:sevak-request-queue-prefix (operation-config)) "non_realtime_" (swarmiji-user))))
 
 (defn queue-diagnostics-q-name []
-  (str ((operation-config) :sevak-diagnostics-queue-prefix) (swarmiji-user)))
+  (str (:sevak-diagnostics-queue-prefix (operation-config)) (swarmiji-user)))
 
 (defn sevak-fanout-exchange-name []
-  (str ((operation-config) :sevak-fanout-exchange-prefix) (swarmiji-user)))
+  (str (:sevak-fanout-exchange-prefix (operation-config)) (swarmiji-user)))
 
 (defn swarmiji-distributed-mode? []
-  ((operation-config) :distributed-mode))
+  (:distributed-mode (operation-config)))
 
 (defn swarmiji-diagnostics-mode? []
-  ((operation-config) :diagnostics-mode))
+  (:diagnostics-mode (operation-config)))
 
 (defn log-to-console? []
   ((operation-config) :log-to-console))
@@ -68,15 +68,21 @@
   ((operation-config) :rabbit-prefetch-count))
 
 (defn medusa-server-thread-count []
-  ((operation-config) :medusa-server-thread-count))
+  (:medusa-server-thread-count (operation-config)))
 
 (defn medusa-client-thread-count []
-  ((operation-config) :medusa-client-thread-count))
+  (:medusa-client-thread-count (operation-config)))
 
 (defn should-reload-namespaces? []
-  ((operation-config) :reload-namespaces))
+  (:reload-namespaces (operation-config)))
 
 (defn config-for-rathore-utils [process-type-id]
   {:log-to-console (log-to-console?)
    :logs-dir ((operation-config) :logsdir)
    :log-filename-prefix (str process-type-id "_" *swarmiji-env*)})
+
+(defn syslog-config []
+  (:syslog-config (operation-config)))
+
+(defn syslog-local-name []
+  (:syslog-local-name (operation-config)))
