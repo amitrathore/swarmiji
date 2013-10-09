@@ -13,7 +13,7 @@
 
 (defn- swarmiji-config [distributed-mode?]
   {:operation-configs {:diagnostics-mode false,
-                       :distributed-mode true,
+                       :distributed-mode distributed-mode?,
                        :host "localhost",
                        :log-to-console true,
                        :logsdir "/var/log/swarm/furtive/",
