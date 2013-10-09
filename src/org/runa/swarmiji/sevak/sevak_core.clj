@@ -1,5 +1,6 @@
 (ns org.runa.swarmiji.sevak.sevak-core
-  (:require [org.runa.swarmiji.log :as log]
+  (:require [kits.structured-logging :as structured-logging]
+            [org.runa.swarmiji.log :as log]
             [org.runa.swarmiji.rabbitmq.channel :as channel])
   (:use org.runa.swarmiji.mpi.transport)
   (:use org.runa.swarmiji.rabbitmq.message-handler)

@@ -19,6 +19,8 @@
     (try
       (channel/send-message channel/DEFAULT-EXCHANGE-NAME channel/DEFAULT-EXCHANGE-TYPE q-name q-message-object)
       (catch Exception e
+        (log/error {:message "Exception while sending Swarmiji message."
+                    :fn "transport/send-message-on-queue"})
         (log/exception e)))))
 
 (defn send-message-no-declare [q-name q-message-object]
@@ -65,6 +67,9 @@
   (try
     (send-and-register-callback realtime? return-q-name custom-handler request-object)
     (catch java.net.ConnectException ce
+      (log/error {:message "Caught ConnectionException registering callback."
+                  :fn "transport/register-callback-or-fallback"})
+      (log/exception ce)
       (if (should-fallback (:sevak-service-name request-object))
         (add-to-rabbit-down-queue realtime? return-q-name custom-handler request-object)))))
 

@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.rabbitmq.message-handler
-  (:require [kits.structured-logging :as log]
+  (:require [org.runa.swarmiji.log :as log]
             [org.runa.swarmiji.rabbitmq.channel :as channel]
             [org.runa.swarmiji.rabbitmq.connection :as conn]
             [org.runa.swarmiji.utils.general-utils :as utils])
@@ -21,16 +21,16 @@
      (reset! consumer-atom new-consumer)
      #(guaranteed-delivery-from exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))
    (catch Exception e
-     #_(log/error {:message "recover-from-delivery: retrying"})
-     #_(log/exception e)
+     (log/error {:message "recover-from-delivery: retrying"})
+     (log/exception e)
      #(recover-from-delivery exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
 
 (defn- guaranteed-delivery-from [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]
   (try
    (channel/delivery-from @channel-atom @consumer-atom)
    (catch Exception e
-     #_(log/error "guaranteed-delivery-from: recovering")
-     #_(log/exception e)
+     (log/error "guaranteed-delivery-from: recovering")
+     (log/exception e)
      #(recover-from-delivery exchange-name exchange-type queue-name routing-key channel-atom consumer-atom))))
 
 (defn- lazy-message-seq [exchange-name exchange-type queue-name routing-key channel-atom consumer-atom]

@@ -31,6 +31,6 @@
     (first (.split m-name "@"))))
 
 (defn wait-for-seconds [n]
-  #_(log/info {:message "waiting to reconnect to RabbitMQ"
-               :seconds n})
+  (log/info {:message "waiting to reconnect to RabbitMQ"
+             :seconds n})
   (Thread/sleep (* 1000 n)))

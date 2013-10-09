@@ -49,7 +49,10 @@
       (try
         (with-swarmiji-bindings
           (.queueDelete channel queue)
-          (catch Exception e))))))
+          (catch Exception e
+            (log/error {:message "Exception while deleting Swarmiji queue."
+                        :fn "client-core/disconnect-proxy"})
+            (log/exception e)))))))
                                         ;no-op, this sevak-proxy should be aborted, thats it
 
 (defn on-swarm [realtime? sevak-service & args]

@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.rabbitmq.channel
-  (:require [kits.structured-logging :as log]
+  (:require [org.runa.swarmiji.log :as log]
             [org.runa.swarmiji.rabbitmq.connection :as conn]
             [org.runa.swarmiji.utils.general-utils :as utils]
             [taoensso.nippy :as nippy])
@@ -23,8 +23,8 @@
         (.basicQos ch *PREFETCH-COUNT*)
         ch)
       (catch Exception e
-        #_(log/error {:message "error creating channel, retrying"})
-        #_(log/exception e)
+        (log/error {:message "error creating channel, retrying"})
+        (log/exception e)
         (conn/close c)
         (conn/clear-thread-local-conn)
         (utils/wait-for-seconds (rand-int 2))

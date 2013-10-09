@@ -1,5 +1,5 @@
 (ns org.runa.swarmiji.rabbitmq.connection
-  (:require [kits.structured-logging :as log])
+  (:require [org.runa.swarmiji.log :as log])
   (:import (com.rabbitmq.client AlreadyClosedException
                                 Connection
                                 ConnectionFactory)))
@@ -34,13 +34,5 @@
   (try
     (.close c)
     (catch Exception e
-      #_(log/exception e)
-      #_(log/error {:message "Ignoring problem when closing connection."}))))
-
-;; TODO: use this in SOMEWHERE ...
-(defn connection-valid? [^Connection c]
-  (try
-    (.ensureIsOpen c)
-    true
-    (catch AlreadyClosedException _
-      false)))
+      (log/exception e)
+      (log/error {:message "Ignoring problem when closing connection."}))))
